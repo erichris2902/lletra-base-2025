@@ -1,0 +1,153 @@
+<script>
+    function init_catalogs() {
+        // Solo para fechas simples (sin hora)
+        flatpickr(".flatpickr:not(.flatpickr-datetime)", {
+            dateFormat: 'Y-m-d',  // lo que queda en el input real (y Django entiende)
+            locale: "es"
+        });
+
+        // Solo para fechas con hora
+        document.querySelectorAll(".flatpickr-datetime").forEach(el => {
+            flatpickr(el, {
+                enableTime: true,
+                dateFormat: "d/m/Y H:i",
+                locale: "es",
+                time_24hr: true,
+                minuteIncrement: 30,
+                defaultDate: el.dataset.defaultDate || null
+            });
+        });
+        // Inicializa todos los select2 normales primero
+        $('.select2').each(function () {
+            const $select = $(this);
+            $select.select2({
+                theme: 'bootstrap-5',
+                dropdownParent: $("#FormContainer"),
+                placeholder: $select.attr('data-placeholder') || 'Selecciona una opción',
+                allowClear: true
+            });
+        });
+
+        {% for catalog in catalogs %}
+            (function () {
+                const id = '{{ catalog.id }}';
+                let $el = $('#' + id);
+                if (!$el.length) return;
+
+                // 0) Rescatar valor/texto inicial de donde exista
+                const ctxId = '{{ catalog.initial.id|default:"" }}';
+                const ctxText = '{{ catalog.initial.text|default:"" }}';
+                const dataId = $el.attr('data-initial-id') || '';
+                const dataTxt = $el.attr('data-initial-text') || '';
+                const domVal = $el.val() || '';              // si era <input> con value
+                const initialId = ctxId || dataId || domVal;
+                const initialText = ctxText || dataTxt || ''; // puede venir vacío
+
+                // 1) Evitar conflictos con form-floating
+                const $floating = $el.closest('.form-floating');
+                if ($floating.length) {
+                    $floating.removeClass('form-floating');
+                    $floating.find('label[for="' + id + '"]').addClass('visually-hidden');
+                }
+
+                // 2) Si vino como <input>, convertir a <select> conservando el value
+                if (!$el.is('select')) {
+                    const origClasses = ($el.attr('class') || '')
+                        .replace(/\bselect2-hidden-accessible\b/g, '')
+                        .replace(/\bform-control\b/g, 'form-select');
+
+                    const $select = $('<select>', {
+                        id: $el.attr('id'),
+                        name: $el.attr('name'),
+                        class: origClasses
+                    });
+
+                    // conserva data-*
+                    $.each($el.data(), function (k, v) {
+                        $select.attr('data-' + k, v);
+                    });
+
+                    $el.replaceWith($select);
+                    $el = $select;
+                }
+
+                // 3) Si ya estaba inicializado, destruir
+                if ($el.hasClass('select2-hidden-accessible')) {
+                    $el.select2('destroy');
+                }
+
+                // 4) Inyectar opción inicial si hay id (aunque no tengamos el texto)
+                if (initialId && !$el.find('option[value="' + initialId + '"]').length) {
+                    const text = initialText || initialId; // fallback a id mientras llega el texto real
+                    $el.append(new Option(text, initialId, true, true));
+                }
+
+                // 5) Init Select2
+                $el.css('width', '100%').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    dropdownParent: $("#FormContainer"),
+                    placeholder: '{{ catalog.placeholder|default:"Buscar" }}',
+                    language: 'es',
+                    minimumInputLength: 3,
+                    allowClear: false,
+                    ajax: {
+                        url: '/system/catalog',
+                        type: 'POST',
+                        delay: 250,
+                        dataType: 'json',
+                        data: function (params) {
+                            return {
+                                term: params.term,
+                                action: 'Search',
+                                catalog: '{{ catalog.service }}',
+                                csrfmiddlewaretoken: csrfToken
+                            };
+                        },
+                        processResults: function (data) {
+                            return {results: data.results};
+                        }
+                    },
+                    // asegura que siempre pinte algo
+                    templateSelection: function (data) {
+                        if (!data) return '';
+                        return data.text || (data.element ? $(data.element).text() : data.id) || '';
+                    }
+                });
+
+                // 6) Reafirmar valor tras init (por timing)
+                if (initialId) {
+                    $el.val(initialId).trigger('change.select2');
+                }
+
+                // 7) (Opcional) Si no tenías texto, intenta recuperarlo por ID y actualizar label
+                // Requiere que tu endpoint soporte 'GetById' (o similar).
+                {% if catalogs and catalogs.0.service %}
+                    if (initialId && !initialText) {
+                        $.post('/system/catalog', {
+                            action: 'GetById',            // <-- implementa este caso en tu view
+                            catalog: '{{ catalog.service }}',
+                            id: initialId,
+                            csrfmiddlewaretoken: csrfToken
+                        }).done(function (resp) {
+                            if (resp && resp.id && resp.text) {
+                                // actualiza la opción y el render
+                                const opt = $el.find('option[value="' + resp.id + '"]');
+                                if (opt.length) {
+                                    opt.text(resp.text);
+                                } else {
+                                    $el.append(new Option(resp.text, resp.id, true, true));
+                                }
+                                $el.trigger('change.select2');
+                            }
+                        }).fail(function () { /* silencioso */
+                        });
+                    }
+                {% endif %}
+            })();
+        {% endfor %}
+
+
+
+    }
+</script>

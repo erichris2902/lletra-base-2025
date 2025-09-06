@@ -1,0 +1,80 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="pagetitle">
+    <h1>Dashboard</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Home</a></li>
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+    </nav>
+</div>
+
+<section class="section dashboard">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Bienvenido al Panel de Administración</h5>
+                    <p>Este es el panel de administración para usuarios del sistema. Desde aquí podrás gestionar todas las funcionalidades del sistema.</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card info-card sales-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Facturación <span>| FacturAPI</span></h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-receipt"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>Gestión de Facturas</h6>
+                                            <a href="{% url 'facturapi:dashboard' %}" class="btn btn-primary btn-sm mt-2">Ir a Facturación</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card info-card revenue-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Google Drive <span>| Archivos</span></h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-cloud"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>Gestión de Archivos</h6>
+                                            <a href="{% url 'google_drive:dashboard' %}" class="btn btn-primary btn-sm mt-2">Ir a Google Drive</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card info-card customers-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">OpenAI <span>| Asistente</span></h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-robot"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>Asistente IA</h6>
+                                            <a href="/openai/" class="btn btn-primary btn-sm mt-2">Ir a OpenAI</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

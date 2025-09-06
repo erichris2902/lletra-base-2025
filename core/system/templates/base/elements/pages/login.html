@@ -1,0 +1,112 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Acceso - Lletra</title>
+    <link rel="stylesheet" href="{% static 'css/login/style.css' %}">
+    <link rel="stylesheet" href="{% static 'lib/adminlte/plugins/fontawesome-free/css/all.min.css' %}">
+    <script src="{% static 'lib/sweetalert/dist/sweetalert2.all.min.js' %}"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div class="container">
+    <input type="checkbox" id="flip">
+    <div class="cover">
+        <div class="front">
+            <img src="{% static 'img/frontImg.jpg' %}" alt="Fondo Lletra">
+            <div class="text">
+                <span class="text-1">Lletra</span>
+                <span class="text-2">CREATIVE DIGITAL LAB</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="forms">
+        <div class="form-content">
+            <div class="login-form">
+                <div class="title">Acceso</div>
+                <form id="login-form" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="login">
+                    <div class="input-boxes">
+                        <div class="input-box">
+                            <i class="fas fa-envelope"></i>
+                            <input type="text" name="username" placeholder="Ingresa tu usuario" required>
+                        </div>
+                        <div class="input-box">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" name="password" placeholder="Ingresa tu contraseña" required>
+                        </div>
+                        <div class="button input-box">
+                            <input type="submit" value="Ingresar" id="login-btn">
+                        </div>
+                        <div class="text sign-up-text">
+                            ¿Deseas contratar nuestros servicios?<br>
+                            <label><a href="https://wa.me/524427958845" target="_blank">Contáctanos</a></label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'lib/adminlte/plugins/jquery/jquery.min.js' %}"></script>
+<script>
+    const loginForm = $('#login-form');
+    const loginBtn = $('#login-btn');
+
+    {% if form.errors %}
+        let errors = '';
+        {% for field in form %}
+            {% for error in field.errors %}
+                errors += '{{ error }}<br>';
+            {% endfor %}
+        {% endfor %}
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de acceso',
+            html: errors
+        });
+    {% endif %}
+
+    loginForm.on('submit', function (e) {
+        e.preventDefault();
+        loginBtn.prop('disabled', true).val('Ingresando...');
+
+        const parameters = loginForm.serializeArray();
+
+        $.ajax({
+            url: window.location.pathname,
+            type: 'POST',
+            data: parameters,
+            dataType: 'json',
+        }).done(function (data) {
+            if (!data.error) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Bienvenido!',
+                    text: 'Redirigiendo...'
+                });
+                window.location.href = data.url;
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Acceso denegado',
+                    text: data.error
+                });
+            }
+        }).fail(function () {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de conexión',
+                text: 'No fue posible contactar al servidor. Verifica tu conexión.'
+            });
+        }).always(function () {
+            loginBtn.prop('disabled', false).val('Ingresar');
+        });
+    });
+</script>
+</body>
+</html>

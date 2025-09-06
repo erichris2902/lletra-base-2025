@@ -1,0 +1,647 @@
+{% extends 'base/report.html' %}
+{% load static %}
+
+
+{% block content %}
+    <style>
+        /* ===== Carta Porte – Estilos limpitos ===== */
+        :root {
+            --cp-bg: #f7f8fa;
+            --cp-card: #ffffff;
+            --cp-primary: #0ea5e9; /* azul suave */
+            --cp-secondary: #64748b; /* gris pizarra */
+            --cp-accent: #10b981; /* verde */
+            --cp-border: #e5e7eb;
+            --cp-text: #0f172a;
+            --cp-muted: #6b7280;
+            --cp-warning: #f59e0b;
+        }
+
+        .cp-doc {
+            background: var(--cp-bg);
+            padding: 1.5rem;
+            border-radius: 1rem;
+        }
+
+        .cp-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        @media (min-width: 992px) {
+            .cp-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .cp-card {
+            background: var(--cp-card);
+            border: 1px solid var(--cp-border);
+            border-radius: 1rem;
+            box-shadow: 0 6px 20px rgba(2, 8, 23, .06);
+            overflow: hidden;
+        }
+
+        .cp-card header {
+            padding: .9rem 1.1rem;
+            background: linear-gradient(120deg, #e0f2fe 0%, #ecfeff 100%);
+            border-bottom: 1px solid var(--cp-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+        }
+
+        .cp-title {
+            font-weight: 700;
+            letter-spacing: .2px;
+            color: #0369a1;
+            display: flex;
+            align-items: center;
+            gap: .5rem
+        }
+
+        .cp-title .emoji {
+            filter: saturate(120%);
+            font-size: 1.15rem
+        }
+
+        .cp-body {
+            padding: 1rem 1.1rem;
+        }
+
+        .cp-kv {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: .65rem;
+        }
+
+        @media (min-width: 576px) {
+            .cp-kv {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .cp-item {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: .5rem;
+            align-items: start
+        }
+
+        .cp-item .k {
+            color: var(--cp-muted);
+            font-size: .85rem;
+            text-transform: uppercase;
+            letter-spacing: .4px
+        }
+
+        .cp-item .v {
+            color: var(--cp-text);
+            font-weight: 600
+        }
+
+        .cp-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem
+        }
+
+        .cp-badge {
+            border: 1px solid var(--cp-border);
+            background: #fff;
+            color: var(--cp-secondary);
+            font-weight: 600;
+            padding: .25rem .5rem;
+            border-radius: 999px;
+            font-size: .78rem;
+        }
+
+        .cp-badge.primary {
+            border-color: #bae6fd;
+            color: #0369a1;
+            background: #e0f2fe
+        }
+
+        .cp-badge.accent {
+            border-color: #bbf7d0;
+            color: #065f46;
+            background: #ecfdf5
+        }
+
+        .cp-badge.warn {
+            border-color: #fde68a;
+            color: #92400e;
+            background: #fffbeb
+        }
+
+        /* Tabla */
+        .cp-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            overflow: hidden;
+            border-radius: .75rem;
+            border: 1px solid var(--cp-border)
+        }
+
+        .cp-table thead th {
+            background: #f1f5f9;
+            color: #0f172a;
+            text-align: left;
+            font-weight: 700;
+            padding: .7rem .8rem;
+            font-size: .9rem;
+            border-bottom: 1px solid var(--cp-border)
+        }
+
+        .cp-table tbody td {
+            padding: .65rem .8rem;
+            border-bottom: 1px solid var(--cp-border);
+            vertical-align: top
+        }
+
+        .cp-table tbody tr:nth-child(odd) {
+            background: #fbfdff
+        }
+
+        .cp-table tfoot td {
+            padding: .7rem .8rem;
+            background: #f8fafc;
+            font-weight: 700
+        }
+
+        /* Sección ancho completo */
+        .cp-span-2 {
+            grid-column: 1 / -1
+        }
+
+        /* Etiquetas pequeñas dentro de valores */
+        .chip {
+            display: inline-block;
+            padding: .15rem .45rem;
+            font-size: .72rem;
+            border-radius: .5rem;
+            background: #eef2ff;
+            color: #3730a3;
+            border: 1px solid #c7d2fe;
+            font-weight: 700
+        }
+
+        /* Print */
+        @media print {
+            .cp-doc {
+                background: #fff;
+                padding: 0
+            }
+
+            .cp-card {
+                box-shadow: none;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .cp-span-2 {
+                break-inside: avoid;
+            }
+        }
+    </style>
+
+    <div class="cp-doc">
+        <div class="row">
+            <div class="col-4">
+                <h2 class="page-header">
+                    <img class="img-fluid" src="{% static 'img/logo.png' %}">
+                </h2>
+            </div>
+            <!-- /.col -->
+            <div class="col-sm-1 invoice-col">
+            </div>
+            <div class="col-sm-6 invoice-col">
+                <div class="row">
+                    <div class="col-4 ">
+                        <b>FOLIO </b><br>
+                        <b>TIPO </b><br>
+                        <b>FOLIO FISCAL</b> <br>
+                        <b>LUGAR EMISION</b><br>
+                        <b>FECHA EMISION</b><br>
+                        <b>FECHA CERTIF</b><br>
+                        <b>NUM CERTIFICADO</b><br>
+                    </div>
+                    <div class="col-8 ">
+                        {{ Factura.folio_number }} <br>
+                        {{ Factura.type }}<br>
+                        {{ Factura.uuid }}<br>
+                        76146<br>
+                        {{ Factura.stamp.date }}<br>
+                        {{ Factura.stamp.date }}<br>
+                        {{ Factura.stamp.sat_cert_number }}<br>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row invoice-info" style="margin-top: 30px">
+            <div class="col-sm-6 invoice-col">
+                <div class="row">
+                    <div class="col-11" style="border: 1px solid black;border-radius: 10px;">
+                        <div style="text-align: center;border-bottom: 1px solid gray;">Emisor</div>
+                        <div class="row">
+                            <div class="col-4 ">
+                                <b>RAZON SOCIAL </b><br>
+                                <b>RFC</b> <br>
+                                <b>DOMICILIO</b><br>
+                                <b>TELEFONO</b><br>
+                                <b>REGIMEN F.</b><br>
+                            </div>
+                            <div class="col-8 ">
+                                SERVICIOS TECNOLOGICOS Y LOGISTICOS LLETRA S DE RL DE CV<br>
+                                STL191211KM2<br>
+                                76030, MEX<br>
+                                MARIANO PERRUSQUIA 102, LOCAL 1 SAN ANGEL, QUERÉTARO, QRO<br>
+                                601 - General de Ley Personas Morales<br>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- /.col -->
+            <div class="col-sm-6 invoice-col">
+                <div class="row">
+                    <div class="col-11" style="border: 1px solid black;border-radius: 10px;">
+                        <div style="text-align: center;border-bottom: 1px solid gray;">RECEPTOR</div>
+                        <div class="row">
+                            <div class="col-4 ">
+                                <b>RAZON SOCIAL </b><br>
+                                <b>RFC</b> <br>
+                                <b>DOMICILIO</b><br>
+                                <b>USO DE CFDI</b><br>
+                            </div>
+                            <div class="col-8 ">
+                                {{ Factura.customer.legal_name }}<br>
+                                {{ Factura.customer.tax_id }}<br>
+                                {{ Factura.customer.address.country }}<br>
+                                {{ Factura.use }}<br>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <!-- Encabezado principal -->
+        <div class="cp-card cp-span-2" style="margin-bottom:1rem">
+            <header>
+                <div class="cp-title"><span class="emoji"></span> COMPLEMENTO CARTA PORTE AUTOTRANSPORTE</div>
+                <div class="cp-badges">
+                    <span class="cp-badge primary">Versión: 3.1</span>
+                    <span class="cp-badge accent">Transporte internacional: No</span>
+                    <span class="cp-badge">Vía de entrada: 01</span>
+                    <span class="cp-badge warn">IdCCP: {{ Cartaporte.ccp_id }}</span>
+                    <span class="cp-badge">Total distancia: {{ Cartaporte.total_distance_km }} km</span>
+                </div>
+            </header>
+            <div class="cp-body" style="padding-top:.8rem">
+                <div class="cp-kv">
+                    <div class="cp-item">
+                        <div class="k">Versión</div>
+                        <div class="v">3.1</div>
+                    </div>
+                    <div class="cp-item">
+                        <div class="k">Transporte internacional</div>
+                        <div class="v">No</div>
+                    </div>
+                    <div class="cp-item">
+                        <div class="k">Total distancia recorrida</div>
+                        <div class="v">{{ Cartaporte.total_distance_km }}</div>
+                    </div>
+                    <div class="cp-item">
+                        <div class="k">Vía de entrada</div>
+                        <div class="v">01</div>
+                    </div>
+                    <div class="cp-item">
+                        <div class="k">IdCCP</div>
+                        <div class="v"><span class="chip">{{ Cartaporte.idccp }}</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cp-grid">
+            <!-- ORIGEN -->
+            <section class="cp-card">
+                <header>
+                    <div class="cp-title"><span class="emoji"></span> ORIGEN</div>
+                </header>
+                <div class="cp-body">
+                    <div class="cp-kv">
+                        <div class="cp-item">
+                            <div class="k">Remitente</div>
+                            <div class="v">{{ Cartaporte.Origen.NombreRemitente }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">RFC Remitente</div>
+                            <div class="v">{{ Cartaporte.Origen.RFCRemitente }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Fecha/Hora salida</div>
+                            <div class="v">{{ Cartaporte.Origen.FechaHoraSalida }}</div>
+                        </div>
+                    </div>
+
+                    <hr style="border:none; border-top:1px dashed var(--cp-border); margin:.9rem 0">
+
+                    <div class="cp-kv">
+                        <div class="cp-item">
+                            <div class="k">Calle</div>
+                            <div class="v">{{ Cartaporte.Origen.Calle }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">No. Exterior</div>
+                            <div class="v">{{ Cartaporte.Origen.NumeroExterior }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Colonia</div>
+                            <div class="v">{{ Cartaporte.Origen.Colonia|upper }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Localidad</div>
+                            <div class="v">{{ Cartaporte.Origen.Localidad|upper }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Municipio</div>
+                            <div class="v">{{ Cartaporte.Origen.Municipio|upper }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Estado</div>
+                            <div class="v">{{ Cartaporte.Origen.Estado }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">CP</div>
+                            <div class="v">{{ Cartaporte.Origen.CodigoPostal }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">País</div>
+                            <div class="v">{{ Cartaporte.Origen.Pais }}</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DESTINO -->
+            <section class="cp-card">
+                <header>
+                    <div class="cp-title"><span class="emoji"></span> DESTINO</div>
+                </header>
+                <div class="cp-body">
+                    <div class="cp-kv">
+                        <div class="cp-item">
+                            <div class="k">Destinatario</div>
+                            <div class="v">{{ Cartaporte.Destino.NombreRemitente }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">RFC Destinatario</div>
+                            <div class="v">{{ Cartaporte.Destino.RFCDestinatario }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Fecha/Hora llegada</div>
+                            <div class="v">{{ Cartaporte.Destino.FechaHoraSalida }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Control vehicular</div>
+                            <div class="v">{{ Cartaporte.ControlVehicular|upper }}</div>
+                        </div>
+                    </div>
+
+                    <hr style="border:none; border-top:1px dashed var(--cp-border); margin:.9rem 0">
+
+                    <div class="cp-kv">
+                        <div class="cp-item">
+                            <div class="k">Calle</div>
+                            <div class="v">{{ Cartaporte.Destino.Calle }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">No. Exterior</div>
+                            <div class="v">{{ Cartaporte.Destino.NumeroExterior }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Colonia</div>
+                            <div class="v">{{ Cartaporte.Destino.Colonia|upper }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Localidad</div>
+                            <div class="v">{{ Cartaporte.Destino.Localidad|upper }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Municipio</div>
+                            <div class="v">{{ Cartaporte.Destino.Municipio|upper }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Estado</div>
+                            <div class="v">{{ Cartaporte.Destino.Estado }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">CP</div>
+                            <div class="v">{{ Cartaporte.Destino.CodigoPostal }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">País</div>
+                            <div class="v">{{ Cartaporte.Destino.Pais }}</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- REPARTOS (MiddlePoints) -->
+            {% for point in Cartaporte.MiddlePoint %}
+                <section class="cp-card cp-span-2">
+                    <header>
+                        <div class="cp-title"><span class="emoji"></span> REPARTO #{{ forloop.counter }}</div>
+                        <div class="cp-badges">
+                            <span class="cp-badge">RFC: {{ point.RFCDestinatario }}</span>
+                        </div>
+                    </header>
+                    <div class="cp-body">
+                        <div class="cp-kv">
+                            <div class="cp-item">
+                                <div class="k">Remitente</div>
+                                <div class="v">{{ point.NombreRemitente }}</div>
+                            </div>
+                        </div>
+
+                        <hr style="border:none; border-top:1px dashed var(--cp-border); margin:.9rem 0">
+
+                        <div class="cp-kv">
+                            <div class="cp-item">
+                                <div class="k">Calle</div>
+                                <div class="v">{{ point.Calle }}</div>
+                            </div>
+                            <div class="cp-item">
+                                <div class="k">No. Exterior</div>
+                                <div class="v">{{ point.NumeroExterior }}</div>
+                            </div>
+                            <div class="cp-item">
+                                <div class="k">Colonia</div>
+                                <div class="v">{{ point.Colonia|upper }}</div>
+                            </div>
+                            <div class="cp-item">
+                                <div class="k">Localidad</div>
+                                <div class="v">{{ point.Localidad|upper }}</div>
+                            </div>
+                            <div class="cp-item">
+                                <div class="k">Municipio</div>
+                                <div class="v">{{ point.Municipio|upper }}</div>
+                            </div>
+                            <div class="cp-item">
+                                <div class="k">Estado</div>
+                                <div class="v">{{ point.Estado }}</div>
+                            </div>
+                            <div class="cp-item">
+                                <div class="k">CP</div>
+                                <div class="v">{{ point.CodigoPostal }}</div>
+                            </div>
+                            <div class="cp-item">
+                                <div class="k">País</div>
+                                <div class="v">{{ point.Pais }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            {% endfor %}
+
+            <!-- MERCANCÍAS -->
+            <section class="cp-card cp-span-2">
+                <header>
+                    <div class="cp-title"><span class="emoji"></span> INFORMACIÓN DE MERCANCÍAS</div>
+                </header>
+                <div class="cp-body">
+                    <table class="cp-table">
+                        <thead>
+                        <tr>
+                            <th>Cantidad</th>
+                            <th>Unidad</th>
+                            <th>Clave</th>
+                            <th>Descripción</th>
+                            <th>Peso (kg)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for product in Cartaporte.Products %}
+                            <tr>
+                                <td>{{ product.Cantidad }}</td>
+                                <td>{{ product.ClaveUnidad }}</td>
+                                <td>{{ product.BienesTransp }}</td>
+                                <td>{{ product.Descripcion }}</td>
+                                <td>{{ product.PesoEnKg }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- AUTOTRANSPORTE FEDERAL -->
+            <section class="cp-card">
+                <header>
+                    <div class="cp-title"><span class="emoji"></span> AUTOTRANSPORTE FEDERAL</div>
+                </header>
+                <div class="cp-body">
+                    <div class="cp-kv">
+                        <div class="cp-item">
+                            <div class="k">Tipo permiso SCT</div>
+                            <div class="v">{{ Cartaporte.PermSCT }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">No. permiso SCT</div>
+                            <div class="v">{{ Cartaporte.NumPermisoSCT }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Aseguradora</div>
+                            <div class="v">{{ Cartaporte.NombreAseg }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">No. póliza</div>
+                            <div class="v">{{ Cartaporte.NumPolizaSeguro }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Clave autotransporte</div>
+                            <div class="v">{{ Cartaporte.Unidad }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Placa vehículo</div>
+                            <div class="v">{{ Cartaporte.PlacaVM }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Año modelo</div>
+                            <div class="v">{{ Cartaporte.AnioModeloVM }}</div>
+                        </div>
+                    </div>
+
+                    <hr style="border:none; border-top:1px dashed var(--cp-border); margin:.9rem 0">
+
+                    <div class="cp-kv">
+                        <div class="cp-item">
+                            <div class="k">Tipo de remolque</div>
+                            <div class="v">{{ Cartaporte.Caja }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Placa remolque</div>
+                            <div class="v">{{ Cartaporte.PlacaCaja }}</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FIGURA DE TRANSPORTE -->
+            <section class="cp-card">
+                <header>
+                    <div class="cp-title"><span class="emoji">️</span> FIGURA DE TRANSPORTE</div>
+                </header>
+                <div class="cp-body">
+                    <div class="cp-kv">
+                        <div class="cp-item">
+                            <div class="k">Clave del transporte</div>
+                            <div class="v">—</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Operador</div>
+                            <div class="v">{{ Cartaporte.NombreOperador }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">RFC Operador</div>
+                            <div class="v">{{ Cartaporte.RFCOperador }}</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">Residencia fiscal</div>
+                            <div class="v">MÉXICO</div>
+                        </div>
+                        <div class="cp-item">
+                            <div class="k">No. licencia</div>
+                            <div class="v">{{ Cartaporte.NumLicencia }}</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    {% if include_signature %}
+        <section class="sat_signature">
+            <div class="row">
+                <div class="col-3">
+                    <img class="img-responsive" src="{{ QR.qr.url }}" width="250" height="250">
+                </div>
+                <div class="col-9" style="font-size: 14px;line-height: 1.2;">
+                    <b>Sello digital del CFDI</b><br>
+                    <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.stamp.signature }}</span><br>
+                    <b>Sello del SAT</b><br>
+                    <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.stamp.sat_signature }}</span><br>
+                    <b>Cadena original del complemento de certificación digital del SAT</b><br>
+                    <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.stamp.complement_string }}</span><br>
+                    <b>Número de serie del certificado del SAT</b><br>
+                    <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.stamp.sat_cert_number }}</span><br>
+                </div>
+            </div>
+        </section>
+    {% endif %}
+{% endblock %}

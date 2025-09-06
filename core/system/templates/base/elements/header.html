@@ -1,0 +1,114 @@
+{% load static %}
+<div class="d-flex align-items-center justify-content-between">
+    <a href="/sales/" class="logo d-flex align-items-center">
+        <img src="{% static 'assets/img/logo.png' %}" alt="Logo Lletra" class="img-fluid">
+        <span class="d-none d-lg-block">
+            {% if request.user.system %}
+                {{ request.user.system }}
+            {% else %}
+                Lletra Sistema
+            {% endif %}
+        </span>
+    </a>
+    <i class="bi bi-list toggle-sidebar-btn"></i>
+</div><!-- End Logo -->
+
+<div class="search-bar">
+    <form class="search-form d-flex align-items-center" method="POST" action="#">
+        {% csrf_token %}
+        <input type="text" name="query" placeholder="Buscar..." title="Escribe y presiona enter">
+        <button type="submit" title="Buscar"><i class="bi bi-search"></i></button>
+    </form>
+</div><!-- End Search Bar -->
+
+<nav class="header-nav ms-auto">
+    <ul class="d-flex align-items-center">
+
+        <!-- Mobile Search Icon -->
+        <li class="nav-item d-block d-lg-none">
+            <a class="nav-link nav-icon search-bar-toggle" href="#">
+                <i class="bi bi-search"></i>
+            </a>
+        </li>
+
+        <!-- Notifications -->
+        <li class="nav-item dropdown">
+            <a class="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
+                <i class="bi bi-bell"></i>
+                {% if notification_amount and notification_amount > 0 %}
+                    <span class="badge bg-primary badge-number">{{ notification_amount }}</span>
+                {% endif %}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
+                <li class="dropdown-header">
+                    {% if notification_amount > 0 %}
+                        Tienes {{ notification_amount }} notificaciones
+                    {% else %}
+                        No tienes notificaciones nuevas.
+                    {% endif %}
+                    <a href="#"><span class="badge rounded-pill bg-primary p-2 ms-2">Ver todas</span></a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li class="dropdown-footer">
+                    <a href="#">Ver todas las notificaciones</a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Messages -->
+        <li class="nav-item dropdown">
+            <a class="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
+                <i class="bi bi-chat-left-text"></i>
+                {% if message_amount and message_amount > 0 %}
+                    <span class="badge bg-success badge-number">{{ message_amount }}</span>
+                {% endif %}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow messages">
+                <li class="dropdown-header">
+                    {% if message_amount > 0 %}
+                        Tienes {{ message_amount }} mensajes nuevos
+                    {% else %}
+                        No tienes mensajes nuevos.
+                    {% endif %}
+                    <a href="#"><span class="badge rounded-pill bg-primary p-2 ms-2">Ver todos</span></a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li class="dropdown-footer">
+                    <a href="#">Ver todos los mensajes</a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- User Profile -->
+        <li class="nav-item dropdown pe-3">
+            <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
+                <span class="d-none d-md-block dropdown-toggle ps-2">
+                    {{ request.session.username|default:"Usuario" }}
+                </span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
+                <li class="dropdown-header">
+                    <h6>{{ request.session.username|default:"Usuario" }}</h6>
+                    <span>{{ request.session.SYSTEM|default:"Sistema Lletra" }}</span>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+
+                <li>
+                    <a class="dropdown-item d-flex align-items-center" href="https://wa.me/524427958845" target="_blank">
+                        <i class="bi bi-question-circle"></i>
+                        <span>Soporte técnico</span>
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+
+                <li>
+                    <a class="dropdown-item d-flex align-items-center" href="{% url 'admin_panel:logout' %}">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Cerrar sesión</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+    </ul>
+</nav><!-- End Icons Navigation -->

@@ -1,0 +1,80 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="pagetitle">
+    <h1>Dashboard de Operaciones</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'operations_panel:dashboard' %}">Home</a></li>
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+    </nav>
+</div>
+
+<section class="section dashboard">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Bienvenido al Panel de Operaciones</h5>
+                    <p>Este es el panel de operaciones para usuarios del sistema. Desde aquí podrás gestionar todas las funcionalidades relacionadas con las operaciones de la empresa.</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card info-card sales-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Proyectos <span>| Gestión</span></h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-kanban"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>Gestión de Proyectos</h6>
+                                            <a href="#" class="btn btn-primary btn-sm mt-2">Ir a Proyectos</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card info-card customers-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Tareas <span>| Seguimiento</span></h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-list-check"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>Seguimiento de Tareas</h6>
+                                            <a href="#" class="btn btn-primary btn-sm mt-2">Ir a Tareas</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card info-card revenue-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Recursos <span>| Asignación</span></h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-gear"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>Asignación de Recursos</h6>
+                                            <a href="#" class="btn btn-primary btn-sm mt-2">Ir a Recursos</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

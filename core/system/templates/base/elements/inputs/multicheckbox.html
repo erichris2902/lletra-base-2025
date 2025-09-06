@@ -1,0 +1,9 @@
+{% load widget_tweaks %}
+
+<label class="col-sm-12 col-form-label">{{ field.label }}</label>
+{% for value, label in field.field.widget.choices %}
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="id_{{ value }}" name="{{ field.html_name }}" value="{{ value }}" {% if value in field.value %}checked{% endif %}>
+        <label class="form-check-label" for="id_{{ value }}">{{ label }}</label>
+    </div>
+{% endfor %}

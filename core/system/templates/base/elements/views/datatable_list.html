@@ -1,0 +1,23 @@
+{% extends 'base/elements/views/list.html' %}
+{% load static %}
+
+{% block rows %}
+    {% include 'base/elements/views/partials/headers.html' %}
+{% endblock %}
+
+{% block rowsbottom %}
+    {% include 'base/elements/views/partials/headers.html' %}
+{% endblock %}
+
+{% block columns %}
+    {# Render dinámico por JS (DataTables) #}
+{% endblock %}
+
+{% block datatable_import %}
+    {# JS específico para este listado #}
+    {% include static_path %}
+{% endblock %}
+
+{% block js %}
+    {# JS adicional específico para esta vista #}
+{% endblock %}

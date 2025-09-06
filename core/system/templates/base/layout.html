@@ -1,0 +1,25 @@
+{% extends 'base/base_layout.html' %}
+{% load static %}
+
+
+{% block body %}
+    <header id="header" class="header fixed-top d-flex align-items-center">
+        {% include 'base/elements/header.html' %}
+    </header>
+
+    <aside id="sidebar" class="sidebar">
+        {% include 'base/elements/sidebar.html' %}
+    </aside>
+
+    <main id="main" class="main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer id="footer" class="footer">
+        {% include 'base/elements/footer.html' %}
+    </footer>
+
+    <a href="#" class="back-to-top d-flex align-items-center justify-content-center">
+        <i class="bi bi-arrow-up-short"></i>
+    </a>
+{% endblock %}

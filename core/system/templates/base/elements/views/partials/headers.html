@@ -1,0 +1,6 @@
+{% for header in datatable_headers %}
+    <th>{{ header }}</th>
+{% endfor %}
+{% if datatable_actions %}
+    <th>Acciones</th>
+{% endif %}

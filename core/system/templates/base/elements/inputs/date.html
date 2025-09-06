@@ -1,0 +1,20 @@
+{% load widget_tweaks %}
+
+{% if form_type == "vertical" %}
+    <label class="col-form-label" for="input">{{ field.label }}</label>
+    {% render_field field  %}
+{% elif form_type == "horizontal" %}
+    <div class="row mb-3">
+        <div class="col-sm-3">
+            <label class="col-form-label" for="input" >{{ field.label }}</label>
+        </div>
+        <div class="col-sm-9">
+            {% render_field field  %}
+        </div>
+    </div>
+{% else %}
+    <div class="form-floating">
+        {% render_field field  %}
+        <label for="input">{{ field.label }}</label>
+    </div>
+{% endif %}

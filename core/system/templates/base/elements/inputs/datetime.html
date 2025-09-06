@@ -1,0 +1,13 @@
+{% load widget_tweaks %}
+
+<div class="form-group">
+    <label for="{{ field.label }}">{{ field.label }}</label>
+    <div class="input-group date datetimepicker" id="{{ field.name }}" data-target-input="nearest">
+        {% with target="#"|add:field.name %}
+            {% render_field field class="form-control datetimepicker-input" data-target=target %}
+        {%  endwith %}
+        <div class="input-group-append" data-target="#{{ field.name }}" data-toggle="datetimepicker">
+            <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+        </div>
+    </div>
+</div>

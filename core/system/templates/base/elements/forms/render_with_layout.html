@@ -1,0 +1,46 @@
+{% load custom_filters %}
+
+{% if add_form_layout %}
+    {% for section in add_form_layout %}
+        {% if section.type == "row" %}
+            <div class="row mb-3">
+                {% for field_def in section.fields %}
+                    {% with field_name=field_def.name size=field_def.size|default:12 %}
+                        {% with field=add_form_fields|dict_get:field_name %}
+                            {% if field %}
+                                <div class="col-md-{{ size }}">
+                                    {% include "base/elements/forms/field_dispatcher.html" with field=field %}
+                                </div>
+                            {% else %}
+                                <p class="text-danger">⚠️ Campo no encontrado: {{ field_name }}</p>
+                            {% endif %}
+                        {% endwith %}
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        {% elif section.type == "callout" %}
+            <div class="callout callout-info border rounded p-3 mb-4 shadow-sm">
+                <h5 class="mb-3">{{ section.title }}</h5>
+                {% for sub in section.sections %}
+                    <div class="row mb-2">
+                        {% for field_def in sub.fields %}
+                            {% with field_name=field_def.name size=field_def.size|default:12 %}
+                                {% with field=add_form_fields|dict_get:field_name %}
+                                    {% if field %}
+                                        <div class="col-md-{{ size }}">
+                                            {% include "base/elements/forms/field_dispatcher.html" with field=field %}
+                                        </div>
+                                    {% else %}
+                                        <p class="text-danger">⚠️ Campo no encontrado: {{ field_name }}</p>
+                                    {% endif %}
+                                {% endwith %}
+                            {% endwith %}
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% else %}
+    {% include "base/elements/forms/render.html" %}
+{% endif %}

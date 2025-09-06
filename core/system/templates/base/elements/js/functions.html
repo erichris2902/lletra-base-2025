@@ -1,0 +1,55 @@
+<script>
+    function submit_with_ajax(url, parameters, success_callback, error_callback, require_confirmation = true) {
+        const executeAjax = () => {
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: parameters,
+                dataType: 'json',
+                processData: false,
+                contentType: false,
+            })
+                .done(function (data) {
+                    if (data.hasOwnProperty('error')) {
+                        error_callback(data);
+                    } else {
+                        success_callback(data);
+                    }
+                })
+                .fail(function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de comunicación',
+                        text: 'Ocurrió un error al contactar con el servidor. Verifica tu conexión.',
+                    });
+                });
+        };
+
+        if (require_confirmation) {
+            $.confirm({
+                theme: 'material',
+                title: '¿Estás seguro?',
+                icon: 'fa fa-question-circle',
+                content: '¿Deseas continuar con esta acción?',
+                columnClass: 'small',
+                type: 'blue',
+                typeAnimated: true,
+                draggable: true,
+                buttons: {
+                    confirmar: {
+                        text: "Sí",
+                        btnClass: 'btn-primary',
+                        action: executeAjax
+                    },
+                    cancelar: {
+                        text: "No",
+                        btnClass: 'btn-secondary'
+                    }
+                }
+            });
+        } else {
+            executeAjax();
+        }
+    }
+
+</script>

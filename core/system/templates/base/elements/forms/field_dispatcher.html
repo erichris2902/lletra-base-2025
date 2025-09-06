@@ -1,0 +1,26 @@
+{% load custom_filters %}
+
+{% if field|is_date_field %}
+    {% include "base/elements/inputs/date.html" with field=field %}
+{% elif field|is_time_field %}
+    {% include "base/elements/inputs/time.html" with field=field %}
+{% elif field|is_multiselect %}
+    {% include "base/elements/inputs/multiselect.html" with field=field %}
+{% elif field|is_file_field %}
+    {% include "base/elements/inputs/file_field.html" with field=field %}
+{% elif field.field.widget.input_type == "text" %}
+    {% include "base/elements/inputs/text_field.html" with field=field %}
+{% elif field.field.widget.input_type == "email" %}
+    {% include "base/elements/inputs/text_field.html" with field=field %}
+{% elif field.field.widget.input_type == "checkbox" %}
+    {% include "base/elements/inputs/checkbox.html" with field=field %}
+{% elif field.field.widget.input_type == "number" %}
+    {% include "base/elements/inputs/number_field.html" with field=field %}
+{% elif field.field.widget.input_type == "select" %}
+    {% include "base/elements/inputs/select.html" with field=field %}
+{% elif field.field.widget.input_type|default_if_none:'Textarea' == 'Textarea' %}
+    {% include "base/elements/inputs/textarea_field.html" with field=field %}
+{% else %}
+    <p class="text-danger">No hay soporte para el campo {{ field.label }} de tipo {{ field.field.widget.input_type }}</p>
+    {{ field }}
+{% endif %}

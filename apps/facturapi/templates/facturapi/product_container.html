@@ -1,0 +1,58 @@
+<div style="display: none">
+    <div class="card" id="product-container" style="padding: 10px;">
+        <div class="row" style="">
+            <input type="hidden" name="id" id="product-id" value="-1">
+            <div class="col-4">
+                <label class="col-form-label" for="input">Producto Nombre</label>
+                <input type="text" name="product_name" class="form-control" id="product" readonly>
+            </div>
+            <div class="col-8">
+                <label class="col-form-label" for="input">Descripcion</label>
+                <input type="text" name="description" class="form-control" id="description" required>
+            </div>
+            <div class="col-2">
+                <div class="form-group">
+                    <label class="col-form-label" for="input">Precio sin IVA</label>
+                    <input type="number" name="price" class="form-control" id="precio" onchange="calculateTotal(this)"
+                           step="0.01">
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="form-group">
+                    <label class="col-form-label" for="input">Cantidad</label>
+                    <input type="number" name="quantity" class="form-control" id="id_quantity"
+                           onchange="calculateTotal(this)">
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="form-group">
+                    <label class="col-form-label" for="input">Descuento</label>
+                    <input type="number" name="discount" class="form-control" id="id_discount"
+                           onchange="calculateTotal(this)"
+                           step="0.01">
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="form-group">
+                    <label class="col-form-label" for="input">Impuesto total</label>
+                    <input type="number" name="tax" class="form-control" id="id_tax" step="0.01" readonly>
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="form-group">
+                    <label class="col-form-label" for="input">Total:</label>
+                    <input type="number" class="form-control" id="total" step="0.01" readonly>
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="form-group" style="align-content: center;margin-top: 35px;">
+                    <label class="col-form-label" for="input">Acciones:</label>
+                    <button type="button" class="btn btn-danger btn-xs btn-flat" id="asd"
+                            onclick="this.parentElement.parentElement.parentElement.remove()"><i
+                            class="bi bi-trash"></i></button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,80 @@
+{% extends 'openai_assistant/base.html' %}
+
+{% block title %}Chats | OpenAI Assistant{% endblock %}
+
+{% block heading %}Your Chats{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <a href="{% url 'openai_assistant:chat_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Start New Chat
+        </a>
+    </div>
+</div>
+
+{% if chats %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">All Chats</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for chat in chats %}
+                            <a href="{% url 'openai_assistant:chat_detail' chat.id %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="mb-1">{{ chat.title }}</h5>
+                                        <p class="mb-1 text-muted">Assistant: {{ chat.assistant.name }}</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <small class="text-muted d-block">Created: {{ chat.created_at }}</small>
+                                        <small class="text-muted d-block">Last updated: {{ chat.updated_at }}</small>
+                                        <div class="mt-2">
+                                            <a href="{% url 'openai_assistant:chat_delete' chat.id %}" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <p>You don't have any chats yet. Start a new chat to begin a conversation with an assistant.</p>
+    </div>
+    
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-4">
+        <div class="col">
+            <div class="card h-100 text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Start a New Chat</h5>
+                    <p class="card-text">Choose an assistant to start a conversation with.</p>
+                    <a href="{% url 'openai_assistant:chat_create' %}" class="btn btn-primary">
+                        <i class="bi bi-chat-dots"></i> Start Chat
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col">
+            <div class="card h-100 text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Browse Assistants</h5>
+                    <p class="card-text">View all available assistants.</p>
+                    <a href="{% url 'openai_assistant:assistant_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-robot"></i> View Assistants
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

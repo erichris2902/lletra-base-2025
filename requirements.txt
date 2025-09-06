@@ -1,0 +1,58 @@
+Django~=5.2.4
+django-heroku~=0.3.1
+
+# Database
+psycopg2-binary~=2.9.9
+dj-database-url~=2.1.0
+
+# Channels for WebSockets
+channels~=4.2.2
+channels-redis~=4.1.0
+daphne~=4.0.0
+
+# Storage
+django-storages~=1.14.2
+boto3~=1.34.0
+
+# API
+djangorestframework~=3.16.0
+
+# Forms and UI
+django-widget-tweaks~=1.5.0
+django-tempus-dominus~=5.1.2.17
+django-taggit~=5.0.1
+
+# Task Queue
+celery~=5.3.6
+django-celery-results~=2.5.1
+redis~=5.0.1
+
+# Google APIs
+google-api-python-client~=2.176.0
+google-auth~=2.27.0
+google-auth-oauthlib~=1.2.0
+django-google-maps~=0.13.0
+
+# OpenAI
+openai~=1.97.0
+
+# Telegram
+python-telegram-bot~=20.7
+
+# Environment variables
+python-dotenv~=1.0.0
+
+# Security
+whitenoise~=6.6.0
+
+# GIS
+GDAL>=3.4.3  # Comment this out for Heroku deployment, as it's provided by the buildpack
+
+packaging~=25.0
+requests~=2.32.4
+google~=3.0.0
+protobuf~=6.31.1
+fuzzywuzzy~=0.18.0
+polyline~=2.0.2
+geopy~=2.4.1
+folium~=0.20.0

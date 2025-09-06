@@ -1,0 +1,121 @@
+{% load static %}
+{% load widget_tweaks %}
+<!DOCTYPE html>
+<!-- Created by CodingLab |www.youtube.com/c/CodingLabYT-->
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <!--<title> Login and Registration Form in HTML & CSS | CodingLab </title>-->
+    <!--link rel="stylesheet" href="style.css"-->
+    <link rel="stylesheet" href="{% static 'css/login/style.css' %}">
+    <!-- Fontawesome CDN Link -->
+    <!--link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"-->
+    <link rel="stylesheet" href="{% static 'lib/adminlte/plugins/fontawesome-free/css/all.min.css' %}">
+    <!-- SweetAlert -->
+    <script src="{% static 'lib/sweetalert/dist/sweetalert2.all.min.js' %}"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div class="container">
+    <input type="checkbox" id="flip">
+    <div class="cover">
+        <div class="front">
+            <img src="{% static 'img/frontImg.jpg' %}" alt="">
+            <div class="text">
+                <span class="text-1">OPERACIONES <br>LLETRA</span>
+                <span class="text-2"></span>
+            </div>
+        </div>
+    </div>
+    <div class="forms">
+        <div class="form-content">
+            <div class="login-form">
+                <div class="title">Acceso</div>
+                <form action=".." method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="login">
+                    <div class="input-boxes">
+                        <div class="input-box">
+                            <i class="fas fa-envelope"></i>
+                            <input type="text" name="username" placeholder="Ingresa un correo" required>
+                        </div>
+                        <div class="input-box">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" name="password" placeholder="Ingresa tu contraseña" required>
+                        </div>
+                        <div class="button input-box">
+                            <input type="submit" value="Ingresar">
+                        </div>
+                        <div class="text sign-up-text">¿Deseas contratar nuestros servicios?<br> <label><a
+                                href="Https://wa.me/524427958845">Contactanos</a></label></div>
+                    </div>
+                </form>
+            </div>
+            <div class="signup-form">
+            </div>
+        </div>
+    </div>
+</div>
+<!-- jQuery -->
+<script src="{% static 'lib/adminlte/plugins/jquery/jquery.min.js' %}"></script>
+<script type="application/javascript">
+    var errors = '';
+    {% if form.errors %}
+        {% for field in form %}
+            {% for error in field.errors %}
+                errors += '{{ error }}\n'
+            {% endfor %}
+        {% endfor %}
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: errors,
+        })
+    {% endif %}
+
+
+
+    $('form').on('submit', function (e) {
+        e.preventDefault();
+        var parameters = $(this).serializeArray();
+        console.log(this)
+        console.log(parameters)
+        $.ajax({
+            url: window.location.pathname,
+            type: 'POST',
+            data: parameters,
+            DataType: 'json',
+        }).done(function (data) {
+            console.log(data)
+            if (!data.hasOwnProperty('error')) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Se logeo exitosamente',
+                });
+                location.href = data.url;
+                return false;
+            }
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: data.error,
+            });
+
+        }).fail(function (data) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Ocurrio un error de comunicacion al servidor. Verifica tu conexion a internet.',
+            });
+        }).always(function (data) {
+
+        })
+    });
+
+</script>
+
+</body>
+</html>

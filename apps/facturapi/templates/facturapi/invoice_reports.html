@@ -1,0 +1,23 @@
+<!-- Botonera encima de la tabla -->
+<div class="d-flex justify-content-start mb-3">
+  <div class="btn-group">
+    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+      Reportes
+    </button>
+    <ul class="dropdown-menu">
+      <li><a class="dropdown-item" href="#" onclick="abrirPopup('/system/facturapi/reports/date/', 'ReporteFecha')">Por Fecha</a></li>
+      <li><a class="dropdown-item" href="#" onclick="abrirPopup('/system/facturapi/update_cancelations/', 'ActualizarCancelaciones')">Actualizar Cancelaciones</a></li>
+      <li><a class="dropdown-item" href="#" onclick="abrirPopup('/system/facturapi/reports/incomes/', 'IngresosFacturados')">Ingresos Facturados</a></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+function abrirPopup(url, nombreVentana) {
+    window.open(
+        url,
+        nombreVentana,
+        'width=800,height=600,resizable=yes,scrollbars=yes'
+    );
+}
+</script>

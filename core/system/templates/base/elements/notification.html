@@ -1,0 +1,10 @@
+<li><hr class="dropdown-divider"></li>
+
+<li class="notification-item" role="alert" aria-label="{{ title }}">
+    <i class="{{ icon_class|default:'bi bi-info-circle text-primary' }}"></i>
+    <div>
+        <h4>{{ title }}</h4>
+        <p>{{ message }}</p>
+        <p><time datetime="{{ timestamp }}">{{ time|default:"hace un momento" }}</time></p>
+    </div>
+</li>

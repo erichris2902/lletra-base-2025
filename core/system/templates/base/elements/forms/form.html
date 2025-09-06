@@ -1,0 +1,44 @@
+{% load custom_filters %}
+{% if pages %}
+    <ul class="nav nav-tabs" role="tablist">
+        {% for page in pages %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if forloop.first %}active{% endif %}"
+                        id="{{ page.title|slugify_filter }}-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#{{ page.title|slugify_filter }}"
+                        type="button" role="tab"
+                        aria-controls="{{ page.title|slugify_filter }}"
+                        aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                    {{ page.title }}
+                </button>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <div class="tab-content mt-3">
+        {% for page in pages %}
+            <div id="{{ page.title|slugify_filter }}" class="tab-pane fade {% if forloop.first %}show active{% endif %}" role="tabpanel">
+                <input type="hidden" name="action" value="{{ form_action }}">
+                <input id="updatableId" type="hidden" name="id" value="{{ id }}">
+                {% if additional_data %}{% include additional_data %}{% endif %}
+                {% include "base/elements/forms/render_with_layout.html" with add_form=page.form add_form_layout=page.layout add_form_fields=page.fields%}
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#General">General</a>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3">
+        <div id="General" class="tab-pane fade show active">
+            <input type="hidden" name="action" value="{{ form_action }}">
+            <input id="updatableId" type="hidden" name="id" value="{{ id }}">
+            {% if additional_data %}{% include additional_data %}{% endif %}
+            {% include "base/elements/forms/render_with_layout.html" with add_form=form %}
+        </div>
+    </div>
+{% endif %}

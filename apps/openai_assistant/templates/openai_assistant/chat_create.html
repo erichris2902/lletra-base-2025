@@ -1,0 +1,81 @@
+{% extends 'openai_assistant/base.html' %}
+
+{% block title %}Start New Chat | OpenAI Assistant{% endblock %}
+
+{% block heading %}Start New Chat{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <a href="{% url 'openai_assistant:chat_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Chats
+        </a>
+    </div>
+</div>
+
+{% if assistant %}
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Start Chat with {{ assistant.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'openai_assistant:chat_create_with_assistant' assistant.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Chat Title</label>
+                            <input type="text" class="form-control" id="title" name="title" placeholder="Enter a title for this chat (optional)">
+                            <div class="form-text">If left blank, a default title will be generated.</div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-chat-dots"></i> Start Chat
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Choose an Assistant</h5>
+                </div>
+                <div class="card-body">
+                    {% if assistants %}
+                        <div class="row row-cols-1 row-cols-md-2 g-4">
+                            {% for assistant in assistants %}
+                                <div class="col">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ assistant.name }}</h5>
+                                            <p class="card-text">{% if assistant.description %}{{ assistant.description }}{% else %}<em>No description provided.</em>{% endif %}</p>
+                                            <p class="card-text"><small class="text-muted">Model: {{ assistant.model }}</small></p>
+                                        </div>
+                                        <div class="card-footer">
+                                            <a href="{% url 'openai_assistant:chat_create_with_assistant' assistant.id %}" class="btn btn-primary w-100">
+                                                <i class="bi bi-chat-dots"></i> Select
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <p>No assistants available. Please create an assistant first.</p>
+                            <a href="{% url 'openai_assistant:assistant_create' %}" class="btn btn-primary mt-2">
+                                <i class="bi bi-plus-circle"></i> Create Assistant
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

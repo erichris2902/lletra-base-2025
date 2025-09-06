@@ -1,0 +1,12 @@
+<li><hr class="dropdown-divider"></li>
+
+<li class="message-item">
+    <a href="{{ href|default:'#' }}" aria-label="Mensaje de {{ sender }}">
+        <img src="{{ img_src|default:'/static/img/default-avatar.jpg' }}" alt="Foto de {{ sender }}" class="rounded-circle">
+        <div>
+            <h4>{{ sender }}</h4>
+            <p>{{ message }}</p>
+            <p><time datetime="{{ timestamp }}">{{ time|default:"hace un momento" }}</time></p>
+        </div>
+    </a>
+</li>

@@ -1,0 +1,402 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+{% block title %}Dashboard Certificados{% endblock %}
+
+{% block content %}
+    <div class="pagetitle">
+        <h1>Motor de Facturacion</h1>
+        <nav>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Facturacion</a></li>
+                <li class="breadcrumb-item active">Motor de Facturacion</li>
+            </ol>
+        </nav>
+    </div>
+
+    <section class="section dashboard">
+        <div class="row">
+            <div class="col-9 col-md-9 col-xl-9">
+                <div class="card info-card sales-card">
+                    <form id="InvoiceForm" method="POST" action="" enctype="multipart/form-data">
+                        <input type="hidden" name="action" value="{{ form_action }}">
+                        <div class="card-header">Datos Generales</div>
+                        <div class="card-body">
+                            {% csrf_token %}
+                            <div class="">
+                                <div class="">
+                                    {% include "base/elements/forms/render_with_layout.html" with add_form=form_invoice add_form_layout=add_form_layout %}
+                                </div>
+                                <div class="card-header d-flex justify-content-between">
+                                    <span>Datos de viaje</span>
+                                </div>
+                                <div class="">
+                                    {% include "base/elements/forms/render_with_layout.html" with add_form=shipment_invoice_form add_form_layout=shipment_invoice_form_layout add_form_fields=shipment_invoice_form_fields %}
+                                </div>
+                            </div>
+                            <div id="product_form">
+                                <div class="card-header d-flex justify-content-between">
+                                    <span>Conceptos</span>
+                                </div>
+                                <div class="card-body">
+                                    {% include "base/elements/forms/render_with_layout.html" with add_form=form_product add_form_layout=None %}
+                                </div>
+                                <div id="products">
+                                </div>
+                                <div id="products-summary" class="d-flex justify-content-end mt-2">
+                                    <div class="text-end">
+                                        <strong>Total:</strong> <span id="grand-total">0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% include "facturapi/payment_container.html" %}
+
+                        </div>
+                        <div class="card-footer">
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary">Timbrar factura</button>
+                                <a href="javascript:history.back()" class="btn btn-secondary">Cancelar</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="card info-card sales-card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <span class="fw-semibold">Productos a transportar</span>
+                        <span class="badge bg-primary rounded-pill">{{ Products|length }}</span>
+                    </div>
+
+                    <div class="card-body">
+                        {% if products %}
+                            <ul class="list-group list-group-flush">
+                                {% for product in products %}
+                                    <li class="list-group-item">
+                                        <div class="d-flex align-items-start justify-content-between gap-3">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-center flex-wrap gap-2">
+                                                    <span class="fw-semibold">{{ product.transported_product_key }}</span>
+                                                    <span class="text-muted">{{ product.description }}</span>
+                                                </div>
+
+                                                <div class="small text-secondary mt-1">
+                                                    <i class="bi bi-box-seam me-1"></i>
+                                                    {{ product.weight }}&nbsp;kg
+                                                    <span class="mx-2">·</span>
+                                                    <i class="bi bi-geo-alt me-1"></i>
+                                                    {% if product.is_danger %}
+                                                        <span class="badge bg-danger-subtle border border-danger text-danger ms-2">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Peligroso
+                      </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <div class="text-nowrap">
+                                                <form id="product-delete-form-{{ product.id }}" method="POST" action="."
+                                                      enctype="multipart/form-data" class="m-0">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="DeleteProduct">
+                                                    <input type="hidden" name="id" value="{{ product.id }}">
+                                                    <button
+                                                            type="submit"
+                                                            class="btn btn-outline-danger btn-sm"
+                                                            data-product-name="{{ product.transported_product_key }} — {{ product.description }}"
+                                                            data-product-id="{{ product.id }}"
+                                                            title="Eliminar producto"
+                                                    >
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-inboxes fs-3 d-block mb-2"></i>
+                                No hay productos para mostrar.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% include "facturapi/product_container.html" %}
+
+{% endblock %}
+
+
+
+{% block scripts %}
+    <script>
+        {% include "facturapi/select_product.js" %}
+    </script>
+    <script id="taxes-json" type="application/json">{{ taxes_json|safe }}</script>
+
+    <script>
+        $(document).ready(function () {
+            // --- Envío por AJAX (igual que ya lo tenías) ---
+            $('#InvoiceForm').on('submit', function (e) {
+                e.preventDefault();
+                const parameters = new FormData(this);
+                const submitButtonValue = $(document.activeElement).val();
+                parameters.append('environment', submitButtonValue);
+
+                // Reindexar antes de enviar, por si el usuario eliminó elementos
+                reindexPayments();
+
+                submit_with_ajax(window.location.pathname, parameters, function (data) {
+                    Swal.fire({icon: 'success', title: 'Success', text: 'Exito'});
+                    if (data.file_url) {
+                        window.open(data.file_url, '_blank');
+                    } else if (data.redirect_url) {
+                        location.href = data.redirect_url;
+                    } else {
+                        location.reload();
+                    }
+                }, function (data) {
+                    Swal.fire({icon: 'error', title: 'Oops...', text: data.error});
+                });
+            });
+
+            // ----------------- PAGOS -----------------
+            let paymentIndex = 0;
+
+            function renderPaymentGroup(idx) {
+                return `
+    <div class="card mb-3 payment-group" data-index="${idx}">
+      <div class="card-header py-2 d-flex justify-content-between align-items-center">
+        <span>Pago #<span class="payment-seq">${idx + 1}</span></span>
+        <button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-payment" title="Eliminar">
+          <i class="bi bi-trash"></i> Eliminar
+        </button>
+      </div>
+      <div class="card-body pt-3">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-8">
+            <label class="form-label">Folio fiscal (UUID)</label>
+            <input type="text" class="form-control"
+                   name="payments[${idx}][uuid]"
+                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                   maxlength="36" autocomplete="off"
+                   style="text-transform: uppercase;"
+                   pattern="^[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}$">
+          </div>
+
+          <!-- === Impuestos múltiples === -->
+          <div class="col-12 col-md-4">
+            <label class="form-label">Impuestos</label>
+            <select class="form-select select2-tax"
+                    name="payments[${idx}][tax_ids][]"
+                    multiple
+                    data-placeholder="Selecciona impuestos">
+              <option></option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">Cantidad pagada</label>
+            <input type="number" step="0.01" min="0" class="form-control"
+                   name="payments[${idx}][amount]" placeholder="0.00" required>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">Número de pago</label>
+            <input type="number" min="1" class="form-control"
+                   name="payments[${idx}][number]" placeholder="1" required>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">Total adeudado antes del pago</label>
+            <input type="number" step="0.01" min="0" class="form-control"
+                   name="payments[${idx}][previous_balance]" placeholder="0.00" required>
+          </div>
+        </div>
+      </div>
+    </div>`;
+            }
+
+
+            // Global para onclick del botón en plantilla
+            window.addPayment = function () {
+                const container = document.getElementById('payments');
+                container.insertAdjacentHTML('beforeend', renderPaymentGroup(paymentIndex));
+                paymentIndex += 1;
+                reindexPayments(); // asegura secuencia visible y nombres coherentes
+            };
+
+            // Delegación para eliminar
+            document.getElementById('payments').addEventListener('click', function (ev) {
+                const btn = ev.target.closest('[data-action="remove-payment"]');
+                if (!btn) return;
+                const group = btn.closest('.payment-group');
+                if (group) {
+                    group.remove();
+                    reindexPayments();
+                }
+            });
+
+            function showPaymentForm() {
+                document.getElementById("payment_form").style.display = "";
+                document.getElementById("product_form").style.display = "none";
+
+                if (document.querySelectorAll('#payments .payment-group').length === 0) {
+                    window.addPayment();
+                }
+            }
+
+            function hidePaymentForm() {
+                document.getElementById("payment_form").style.display = "none";
+                document.getElementById("product_form").style.display = "";
+
+                document.getElementById('payments').innerHTML = "";
+                paymentIndex = 0;
+            }
+
+            function initialize_invoice() {
+                // Select2
+                $('#id_type').on('select2:select', function (e) {
+                    const data = e.params.data;
+                    if (data.id === 'P') showPaymentForm(); else hidePaymentForm();
+                });
+
+                // Fallback change nativo
+                $('#id_type').on('change', function () {
+                    const val = $(this).val();
+                    if (val === 'P') showPaymentForm(); else hidePaymentForm();
+                });
+
+                // Estado inicial
+                const initialVal = $('#id_type').val();
+                if (initialVal === 'P') showPaymentForm(); else hidePaymentForm();
+            }
+
+            initialize_invoice();
+            flatpickr(".flatpickr:not(.flatpickr-datetime)", {
+                altInput: true,
+                altFormat: 'd/m/Y',   // lo que ve el usuario
+                dateFormat: 'Y-m-d',  // lo que queda en el input real (y Django entiende)
+                locale: "es"
+            });
+
+
+            // Cargar catálogo desde el <script id="taxes-json">
+            const TAXES = JSON.parse(document.getElementById('taxes-json').textContent || '[]');
+
+            function populateTaxSelect(selectEl, selectedId = null) {
+                // Limpia y agrega placeholder
+                selectEl.innerHTML = '<option></option>';
+                // Rellena opciones
+                const opts = TAXES.map(t => {
+                    const text = `${t.name} (${t.type}) - ${Number(t.rate).toFixed(4)}`;
+                    return `<option value="${t.id}">${text}</option>`;
+                }).join('');
+                selectEl.insertAdjacentHTML('beforeend', opts);
+
+                // Activa Select2
+                $(selectEl).select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: selectEl.dataset.placeholder || 'Selecciona impuesto',
+                    allowClear: true,
+                    dropdownParent: $('#InvoiceForm')
+                });
+
+                // Seleccion predefinida
+                if (selectedId) {
+                    $(selectEl).val(selectedId).trigger('change', {skipRateSet: true});
+                }
+
+                // Cuando selecciona, llena la tasa oculta
+                $(selectEl).on('select2:select', function (e) {
+                    const id = this.value;
+                    const tax = TAXES.find(x => String(x.id) === String(id));
+                    const group = this.closest('.payment-group');
+                    if (!group) return;
+                    const rateInput = group.querySelector('.tax-rate');
+                    if (rateInput && tax && !e.params?.skipRateSet) {
+                        rateInput.value = tax.rate; // ejemplo: 0.1600
+                    }
+                });
+
+                // Clear → borra la tasa
+                $(selectEl).on('select2:clear', function () {
+                    const group = this.closest('.payment-group');
+                    const rateInput = group?.querySelector('.tax-rate');
+                    if (rateInput) rateInput.value = '';
+                });
+            }
+
+// Al agregar un bloque de pago, inicializa el select2 de impuestos en ese bloque
+            window.addPayment = function () {
+                const container = document.getElementById('payments');
+                container.insertAdjacentHTML('beforeend', renderPaymentGroup(paymentIndex));
+                const lastGroup = container.querySelector('.payment-group:last-child');
+                const taxSelect = lastGroup.querySelector('.select2-tax');
+                populateTaxSelect(taxSelect);
+                paymentIndex += 1;
+                reindexPayments();
+            };
+
+// Asegúrate que tu reindexPayments renombre también <select> y no sólo <input>
+            function reindexPayments() {
+                const groups = document.querySelectorAll('#payments .payment-group');
+                groups.forEach((group, newIdx) => {
+                    group.dataset.index = newIdx;
+                    group.querySelector('.payment-seq').textContent = newIdx + 1;
+
+                    // Actualiza name= de inputs y selects
+                    const fields = group.querySelectorAll('input[name^="payments["], select[name^="payments["], textarea[name^="payments["]');
+                    fields.forEach((el) => {
+                        const parts = el.name.split(']');           // ["payments[0", "[field", ""]
+                        const field = parts[1].replace('[', '');     // field
+                        el.name = `payments[${newIdx}][${field}]`;
+                    });
+                });
+                paymentIndex = groups.length;
+            }
+
+        });
+    </script>
+    <!-- Confirmación rápida (Bootstrap 5 + confirm nativo) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('form[id^="product-delete-form-"]').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    const btn = form.querySelector('button[type="submit"]');
+                    const name = btn?.getAttribute('data-product-name') || 'este producto';
+                    if (!confirm(`¿Eliminar ${name}?`)) {
+                        e.preventDefault();
+                    }
+                });
+            });
+        });
+    </script>
+
+    <script>
+        {% if include_invoice_prediction %}
+            function PredictProduct() {
+                $.post(window.location.pathname,
+                    {
+                        action: "PredictProduct",
+                        operation: $("#id_operation option:selected").val(),
+                        csrfmiddlewaretoken: csrfToken,
+                    },
+                    function (data, status) {
+                        addProductFromApi(data);
+                    });
+            }
+
+            window.onload = function () {
+                // Tu código aquí
+                console.log("La página se ha cargado completamente");
+                PredictProduct();
+            };
+
+        {% endif %}
+    </script>
+
+{% endblock %}

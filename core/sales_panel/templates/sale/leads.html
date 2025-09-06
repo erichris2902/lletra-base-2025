@@ -1,0 +1,70 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+    <section class="section dashboard">
+        <a type="button" class="btn btn-primary" href="{% url 'sale:LeadListView' %}">Editar prospectos</a>
+        <div class="row">
+            {% for category in categories %}
+                <div class="col-12">
+                    <div class="card recent-sales overflow-auto">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ category.category }}</h5>
+                            <div class="datatable-wrapper datatable-loading no-footer fixed-columns">
+                                <div class="datatable-top">
+
+                                </div>
+                                <div class="datatable-container">
+                                    <table class="table table-bordered datatable datatable-table">
+                                        <thead>
+                                        <tr>
+                                            <th scope="col" data-sortable="true" style="width: 10%;">
+                                                <button class="datatable-sorter">Empresa</button>
+                                            </th>
+                                            <th scope="col" data-sortable="true" style="width: 10%;">
+                                                <button class="datatable-sorter">Estado</button>
+                                            </th>
+                                            <th scope="col" data-sortable="true" style="width: 20%;">
+                                                <button class="datatable-sorter">Contacto</button>
+                                            </th>
+                                            <th scope="col" data-sortable="true" style="width: 10%;">
+                                                <button class="datatable-sorter">Industria</button>
+                                            </th>
+                                            <th scope="col" data-sortable="true" class="red"
+                                                style="width: 10%;">
+                                                <button class="datatable-sorter">Region</button>
+                                            </th>
+                                            <th scope="col" data-sortable="true" class="red"
+                                                style="width: 40%;">
+                                                <button class="datatable-sorter">Requerimientos</button>
+                                            </th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for lead in category.leads %}
+                                            <tr data-index="{{ forloop }}">
+                                                <td scope="row">{{ lead.business_name }}</td>
+                                                <td class="green"><span
+                                                        class="badge bg-{% if lead.state == "NOT_VIABLE" %}danger{% else %}success{% endif %}">{{ lead.state }}</span>
+                                                </td>
+                                                <td>{{ lead.get_contact }}</td>
+                                                <td>{{ lead.industry }}</td>
+                                                <td>{{ lead.geographic_zone }}</td>
+                                                <td>{{ lead.requirements }}</td>
+
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="datatable-bottom">
+                                </div>
+                            </div>
+
+
+                        </div>
+
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+{% endblock %}

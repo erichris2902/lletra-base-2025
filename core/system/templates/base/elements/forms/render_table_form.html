@@ -1,0 +1,14 @@
+
+<div class="container-fluid">
+  {% for form in formset %}
+    <div class="row border p-3 mb-3 rounded shadow-sm">
+      {% for field in form.visible_fields %}
+        <div class="col-md-3 mb-2">
+          {% include "base/elements/forms/field_dispatcher.html" with field=field %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div>
+<input type="hidden" name="action" value="{{ form_action }}">
+<input id="updatableId" type="hidden" name="id" value="{{ id }}">

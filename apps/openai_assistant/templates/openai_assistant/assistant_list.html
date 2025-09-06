@@ -1,0 +1,56 @@
+{% extends 'openai_assistant/base.html' %}
+
+{% block title %}Assistants | OpenAI Assistant{% endblock %}
+
+{% block heading %}Assistants{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <a href="{% url 'openai_assistant:assistant_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create New Assistant
+        </a>
+    </div>
+</div>
+
+{% if assistants %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for assistant in assistants %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{{ assistant.name }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{% if assistant.description %}{{ assistant.description }}{% else %}No description provided.{% endif %}</p>
+                        <p class="card-text"><small class="text-muted">Model: {{ assistant.model }}</small></p>
+                        
+                        {% if assistant.tools.exists %}
+                            <div class="mb-3">
+                                <strong>Tools:</strong><br>
+                                {% for tool in assistant.tools.all %}
+                                    <span class="badge bg-secondary tool-badge">{{ tool.name }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'openai_assistant:assistant_detail' assistant.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-info-circle"></i> Details
+                            </a>
+                            <a href="{% url 'openai_assistant:chat_create_with_assistant' assistant.id %}" class="btn btn-sm btn-success">
+                                <i class="bi bi-chat-dots"></i> Start Chat
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <p>No assistants found. Create your first assistant to get started!</p>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+    {% include "sale/agenda_template.html" %}
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: '/api/events/',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+            });
+
+            calendar.render();
+        });
+    </script>
+{% endblock %}

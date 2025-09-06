@@ -1,0 +1,131 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+    <section class="section dashboard">
+        <div class="row">
+            <div class="col-3">
+                <div class="card info-card sales-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Clientes prospectados <span>| Semana</span></h5>
+                        <div class="d-flex align-items-center">
+                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <div class="ps-3">
+                                <h4>{{ weekly_prospects }} prospecto(s)</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="card info-card sales-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Tasa conversion <span>| Semana</span></h5>
+                        <div class="d-flex align-items-center">
+                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="bi bi-check-all"></i>
+                            </div>
+                            <div class="ps-3">
+                                <h4>{{ weekly_conversion_rate }}%</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="card info-card sales-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Costo por cliente <span>| Mensual</span></h5>
+                        <div class="d-flex align-items-center">
+                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="bi bi-cash"></i>
+                            </div>
+                            <div class="ps-3">
+                                <h4>${{ customer_acquisition_cost }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="card info-card sales-card">
+                    <div class="card-body">
+                        <h5 class="card-title">% de clientes frecuentes <span>| Mensual</span></h5>
+                        <div class="d-flex align-items-center">
+                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </div>
+                            <div class="ps-3">
+                                <h4>POR INTEGRAR</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="row">
+            <div class="col-9">
+                {% include "sale/agenda_template.html" %}
+            </div>
+            <div class="col-3">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card info-card sales-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Tiempo promedio de cierre <span>| Mensual</span></h5>
+                                <div class="d-flex align-items-center">
+                                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-clock"></i>
+                                    </div>
+                                    <div class="ps-3">
+                                        <h4>POR INTEGRAR</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="card info-card sales-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Venta promedio <span>| Semana</span></h5>
+                                <div class="d-flex align-items-center">
+                                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-currency-dollar"></i>
+                                    </div>
+                                    <div class="ps-3">
+                                        <h4>POR INTEGRAR</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+        </div>
+    </section>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: '/api/events/',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+            });
+
+            calendar.render();
+        });
+    </script>
+{% endblock %}

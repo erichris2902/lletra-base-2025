@@ -1,0 +1,10 @@
+{% load widget_tweaks %}
+
+<div class="form-group">
+    <div class="form-check">
+        <!--input class="custom-control-input" type="checkbox" id="customCheckbox1" value="option1"-->
+        {{ field|attr:"class:form-check-input" }}
+        <label for="form-check-label" class="form-check-label" >{{ field.label }}</label>
+    </div>
+</div>
+

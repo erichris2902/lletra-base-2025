@@ -1,0 +1,285 @@
+{% extends 'openai_assistant/base.html' %}
+
+{% block title %}{% if assistant %}Edit {{ assistant.name }}{% else %}Create Assistant{% endif %} | OpenAI Assistant{% endblock %}
+
+{% block heading %}{% if assistant %}Edit Assistant: {{ assistant.name }}{% else %}Create New Assistant{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsoneditor@9.10.0/dist/jsoneditor.min.css">
+<style>
+    .jsoneditor {
+        height: 300px;
+    }
+    .tool-item {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    .tool-remove {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <a href="{% if assistant %}{% url 'openai_assistant:assistant_detail' assistant.id %}{% else %}{% url 'openai_assistant:assistant_list' %}{% endif %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> {% if assistant %}Back to Assistant{% else %}Back to Assistants{% endif %}
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{% if assistant %}Edit{% else %}Create{% endif %} Assistant</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="assistant-form" action="{% if assistant %}{% url 'openai_assistant:assistant_update' assistant.id %}{% else %}{% url 'openai_assistant:assistant_create' %}{% endif %}">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{% if assistant %}{{ assistant.name }}{% endif %}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="2">{% if assistant %}{{ assistant.description }}{% endif %}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="instructions" class="form-label">Instructions *</label>
+                        <textarea class="form-control" id="instructions" name="instructions" rows="5" required>{% if assistant %}{{ assistant.instructions }}{% endif %}</textarea>
+                        <div class="form-text">Detailed instructions for the assistant to follow.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="model" class="form-label">Model *</label>
+                        <select class="form-select" id="model" name="model" required>
+                            <option value="gpt-4o" {% if assistant.model == 'gpt-4o' or not assistant %}selected{% endif %}>GPT-4o</option>
+                            <option value="gpt-4-turbo" {% if assistant.model == 'gpt-4-turbo' %}selected{% endif %}>GPT-4 Turbo</option>
+                            <option value="gpt-4" {% if assistant.model == 'gpt-4' %}selected{% endif %}>GPT-4</option>
+                            <option value="gpt-3.5-turbo" {% if assistant.model == 'gpt-3.5-turbo' %}selected{% endif %}>GPT-3.5 Turbo</option>
+                        </select>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h5>Tools</h5>
+                    <p class="text-muted">Add tools to enhance the assistant's capabilities.</p>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="code_interpreter" name="code_interpreter">
+                            <label class="form-check-label" for="code_interpreter">Code Interpreter</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="retrieval" name="retrieval">
+                            <label class="form-check-label" for="retrieval">Retrieval</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Function Tools</label>
+                        <div id="tools-container">
+                            {% if tools %}
+                                {% for tool in tools %}
+                                    {% if tool.type == 'function' %}
+                                        <div class="tool-item">
+                                            <button type="button" class="btn-close tool-remove" aria-label="Remove"></button>
+                                            <div class="mb-3">
+                                                <label class="form-label">Name *</label>
+                                                <input type="text" class="form-control tool-name" value="{{ tool.name }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Description</label>
+                                                <textarea class="form-control tool-description">{{ tool.description }}</textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Parameters (JSON Schema) *</label>
+                                                <div class="jsoneditor-container" data-parameters="{{ tool.parameters|safe }}"></div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <button type="button" id="add-tool" class="btn btn-outline-primary mt-2">
+                            <i class="bi bi-plus-circle"></i> Add Function Tool
+                        </button>
+                    </div>
+                    
+                    <input type="hidden" id="tools-data" name="tools" value="[]">
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> {% if assistant %}Update{% else %}Create{% endif %} Assistant
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/jsoneditor@9.10.0/dist/jsoneditor.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toolsContainer = document.getElementById('tools-container');
+        const addToolButton = document.getElementById('add-tool');
+        const toolsDataInput = document.getElementById('tools-data');
+        const form = document.getElementById('assistant-form');
+        
+        // Initialize JSON editors for existing tools
+        document.querySelectorAll('.jsoneditor-container').forEach(container => {
+            const editor = new JSONEditor(container, {
+                mode: 'tree',
+                modes: ['tree', 'view', 'form', 'code', 'text'],
+                onChangeJSON: updateToolsData
+            });
+            
+            try {
+                const parameters = JSON.parse(container.dataset.parameters || '{}');
+                editor.set(parameters);
+            } catch (e) {
+                editor.set({});
+                console.error('Error parsing JSON parameters:', e);
+            }
+        });
+        
+        // Add tool button click handler
+        addToolButton.addEventListener('click', function() {
+            const toolItem = document.createElement('div');
+            toolItem.className = 'tool-item';
+            toolItem.innerHTML = `
+                <button type="button" class="btn-close tool-remove" aria-label="Remove"></button>
+                <div class="mb-3">
+                    <label class="form-label">Name *</label>
+                    <input type="text" class="form-control tool-name" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control tool-description"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Parameters (JSON Schema) *</label>
+                    <div class="jsoneditor-container"></div>
+                </div>
+            `;
+            
+            toolsContainer.appendChild(toolItem);
+            
+            // Initialize JSON editor for new tool
+            const editorContainer = toolItem.querySelector('.jsoneditor-container');
+            const editor = new JSONEditor(editorContainer, {
+                mode: 'tree',
+                modes: ['tree', 'view', 'form', 'code', 'text'],
+                onChangeJSON: updateToolsData
+            });
+            
+            // Set default schema
+            editor.set({
+                type: 'object',
+                properties: {},
+                required: []
+            });
+            
+            // Add remove button handler
+            toolItem.querySelector('.tool-remove').addEventListener('click', function() {
+                toolItem.remove();
+                updateToolsData();
+            });
+            
+            // Add change handlers for inputs
+            toolItem.querySelector('.tool-name').addEventListener('input', updateToolsData);
+            toolItem.querySelector('.tool-description').addEventListener('input', updateToolsData);
+            
+            updateToolsData();
+        });
+        
+        // Add remove button handlers for existing tools
+        document.querySelectorAll('.tool-remove').forEach(button => {
+            button.addEventListener('click', function() {
+                button.closest('.tool-item').remove();
+                updateToolsData();
+            });
+        });
+        
+        // Add change handlers for existing tools
+        document.querySelectorAll('.tool-name, .tool-description').forEach(input => {
+            input.addEventListener('input', updateToolsData);
+        });
+        
+        // Update tools data function
+        function updateToolsData() {
+            const tools = [];
+            
+            // Get all tool items
+            document.querySelectorAll('.tool-item').forEach(item => {
+                const nameInput = item.querySelector('.tool-name');
+                const descriptionInput = item.querySelector('.tool-description');
+                const editorContainer = item.querySelector('.jsoneditor-container');
+                
+                if (nameInput && editorContainer) {
+                    const name = nameInput.value.trim();
+                    const description = descriptionInput ? descriptionInput.value.trim() : '';
+                    
+                    // Get JSON editor instance
+                    const editor = JSONEditor.instances.find(instance => 
+                        instance.container === editorContainer
+                    );
+                    
+                    if (editor && name) {
+                        tools.push({
+                            name: name,
+                            type: 'function',
+                            description: description,
+                            parameters: editor.get()
+                        });
+                    }
+                }
+            });
+            
+            // Update hidden input
+            toolsDataInput.value = JSON.stringify(tools);
+        }
+        
+        // Form submit handler
+        form.addEventListener('submit', function(e) {
+            // Update tools data before submit
+            updateToolsData();
+            
+            // Add code interpreter and retrieval tools if checked
+            const toolsData = JSON.parse(toolsDataInput.value);
+            
+            if (document.getElementById('code_interpreter').checked) {
+                toolsData.push({
+                    name: 'code_interpreter',
+                    type: 'code_interpreter',
+                    description: 'Execute code'
+                });
+            }
+            
+            if (document.getElementById('retrieval').checked) {
+                toolsData.push({
+                    name: 'retrieval',
+                    type: 'retrieval',
+                    description: 'Retrieve information from files'
+                });
+            }
+            
+            toolsDataInput.value = JSON.stringify(toolsData);
+        });
+    });
+</script>
+{% endblock %}

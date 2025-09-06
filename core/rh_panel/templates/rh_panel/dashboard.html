@@ -1,0 +1,80 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="pagetitle">
+    <h1>Dashboard de Recursos Humanos</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'rh_panel:dashboard' %}">Home</a></li>
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+    </nav>
+</div>
+
+<section class="section dashboard">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Bienvenido al Panel de Recursos Humanos</h5>
+                    <p>Este es el panel de recursos humanos para usuarios del sistema. Desde aquí podrás gestionar todas las funcionalidades relacionadas con el personal.</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card info-card sales-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Empleados <span>| Gestión</span></h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-person-badge"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>Gestión de Empleados</h6>
+                                            <a href="#" class="btn btn-primary btn-sm mt-2">Ir a Empleados</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card info-card customers-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Nómina <span>| Pagos</span></h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-cash-coin"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>Gestión de Nómina</h6>
+                                            <a href="#" class="btn btn-primary btn-sm mt-2">Ir a Nómina</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card info-card revenue-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Capacitación <span>| Desarrollo</span></h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-mortarboard"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>Gestión de Capacitación</h6>
+                                            <a href="#" class="btn btn-primary btn-sm mt-2">Ir a Capacitación</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

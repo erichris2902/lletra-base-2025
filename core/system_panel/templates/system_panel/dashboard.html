@@ -1,0 +1,80 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="pagetitle">
+    <h1>Dashboard de Sistema</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'system_panel:dashboard' %}">Home</a></li>
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+    </nav>
+</div>
+
+<section class="section dashboard">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Bienvenido al Panel de Sistema</h5>
+                    <p>Este es el panel de sistema para administradores. Desde aquí podrás gestionar todas las configuraciones y funcionalidades del sistema.</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card info-card sales-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Usuarios <span>| Gestión</span></h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-people"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>Gestión de Usuarios</h6>
+                                            <a href="#" class="btn btn-primary btn-sm mt-2">Ir a Usuarios</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card info-card customers-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Configuración <span>| Sistema</span></h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-gear"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>Configuración del Sistema</h6>
+                                            <a href="#" class="btn btn-primary btn-sm mt-2">Ir a Configuración</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card info-card revenue-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Logs <span>| Monitoreo</span></h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-activity"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>Logs del Sistema</h6>
+                                            <a href="#" class="btn btn-primary btn-sm mt-2">Ir a Logs</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

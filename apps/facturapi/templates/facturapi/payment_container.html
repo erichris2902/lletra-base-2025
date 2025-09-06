@@ -1,0 +1,26 @@
+<div id="payment_form" style="display: none">
+    <div>
+        <div class="card-header d-flex justify-content-between">
+            <span>Informacion de Pago</span>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-6">
+                    {% include "base/elements/inputs/date.html" with field=payment_form.payment_day %}
+                </div>
+            </div>
+        </div>
+        <div id="payments">
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <button type="button" class="btn btn-success center" onclick="addPayment();">Agregar informacion de
+                    pago
+                    adicional
+                </button>
+            </div>
+        </div>
+
+
+    </div>
+</div>

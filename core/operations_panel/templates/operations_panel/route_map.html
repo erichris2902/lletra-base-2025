@@ -1,0 +1,50 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+<h2>Mapa de Ruta</h2>
+<div id="map" style="height: 80vh;"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const routeCoords = {{ route_coords|safe }};  // lista de {lat: ..., lng: ...}
+
+    const map = L.map('map').setView([routeCoords[0].lat, routeCoords[0].lng], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    const latlngs = routeCoords.map(coord => [coord.lat, coord.lng]);
+
+    // Dibuja la línea de la ruta
+    const polyline = L.polyline(latlngs, {color: 'blue'}).addTo(map);
+
+    // Zoom automático a la ruta
+    map.fitBounds(polyline.getBounds());
+
+    const waypoints = {{ waypoints|safe }}; // datos de los puntos
+
+    waypoints.forEach((point, index) => {
+        const marker = L.marker([point.lat, point.lng]).addTo(map);
+
+        const label = `<strong>${point.name}</strong><br>${point.address}`;
+
+        // Opcional: Popup o tooltip
+        marker.bindPopup(label);
+        marker.bindTooltip(label, { permanent: false, direction: "top" });
+
+        if (index === 0) {
+            marker.setIcon(L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', // inicio
+                iconSize: [30, 30]
+            }));
+        } else if (index === waypoints.length - 1) {
+            marker.setIcon(L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/190/190411.png', // destino
+                iconSize: [30, 30]
+            }));
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'base/base_layout.html' %}
+{% load static %}
+
+
+{% block body %}
+    <main id="main" class="main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer id="footer" class="footer">
+        {% include 'base/elements/footer.html' %}
+    </footer>
+{% endblock %}

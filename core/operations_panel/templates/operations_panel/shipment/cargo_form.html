@@ -1,0 +1,84 @@
+{% load custom_filters %}
+{% if pages %}
+    <ul class="nav nav-tabs" role="tablist">
+        {% for page in pages %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if forloop.first %}active{% endif %}"
+                        id="{{ page.title|slugify_filter }}-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#{{ page.title|slugify_filter }}"
+                        type="button" role="tab"
+                        aria-controls="{{ page.title|slugify_filter }}"
+                        aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                    {{ page.title }}
+                </button>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <div class="tab-content mt-3">
+        {% for page in pages %}
+            <div id="{{ page.title|slugify_filter }}" class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+                 role="tabpanel">
+                <input type="hidden" name="action" value="{{ form_action }}">
+                <input id="updatableId" type="hidden" name="id" value="{{ id }}">
+                {% if additional_data %}{% include additional_data %}{% endif %}
+                {% include "base/elements/forms/render_with_layout.html" with add_form=page.form add_form_layout=page.layout add_form_fields=page.fields %}
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#General">General</a>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3">
+        <div id="General" class="tab-pane fade show active">
+            <input type="hidden" name="action" value="{{ form_action }}">
+            <input id="updatableId" type="hidden" name="id" value="{{ id }}">
+            {% if additional_data %}{% include additional_data %}{% endif %}
+            {% include "base/elements/forms/render_with_layout.html" with add_form=form %}
+        </div>
+    </div>
+{% endif %}
+<div class="tab-content mt-3">
+    <h4>Productos a transportar registrados</h4>
+    <table class="table table-bordered table-responsive-md table-striped text-center">
+        <thead>
+        <tr>
+            <th class="text-center">CLAVE SAT</th>
+            <th class="text-center">DESCRIPCION</th>
+            <th class="text-center">PESO</th>
+            <th class="text-center">ES PELIGROSO</th>
+
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for product in data.products %}
+            <form method="POST" action=".">
+                {% csrf_token %}
+                <tr>
+                    <td class="text-center">
+                        {{ product.transported_product_key }}
+                    </td>
+                    <td class="text-center">
+                        {{ product.description }}
+                    </td>
+                    <td class="text-center">
+                        {{ product.weight }}
+                    </td>
+                    <td class="text-center">
+                        {% if product.is_danger %}SI{% endif %}
+                    </td>
+
+                </tr>
+            </form>
+
+        {% endfor %}
+
+        </tbody>
+    </table>
+</div>

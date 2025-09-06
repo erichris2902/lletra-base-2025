@@ -1,0 +1,50 @@
+{% extends 'openai_assistant/base.html' %}
+
+{% block title %}Delete Chat | OpenAI Assistant{% endblock %}
+
+{% block heading %}Delete Chat: {{ chat.title }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <a href="{% url 'openai_assistant:chat_detail' chat.id %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Chat
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Confirm Deletion</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">Are you sure you want to delete the chat <strong>{{ chat.title }}</strong> with assistant <strong>{{ chat.assistant.name }}</strong>?</p>
+                
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill"></i> This action cannot be undone. All messages in this chat will be deleted.
+                </div>
+                
+                <p>This will delete:</p>
+                <ul>
+                    <li>All messages in this chat</li>
+                    <li>All tool executions associated with this chat</li>
+                </ul>
+                
+                <form method="post" action="{% url 'openai_assistant:chat_delete' chat.id %}">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'openai_assistant:chat_detail' chat.id %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Delete Chat
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

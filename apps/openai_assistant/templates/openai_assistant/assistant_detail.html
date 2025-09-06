@@ -1,0 +1,135 @@
+{% extends 'openai_assistant/base.html' %}
+
+{% block title %}{{ assistant.name }} | OpenAI Assistant{% endblock %}
+
+{% block heading %}Assistant: {{ assistant.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Details</h5>
+                    <div>
+                        <a href="{% url 'openai_assistant:assistant_update' assistant.id %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <a href="{% url 'openai_assistant:assistant_delete' assistant.id %}" class="btn btn-sm btn-danger">
+                            <i class="bi bi-trash"></i> Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Name</dt>
+                    <dd class="col-sm-9">{{ assistant.name }}</dd>
+                    
+                    <dt class="col-sm-3">Description</dt>
+                    <dd class="col-sm-9">{% if assistant.description %}{{ assistant.description }}{% else %}<em>No description provided.</em>{% endif %}</dd>
+                    
+                    <dt class="col-sm-3">Model</dt>
+                    <dd class="col-sm-9">{{ assistant.model }}</dd>
+                    
+                    <dt class="col-sm-3">Created by</dt>
+                    <dd class="col-sm-9">{% if assistant.created_by %}{{ assistant.created_by.username }}{% else %}Unknown{% endif %}</dd>
+                    
+                    <dt class="col-sm-3">Created at</dt>
+                    <dd class="col-sm-9">{{ assistant.created_at }}</dd>
+                    
+                    <dt class="col-sm-3">Status</dt>
+                    <dd class="col-sm-9">
+                        {% if assistant.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inactive</span>
+                        {% endif %}
+                    </dd>
+                </dl>
+                
+                <h6 class="mt-4">Instructions</h6>
+                <div class="p-3 bg-light rounded">
+                    <pre class="mb-0" style="white-space: pre-wrap;">{{ assistant.instructions }}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'openai_assistant:chat_create_with_assistant' assistant.id %}" class="btn btn-success w-100 mb-3">
+                    <i class="bi bi-chat-dots"></i> Start New Chat
+                </a>
+                
+                <a href="{% url 'openai_assistant:assistant_list' %}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-arrow-left"></i> Back to Assistants
+                </a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Tools</h5>
+            </div>
+            <div class="card-body">
+                {% if tools %}
+                    <ul class="list-group">
+                        {% for tool in tools %}
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ tool.name }}</strong>
+                                        <span class="badge bg-secondary">{{ tool.type }}</span>
+                                    </div>
+                                </div>
+                                {% if tool.description %}
+                                    <small class="text-muted d-block mt-1">{{ tool.description }}</small>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No tools configured for this assistant.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Chats</h5>
+            </div>
+            <div class="card-body">
+                {% if assistant.chats.all %}
+                    <div class="list-group">
+                        {% for chat in assistant.chats.all %}
+                            {% if forloop.counter <= 5 %}
+                                <a href="{% url 'openai_assistant:chat_detail' chat.id %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ chat.title }}</h6>
+                                        <small>{{ chat.updated_at }}</small>
+                                    </div>
+                                    <small>User: {{ chat.user.username }}</small>
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'openai_assistant:chat_list' %}" class="btn btn-sm btn-outline-primary">View All Chats</a>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No recent chats with this assistant.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

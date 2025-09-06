@@ -1,0 +1,74 @@
+<script>
+    function LoadForm(id = '-1', action = 'Get') {
+        const container = document.getElementById("FormContainer");
+
+        // Mostrar spinner de carga mientras llega la respuesta
+        container.innerHTML = `
+            <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        `;
+        const parameters = new FormData();
+        parameters.append('action', action);
+        parameters.append('id', id);
+        parameters.append('csrfmiddlewaretoken', csrfToken);
+
+        $.ajax({
+            url: window.location.pathname,
+            type: 'POST',
+            data: parameters,
+            dataType: 'json',
+            processData: false,
+            contentType: false,
+        })
+            .done(function (data) {
+                if (data.login_required) {
+                    // Redirige a login si el backend lo indica
+                    window.location.href = '/login/?next=' + encodeURIComponent(window.location.pathname);
+                    return;
+                }
+                console.log(data);
+                if (!data.hasOwnProperty('error')) {
+                    container.innerHTML = data.form;
+                    $('#modalForm').modal('show');
+                    init_catalogs();
+                    executeScripts(container);
+                } else {
+                    showError(data.error);
+                    container.innerHTML = '';  // Limpia el spinner si hay error
+                }
+            })
+            .fail(function () {
+                showError('Ocurrió un error de comunicación al servidor. Verifica tu conexión a internet.');
+                container.innerHTML = '';
+            });
+    }
+
+    function executeScripts(element) {
+        if (!element) return;
+        const scripts = element.querySelectorAll('script');
+        scripts.forEach((oldScript) => {
+            const newScript = document.createElement('script');
+            newScript.type = oldScript.type || 'text/javascript';
+
+            if (oldScript.src) {
+                newScript.src = oldScript.src;
+                newScript.async = true;
+            } else {
+                newScript.textContent = oldScript.textContent;
+            }
+
+            document.body.appendChild(newScript);
+        });
+    }
+
+    function showError(message) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: message
+        });
+    }
+</script>

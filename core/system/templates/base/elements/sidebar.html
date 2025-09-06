@@ -1,0 +1,46 @@
+{% load custom_filters %}
+<ul class="sidebar-nav" id="sidebar-nav">
+    {% for navcategory in navcategories %}
+        {% if navcategory.url %}
+            <!-- Elemento directo -->
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == navcategory.url %}active{% else %}collapsed{% endif %}"
+                   href="{{ navcategory.url }}">
+                    <i class="{{ navcategory.icon }}"></i>
+                    <span>{{ navcategory.name }}</span>
+                </a>
+            </li>
+        {% else %}
+            <!-- Categoría con submenú -->
+            <li class="nav-item">
+                {% comment %} ID seguro para HTML (sin espacios ni acentos) {% endcomment %}
+                {% with nav_id=navcategory.name|slugify_filter %}
+                    <a class="nav-link collapsed" data-bs-target="#{{ nav_id }}-nav" data-bs-toggle="collapse" href="#">
+                        <i class="{{ navcategory.icon }}"></i>
+                        <span>{{ navcategory.name }}</span>
+                        <i class="bi bi-chevron-down ms-auto"></i>
+                    </a>
+
+                    <ul id="{{ nav_id }}-nav"
+                        class="nav-content collapse {% if request.path|slice:":{{ navcategory.name|length }}" in navcategory.name %}show{% endif %}"
+                        data-bs-parent="#sidebar-nav">
+                        {% for section in navcategory.sections_for_template %}
+                            {% if section.url == "-" %}
+                                <li class="nav-divider text-muted text-center my-2"
+                                    style="border-top: 1px solid #dee2e6; position: relative;">
+                                </li>
+                            {% else %}
+                                <li>
+                                    <a href="{{ section.url }}"
+                                       class="{% if request.path == section.url %}active{% endif %}">
+                                        <i class="{{ section.icon }}"></i><span>{{ section.name }}</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                {% endwith %}
+            </li>
+        {% endif %}
+    {% endfor %}
+</ul>
