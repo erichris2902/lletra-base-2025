@@ -122,8 +122,7 @@ class Operation(BaseModel):
         result["shipment_type"] = self.shipment_type
         result["origin"] = str(self.route.initial_location)
         result["destination"] = str(self.route.destination_location)
-        result["deliveries"] = str(self.route.route_stops)
-        print(result)
+        result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route.route_stops else "[]"
         return result
 
     def get_operation_missing_items(self):

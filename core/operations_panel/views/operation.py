@@ -55,9 +55,9 @@ class FolioOperationListView(AdminListView):
     model = Operation
     form = OperationFolioWebsiteForm
     template_name = 'base/elements/views/datatable_list.html'
-    datatable_headers = ["Control vehicular", "Fecha", "Requiere Porte", "Cliente", "Origen", "Destino", "Repartos",
+    datatable_headers = ["Control vehicular", "Fecha", "Requiere Porte", "Cliente", "Ruta", "Repartos",
                          "Unidad", "Operador", "Status"]
-    datatable_keys = ["folio", "operation_date", "need_cartaporte", "client", "origin", "destination", "deliveries",
+    datatable_keys = ["folio", "operation_date", "need_cartaporte", "client", "route", "deliveries",
                       "vehicle", "driver", "status"]
     datatable_actions = True
     title = model._meta.verbose_name_plural.title()
@@ -117,6 +117,16 @@ class FolioOperationListView(AdminListView):
             data['message'] = f"Factura subida a Google Drive correctamente"
         except Exception as e:
             data['error'] = str(e)
+        return data
+
+    def handle_searchdata(self, request, data):
+        """
+        Retorna todos los registros como lista de dicts.
+        """
+        # Obtén los objetos de la tabla (o filtra según tus necesidades)
+        queryset = self.get_queryset()
+        datatable_keys = self.datatable_keys
+        data = [obj.to_operations_view(keys=datatable_keys) for obj in self.get_queryset()]
         return data
 
 

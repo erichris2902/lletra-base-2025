@@ -7,6 +7,21 @@ class TransportedProductForm(BaseModelForm):
     """
     Form for transported products.
     """
+    layout = [
+        {"type": "row", "fields": [
+            {"name": "transported_product_key", "size": 3},
+            {"name": "description", "size": 6},
+            {"name": "unit_key", "size": 3},
+        ]},
+        {"type": "row", "fields": [
+            {"name": "currency", "size": 4},
+            {"name": "weight", "size": 4},
+            {"name": "amount", "size": 4},
+        ]},
+        {"type": "row", "fields": [
+            {"name": "is_danger", "size": 12},
+        ]},
+    ]
 
     class Meta:
         model = TransportedProduct
@@ -19,14 +34,6 @@ class TransportedProductForm(BaseModelForm):
             "amount",
             "is_danger",
         ]
-        widgets = {
-            'transported_product_key': forms.Select(attrs={
-                'class': 'select2',
-            }),
-            'unit_key': forms.Select(attrs={
-                'class': 'select2',
-            }),
-        }
 
 
 class TransportedProductsFormByCSV(forms.Form):

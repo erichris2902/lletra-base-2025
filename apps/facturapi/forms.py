@@ -165,7 +165,7 @@ class FacturapiTaxForm(BaseModelForm):
             {"name": "factor", "size": 4},
         ]},
         {"type": "row", "fields": [
-            {"name": "withholding", "size": 3},
+            {"name": "withholding", "size": 12},
         ]},
     ]
 

@@ -3,6 +3,7 @@ from django.db import models
 from core.operations_panel.models.delivery_location import DeliveryLocation
 
 from core.operations_panel.models.client import Client
+from core.system.functions import extract_best_coincidence_from_field_in_model
 from core.system.models import BaseModel
 
 class Route(BaseModel):
@@ -89,7 +90,7 @@ class Route(BaseModel):
             super().save(update_fields=["optimized_route", "optimized_distance", "direct_distance"])
 
     def __str__(self):
-        return f"{self.name} - {self.client.name}"
+        return f"{self.initial_location} - {self.destination_location}"
 
     def look_for_route(name):
         """
