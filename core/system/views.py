@@ -200,6 +200,7 @@ class AdminListView(AdminView, ListView):
             else:
                 data['error'] = f'Acción "{action}" no reconocida'
         except Exception as e:
+            print(e)
             data['error'] = str(e)
         return JsonResponse(data, safe=False)
 

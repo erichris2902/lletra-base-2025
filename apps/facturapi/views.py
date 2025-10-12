@@ -133,7 +133,7 @@ def download_invoice_pdf(request, invoice_id):
         response['Content-Disposition'] = f'attachment; filename="{invoice.series}-{invoice.folio_number}.pdf"'
         return response
     except Exception as e:
-        logger.error(f"Error downloading invoice PDF: {str(e)}")
+        print(f"Error downloading invoice PDF: {str(e)}")
         return render(request, 'facturapi/error.html', {
             'error_message': f"Error downloading invoice PDF: {str(e)}"
         })
@@ -147,7 +147,7 @@ def download_invoice_acuse(request, invoice_id):
         response['Content-Disposition'] = f'attachment; filename="{invoice.series}-{invoice.folio_number} - ACUSE CANCELACION.pdf"'
         return response
     except Exception as e:
-        logger.error(f"Error downloading invoice PDF: {str(e)}")
+        print(f"Error downloading invoice PDF: {str(e)}")
         return render(request, 'facturapi/error.html', {
             'error_message': f"Error downloading invoice PDF: {str(e)}"
         })
@@ -162,7 +162,7 @@ def download_invoice_xml(request, invoice_id):
         response['Content-Disposition'] = f'attachment; filename="{invoice.series}-{invoice.folio_number}.xml"'
         return response
     except Exception as e:
-        logger.error(f"Error downloading invoice XML: {str(e)}")
+        print(f"Error downloading invoice XML: {str(e)}")
         return render(request, 'facturapi/error.html', {
             'error_message': f"Error downloading invoice XML: {str(e)}"
         })
@@ -177,7 +177,7 @@ def download_invoice_zip(request, invoice_id):
         response['Content-Disposition'] = f'attachment; filename="{invoice.series}-{invoice.folio_number}.zip"'
         return response
     except Exception as e:
-        logger.error(f"Error downloading invoice ZIP: {str(e)}")
+        print(f"Error downloading invoice ZIP: {str(e)}")
         return render(request, 'facturapi/error.html', {
             'error_message': f"Error downloading invoice ZIP: {str(e)}"
         })
@@ -206,6 +206,7 @@ class InvoiceFormView(AdminTemplateView):
             else:
                 data['error'] = f'Acción "{action}" no reconocida'
         except Exception as e:
+            print(e)
             data['error'] = str(e)
         return JsonResponse(data, safe=False)
 

@@ -57,6 +57,6 @@ def register_event(tool_input, telegram_user: TelegramUser=None):
         return {"results": "Evento registrado con exito"}
 
     except Exception as e:
-        logger.exception(f"Error in register_operations: {str(e)}")
+        print(f"Error in register_operations: {str(e)}")
         return {"error": str(e)}
 

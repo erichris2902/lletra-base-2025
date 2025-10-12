@@ -16,7 +16,8 @@ class DeliveryLocation(BaseModel):
     address = models.ForeignKey(Address, on_delete=models.PROTECT, null=True, verbose_name="Dirección")
     notes = models.TextField(blank=True, null=True, verbose_name="Notas")
 
-    def get_or_create_by_str(self, name: str = None):
+    @staticmethod
+    def get_or_create_by_str(name: str = None):
         if not name:
             return None
 

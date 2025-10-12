@@ -139,13 +139,13 @@ def get_service_account_credentials():
 
         return credentials
     except GoogleDriveServiceAccount.DoesNotExist:
-        logger.error(f"Service account '{SERVICE_ACCOUNT_NAME}' not found or not active")
+        print(f"Service account '{SERVICE_ACCOUNT_NAME}' not found or not active")
         return None
     except json.JSONDecodeError:
-        logger.error(f"Invalid JSON in service account credentials")
+        print(f"Invalid JSON in service account credentials")
         return None
     except Exception as e:
-        logger.error(f"Error getting service account credentials: {str(e)}")
+        print(f"Error getting service account credentials: {str(e)}")
         return None
 
 
@@ -169,7 +169,7 @@ def get_drive_service(user=None):
             )
             return build("drive", "v3", credentials=credentials)
         except Exception as e:
-            logger.exception("Failed to get Drive service using service account")
+            print("Failed to get Drive service using service account")
             return None
     return None
 
@@ -189,13 +189,13 @@ def create_folder(user, folder_name, parent_folder_id=None):
     """
     service = get_drive_service(user)
     if not service:
-        logger.error(f"Failed to get Drive service for user {user.username}")
+        print(f"Failed to get Drive service for user {user.username}")
         return None
 
     # Check if folder already exists
     existing_folder = check_folder_exists(user, folder_name, parent_folder_id)
     if existing_folder:
-        logger.info(f"Folder '{folder_name}' already exists with ID {existing_folder.drive_id}")
+        print(f"Folder '{folder_name}' already exists with ID {existing_folder.drive_id}")
         return existing_folder
 
     # Prepare folder metadata
@@ -235,11 +235,11 @@ def create_folder(user, folder_name, parent_folder_id=None):
             parent_folder=parent_folder
         )
 
-        logger.info(f"Created folder '{folder_name}' with ID {folder['id']}")
+        print(f"Created folder '{folder_name}' with ID {folder['id']}")
         return db_folder
 
     except Exception as e:
-        logger.error(f"Error creating folder '{folder_name}': {str(e)}")
+        print(f"Error creating folder '{folder_name}': {str(e)}")
         return None
 
 
@@ -257,7 +257,7 @@ def check_folder_exists(user, folder_name, parent_folder_id=None):
     """
     service = get_drive_service(user)
     if not service:
-        logger.error(f"Failed to get Drive service for user {user.username}")
+        print(f"Failed to get Drive service for user {user.username}")
         return None
 
     # Build query
@@ -304,7 +304,7 @@ def check_folder_exists(user, folder_name, parent_folder_id=None):
         return None
 
     except Exception as e:
-        logger.error(f"Error checking if folder '{folder_name}' exists: {str(e)}")
+        print(f"Error checking if folder '{folder_name}' exists: {str(e)}")
         return None
 
 
@@ -325,7 +325,7 @@ def upload_file(user, file_path, folder_id=None, overwrite=False):
     """
     service = get_drive_service(user)
     if not service:
-        logger.error(f"Failed to get Drive service for user {user.username}")
+        print(f"Failed to get Drive service for user {user.username}")
         return None
 
     # Get file name and calculate MD5 checksum
@@ -335,7 +335,7 @@ def upload_file(user, file_path, folder_id=None, overwrite=False):
     # Check if file already exists
     existing_file = check_file_exists(user, file_name, folder_id, md5_checksum)
     if existing_file and not overwrite:
-        logger.info(f"File '{file_name}' already exists with ID {existing_file.drive_id} and will not be overwritten")
+        print(f"File '{file_name}' already exists with ID {existing_file.drive_id} and will not be overwritten")
         return existing_file
 
     # Prepare file metadata
@@ -372,7 +372,7 @@ def upload_file(user, file_path, folder_id=None, overwrite=False):
             existing_file.md5_checksum = file.get('md5Checksum', '')
             existing_file.save()
 
-            logger.info(f"Updated file '{file_name}' with ID {file['id']}")
+            print(f"Updated file '{file_name}' with ID {file['id']}")
             return existing_file
         else:
             # Create new file
@@ -405,11 +405,11 @@ def upload_file(user, file_path, folder_id=None, overwrite=False):
                 folder=folder
             )
 
-            logger.info(f"Uploaded file '{file_name}' with ID {file['id']}")
+            print(f"Uploaded file '{file_name}' with ID {file['id']}")
             return db_file
 
     except Exception as e:
-        logger.error(f"Error uploading file '{file_name}': {str(e)}")
+        print(f"Error uploading file '{file_name}': {str(e)}")
         return None
 
 
@@ -430,7 +430,7 @@ def upload_file_content(user, file_name, content, mime_type, folder_id=None, ove
     """
     service = get_drive_service(user)
     if not service:
-        logger.error(f"Failed to get Drive service for user {user.username}")
+        print(f"Failed to get Drive service for user {user.username}")
         return None
 
     # Convert content to bytes if it's a string
@@ -443,7 +443,7 @@ def upload_file_content(user, file_name, content, mime_type, folder_id=None, ove
     # Check if file already exists
     existing_file = check_file_exists(user, file_name, folder_id, md5_checksum)
     if existing_file and not overwrite:
-        logger.info(f"File '{file_name}' already exists with ID {existing_file.drive_id} and will not be overwritten")
+        print(f"File '{file_name}' already exists with ID {existing_file.drive_id} and will not be overwritten")
         return existing_file
 
     # Prepare file metadata
@@ -481,7 +481,7 @@ def upload_file_content(user, file_name, content, mime_type, folder_id=None, ove
             existing_file.md5_checksum = file.get('md5Checksum', '')
             existing_file.save()
 
-            logger.info(f"Updated file '{file_name}' with ID {file['id']}")
+            print(f"Updated file '{file_name}' with ID {file['id']}")
             return existing_file
         else:
             # Create new file
@@ -514,11 +514,11 @@ def upload_file_content(user, file_name, content, mime_type, folder_id=None, ove
                 folder=folder
             )
 
-            logger.info(f"Uploaded file '{file_name}' with ID {file['id']}")
+            print(f"Uploaded file '{file_name}' with ID {file['id']}")
             return db_file
 
     except Exception as e:
-        logger.error(f"Error uploading file '{file_name}': {str(e)}")
+        print(f"Error uploading file '{file_name}': {str(e)}")
         return None
 
 
@@ -537,7 +537,7 @@ def check_file_exists(user, file_name, folder_id=None, md5_checksum=None):
     """
     service = get_drive_service(user)
     if not service:
-        logger.error(f"Failed to get Drive service for user {user.username}")
+        print(f"Failed to get Drive service for user {user.username}")
         return None
 
     # Build query
@@ -619,7 +619,7 @@ def check_file_exists(user, file_name, folder_id=None, md5_checksum=None):
         return None
 
     except Exception as e:
-        logger.error(f"Error checking if file '{file_name}' exists: {str(e)}")
+        print(f"Error checking if file '{file_name}' exists: {str(e)}")
         return None
 
 
@@ -637,7 +637,7 @@ def create_folder_with_service_account(folder_name, parent_folder_id=None):
     """
     service = get_drive_service()
     if not service:
-        logger.error("Failed to get Drive service using service account")
+        print("Failed to get Drive service using service account")
         return None
 
     # Prepare folder metadata
@@ -658,11 +658,11 @@ def create_folder_with_service_account(folder_name, parent_folder_id=None):
             supportsAllDrives=True
         ).execute()
 
-        logger.info(f"Created folder '{folder_name}' with ID {folder['id']} using service account")
+        print(f"Created folder '{folder_name}' with ID {folder['id']} using service account")
         return folder['id']
 
     except Exception as e:
-        logger.error(f"Error creating folder '{folder_name}' with service account: {str(e)}")
+        print(f"Error creating folder '{folder_name}' with service account: {str(e)}")
         return None
 
 
@@ -679,7 +679,7 @@ def check_folder_exists_with_service_account(folder_name, parent_folder_id=None)
     """
     service = get_drive_service()
     if not service:
-        logger.error("Failed to get Drive service using service account")
+        print("Failed to get Drive service using service account")
         return None
 
     # Build query
@@ -699,13 +699,13 @@ def check_folder_exists_with_service_account(folder_name, parent_folder_id=None)
 
         items = results.get('files', [])
         if items:
-            logger.info(f"Found folder '{folder_name}' with ID {items[0]['id']} using service account")
+            print(f"Found folder '{folder_name}' with ID {items[0]['id']} using service account")
             return items[0]['id']
 
         return None
 
     except Exception as e:
-        logger.error(f"Error checking if folder '{folder_name}' exists with service account: {str(e)}")
+        print(f"Error checking if folder '{folder_name}' exists with service account: {str(e)}")
         return None
 
 
@@ -725,7 +725,7 @@ def upload_file_with_service_account(file_path, folder_id=None, overwrite=True):
     """
     service = get_drive_service()
     if not service:
-        logger.error("Failed to get Drive service using service account")
+        print("Failed to get Drive service using service account")
         return None
 
     # Get file name and calculate MD5 checksum
@@ -736,7 +736,7 @@ def upload_file_with_service_account(file_path, folder_id=None, overwrite=True):
     existing_file_id = check_file_exists_with_service_account(file_name, folder_id)
 
     if existing_file_id and not overwrite:
-        logger.info(f"File '{file_name}' already exists with ID {existing_file_id} and will not be overwritten")
+        print(f"File '{file_name}' already exists with ID {existing_file_id} and will not be overwritten")
         return existing_file_id
 
     # Prepare file metadata
@@ -767,7 +767,7 @@ def upload_file_with_service_account(file_path, folder_id=None, overwrite=True):
                 supportsAllDrives=True
             ).execute()
 
-            logger.info(f"Updated file '{file_name}' with ID {file['id']} using service account")
+            print(f"Updated file '{file_name}' with ID {file['id']} using service account")
             return file['id']
         else:
             # Create new file
@@ -778,11 +778,11 @@ def upload_file_with_service_account(file_path, folder_id=None, overwrite=True):
                 supportsAllDrives=True,
             ).execute()
 
-            logger.info(f"Uploaded file '{file_name}' with ID {file['id']} using service account")
+            print(f"Uploaded file '{file_name}' with ID {file['id']} using service account")
             return file['id']
 
     except Exception as e:
-        logger.error(f"Error uploading file '{file_name}' with service account: {str(e)}")
+        print(f"Error uploading file '{file_name}' with service account: {str(e)}")
         return None
 
 
@@ -795,7 +795,7 @@ def check_file_exists_with_service_account(file_name, folder_id=None):
     """
     service = get_drive_service()
     if not service:
-        logger.error("Failed to get Drive service using service account")
+        print("Failed to get Drive service using service account")
         return None
 
     query = f"name = '{file_name}' and trashed = false"
@@ -814,13 +814,13 @@ def check_file_exists_with_service_account(file_name, folder_id=None):
         files = results.get('files', [])
         if files:
             file_id = files[0]['id']
-            logger.info(f"Found existing file '{file_name}' with ID {file_id}")
+            print(f"Found existing file '{file_name}' with ID {file_id}")
             return file_id
 
         return None
 
     except Exception as e:
-        logger.error(f"Error checking for file '{file_name}': {str(e)}")
+        print(f"Error checking for file '{file_name}': {str(e)}")
         return None
 
 

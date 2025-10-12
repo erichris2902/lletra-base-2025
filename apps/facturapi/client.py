@@ -35,11 +35,11 @@ def _log_http_error(what: str, e: requests.exceptions.RequestException):
     msg = f"Error al {what}: {e}"
     if getattr(e, "response", None) is not None:
         try:
-            logger.error("%s | status=%s | json=%s", msg, e.response.status_code, e.response.json())
+            print("%s | status=%s | json=%s", msg, e.response.status_code, e.response.json())
         except Exception:
-            logger.error("%s | status=%s | text=%s", msg, e.response.status_code, getattr(e.response, "text", ""))
+            print("%s | status=%s | text=%s", msg, e.response.status_code, getattr(e.response, "text", ""))
     else:
-        logger.error(msg)
+        print(msg)
 
 # ----------------- Customers -----------------
 

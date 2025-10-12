@@ -65,7 +65,7 @@ def register_quote(tool_input, telegram_user: TelegramUser=None):
         group_chat_id = TelegramGroup.objects.get(name='Comercial Lletra').telegram_id
 
         if not bot_token or not group_chat_id:
-            logger.warning("Telegram notification settings not configured")
+            print("Telegram notification settings not configured")
             return False
 
         # Get or create the bot
@@ -103,12 +103,11 @@ def register_quote(tool_input, telegram_user: TelegramUser=None):
                 telegram_message.quote = quote
                 telegram_message.save()
 
-            logger.info(f"Linked message {message_id} to quote {quote.id}")
+            print(f"Linked message {message_id} to quote {quote.id}")
 
         return {"results": "Cotizacion registrada con exito"}
 
     except Exception as e:
-        logger.exception(f"Error in register_operations: {str(e)}")
-        print(e)
+        print(f"Error in register_operations: {str(e)}")
         return {"error": str(e)}
 

@@ -79,6 +79,7 @@ class TelegramOpenAIIntegration:
             return True, f"Switched to assistant: {assistant.name}"
             
         except Exception as e:
+            print(e)
             return False, f"Error switching assistant: {str(e)}"
     
     def get_available_assistants(self):

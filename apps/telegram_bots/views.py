@@ -18,27 +18,25 @@ User = get_user_model()
 @csrf_exempt
 @require_POST
 def telegram_webhook(request, bot_username):
-    """
-    Main webhook endpoint for Telegram updates.
-    Each bot has its own webhook URL with its username in the path.
-    """
     try:
         # Get the bot by username
         bot = TelegramBot.objects.get(username=bot_username, is_active=True)
+        response_data = {"success": True}
+        return JsonResponse(response_data)
         
         # Parse the update data
         update_data = json.loads(request.body)
-        logger.debug(f"Received update for bot {bot_username}: {update_data}")
+        print(f"Received update for bot {bot_username}: {update_data}")
         
         # Process the update
         response_data = process_update(bot, update_data)
         print(response_data)
         return JsonResponse(response_data)
     except TelegramBot.DoesNotExist:
-        logger.error(f"Bot with username {bot_username} not found or inactive")
+        print(f"Bot with username {bot_username} not found or inactive")
         return HttpResponseForbidden("Bot not found or inactive")
     except Exception as e:
-        logger.exception(f"Error processing webhook for bot {bot_username}: {str(e)}")
+        print(f"Error processing webhook for bot {bot_username}: {str(e)}")
         return JsonResponse({"error": str(e)}, status=500)
 
 @csrf_exempt
@@ -56,7 +54,7 @@ def telegram_webapp_callback(request, bot_username):
         
         # Verify the data with Telegram's validation
         if not verify_telegram_webapp_data(data.get('initData', ''), bot.token):
-            logger.warning(f"Invalid webapp data for bot {bot_username}")
+            print(f"Invalid webapp data for bot {bot_username}")
             return HttpResponseForbidden("Invalid data")
         
         # Process the webapp data
@@ -64,10 +62,10 @@ def telegram_webapp_callback(request, bot_username):
         
         return JsonResponse({"success": True})
     except TelegramBot.DoesNotExist:
-        logger.error(f"Bot with username {bot_username} not found or inactive")
+        print(f"Bot with username {bot_username} not found or inactive")
         return HttpResponseForbidden("Bot not found or inactive")
     except Exception as e:
-        logger.exception(f"Error processing webapp callback for bot {bot_username}: {str(e)}")
+        print(f"Error processing webapp callback for bot {bot_username}: {str(e)}")
         return JsonResponse({"error": str(e)}, status=500)
 
 def verify_telegram_webapp_data(init_data, bot_token):

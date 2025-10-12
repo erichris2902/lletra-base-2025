@@ -31,7 +31,7 @@ def get_facturapi_key():
     """
     api_key = os.environ.get('FACTURAPI_TEST_KEY') if settings.DEBUG else os.environ.get('FACTURAPI_LIVE_KEY')
     if not api_key:
-        logger.error("FACTURAPI_KEY not set in env")
+        print("FACTURAPI_KEY not set in env")
         raise ValueError("FACTURAPI_KEY not set in env")
     return api_key
 
@@ -244,11 +244,11 @@ def _log_http_error(what, e: requests.exceptions.RequestException):
     if getattr(e, "response", None) is not None:
         try:
             payload = e.response.json()
-            logger.error("%s | status=%s | detail=%s", msg, e.response.status_code, payload)
+            print("%s | status=%s | detail=%s", msg, e.response.status_code, payload)
         except Exception:
-            logger.error("%s | status=%s | body=%s", msg, e.response.status_code, getattr(e.response, "text", ""))
+            print("%s | status=%s | body=%s", msg, e.response.status_code, getattr(e.response, "text", ""))
     else:
-        logger.error(msg)
+        print(msg)
 
 
 def _set_facturapi_invoice_base_data(invoice: FacturapiInvoice):

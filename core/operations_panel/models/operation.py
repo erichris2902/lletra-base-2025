@@ -126,25 +126,12 @@ class Operation(BaseModel):
         return result
 
     def get_operation_missing_items(self):
-        """
-        Identify missing items for an operation.
-
-        Args:
-            operation (Operation): The Operation instance to check
-
-        Returns:
-            dict: Dictionary with missing items categorized
-        """
         missing_items = {}
 
         # Check for missing basic information
         basic_info = []
         if not self.client:
             basic_info.append("Cliente")
-        if not self.origin:
-            basic_info.append("Origen")
-        if not self.destination:
-            basic_info.append("Destino")
         if not self.operation_date:
             basic_info.append("Fecha de operación")
         if not self.shipment_type:
@@ -181,7 +168,7 @@ class Operation(BaseModel):
 
         # Check for missing document information
         document_info = []
-        if self.need_cartaporte and not self.invoice:
+        if self.need_cartaporte and not self.shipment_invoice:
             document_info.append("Carta porte")
         if not self.folio:
             document_info.append("Folio")
@@ -192,15 +179,6 @@ class Operation(BaseModel):
         return missing_items
 
     def format_missing_items(self, missing_items):
-        """
-        Formatea los faltantes de una operación como un mensaje para Telegram.
-
-        Args:
-            missing_items (dict): Diccionario con los campos faltantes categorizados.
-
-        Returns:
-            str: Mensaje listo para enviar por Telegram.
-        """
         if not missing_items:
             return "✅ *La operación está completa.*"
 
@@ -321,21 +299,15 @@ class Operation(BaseModel):
         return self.pre_folio
 
     def assign_folio(self):
-        """
-        Assign the pre-folio to the folio field.
-        """
         if self.pre_folio and not self.folio:
             self.folio = self.pre_folio
             self.save(update_fields=['folio'])
 
             # Send notification to Telegram group
             try:
-                from apps.telegram_bots.operations import notify_operation_approved
-                notify_operation_approved(self)
+                self.notify_operation_approved()
             except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.exception(f"Error sending operation approved notification: {str(e)}")
+                print(f"Error sending operation approved notification: {str(e)}")
 
             if self.operation_date and not self.cargo_appointment:
                 dt = datetime.combine(self.operation_date, time(8, 0))
@@ -354,10 +326,6 @@ class Operation(BaseModel):
         return self.folio
 
     def generate_invoice(self, user):
-        """
-        Generate an invoice for the operation using FacturAPI.
-        This is a placeholder method that should be implemented with actual FacturAPI integration.
-        """
 
         if not self.client:
             raise ValueError("Cannot generate invoice without a client")
@@ -365,17 +333,9 @@ class Operation(BaseModel):
         if not self.folio:
             raise ValueError("Cannot generate invoice without a folio")
 
-        # This is a simplified example. In a real implementation, you would:
-        # 1. Get or create a FacturapiCustomer for the client
-        # 2. Create line items based on the operation details
-        # 3. Generate the invoice with cartaporte complement
-        # 4. Save the invoice reference to this operation
-
         # For now, we'll just update the status
         self.status = OperationStatus.INVOICED
         self.save(update_fields=['status'])
-
-        return self.invoice
 
     def upload_invoice_to_drive(self, user):
         """
@@ -384,7 +344,7 @@ class Operation(BaseModel):
         """
         import datetime
 
-        if not self.invoice:
+        if not self.shipment_invoice:
             raise ValueError("Cannot upload invoice that hasn't been generated")
 
         if not self.client:
@@ -405,6 +365,165 @@ class Operation(BaseModel):
         # 3. Upload the invoice file
 
         return self.invoice_file
+
+    def notify_operation_created(self):
+        from apps.telegram_bots.models import TelegramBot, TelegramMessage, TelegramChat,TelegramGroup
+
+        try:
+            # Get the notification bot and group chat ID from settings
+            from django.conf import settings
+
+            bot_token = TelegramBot.objects.get(username='prueba_lletra_bot').token
+            group_chat_id = TelegramGroup.objects.get(name='Folios Lletra').telegram_id
+
+            # Get or create the bot
+            bot, created = TelegramBot.objects.get_or_create(
+                token=bot_token,
+                defaults={'name': 'Operations Notification Bot'}
+            )
+
+            # Format the message
+            message_text = self.format_operation_notification()
+
+            # Send the message
+            from apps.telegram_bots.services import send_telegram_message
+            response = send_telegram_message(bot, group_chat_id, message_text)
+
+            # If the message was sent successfully, link it to the operation
+            if response and 'result' in response and 'message_id' in response['result']:
+                message_id = response['result']['message_id']
+
+                # Get the chat
+                chat = TelegramChat.objects.get(telegram_id=group_chat_id)
+
+                # Get or create the message
+                telegram_message, created = TelegramMessage.objects.get_or_create(
+                    telegram_id=message_id,
+                    chat=chat,
+                    bot=bot,
+                    defaults={
+                        'text': message_text,
+                        'operation': self
+                    }
+                )
+
+                # If the message already existed but wasn't linked to the operation, link it
+                if not created and not telegram_message.operation:
+                    telegram_message.operation = self
+                    telegram_message.save()
+            return True
+        except Exception as e:
+            print(e)
+            return False
+
+    def format_operation_notification(self):
+        # Get the deliveries as a comma-separated list
+        deliveries = ", ".join([d.name for d in self.route.route_stops.all()])
+
+        # Format the message
+        message = (
+            f"🚚 Nueva operación registrada:\n"
+            f"Cliente: {self.client.name if self.client else 'N/A'}\n"
+            f"Origen: {self.route.initial_location}\n"
+            f"Destino: {self.route.destination_location}\n"
+            f"Unidad: {self.get_vehicle_type_display() if self.vehicle_type else 'N/A'}\n"
+            f"Proveedor: {self.supplier.business_name if self.supplier else 'N/A'}\n"
+            f"Operador: {self.driver.name + ' ' + self.driver.last_name if self.driver else 'N/A'}\n"
+            f"Fecha: {self.operation_date.strftime('%Y-%m-%d')}\n"
+        )
+
+        if deliveries:
+            message += f"Repartos: {deliveries}\n"
+
+        message += f"Folio: {self.pre_folio or 'Pendiente'}"
+
+        return message
+
+    def format_operation_approved_notification(self):
+        deliveries = ", ".join([d.name for d in self.route.route_stops.all()])
+
+        # Format the message
+        message = (
+            f"✅ Operación aprobada con folio asignado:\n"
+            f"Folio: {self.folio}\n"
+            f"Cliente: {self.client.name if self.client else 'N/A'}\n"
+            f"Origen: {self.route.initial_location}\n"
+            f"Destino: {self.route.destination_location}\n"
+            f"Unidad: {self.get_vehicle_type_display() if self.vehicle_type else 'N/A'}\n"
+            f"Proveedor: {self.supplier.business_name if self.supplier else 'N/A'}\n"
+            f"Operador: {self.driver.name + ' ' + self.driver.last_name if self.driver else 'N/A'}\n"
+            f"Fecha: {self.operation_date.strftime('%Y-%m-%d')}\n"
+        )
+
+        if deliveries:
+            message += f"Repartos: {deliveries}\n"
+
+        return message
+
+    def notify_operation_approved(self):
+        from apps.telegram_bots.models import TelegramBot, TelegramMessage, TelegramChat
+
+        try:
+            # Get the notification bot and group chat ID from settings
+            from apps.telegram_bots.models import TelegramGroup
+
+            bot_token = TelegramBot.objects.get(username='prueba_lletra_bot').token
+
+            # Get the "Embarques Lletra" group
+            try:
+                # Use filter instead of get to handle multiple groups
+                groups = TelegramGroup.objects.filter(name='Embarques Lletra')
+                if groups.exists():
+                    group_chat_id = groups.first().telegram_id
+                else:
+                    raise TelegramGroup.DoesNotExist
+            except TelegramGroup.DoesNotExist:
+                return False
+
+            if not bot_token or not group_chat_id:
+                return False
+
+            # Get or create the bot
+            bot, created = TelegramBot.objects.get_or_create(
+                token=bot_token,
+                defaults={'name': 'Operations Notification Bot'}
+            )
+
+            # Format the message
+            message_text = self.format_operation_approved_notification()
+
+            # Send the message
+            from apps.telegram_bots.services import send_telegram_message
+            response = send_telegram_message(bot, group_chat_id, message_text)
+
+            # If the message was sent successfully, link it to the operation
+            if response and 'result' in response and 'message_id' in response['result']:
+                message_id = response['result']['message_id']
+
+                # Get the chat
+                chat = TelegramChat.objects.get(telegram_id=group_chat_id)
+
+                # Get or create the message
+                telegram_message, created = TelegramMessage.objects.get_or_create(
+                    telegram_id=message_id,
+                    chat=chat,
+                    bot=bot,
+                    defaults={
+                        'text': message_text,
+                        'operation': self
+                    }
+                )
+
+                # If the message already existed but wasn't linked to the operation, link it
+                if not created and not telegram_message.operation:
+                    telegram_message.operation = self
+                    telegram_message.save()
+
+
+            return True
+        except Exception as e:
+            print(e)
+            return False
 
     class Meta:
         verbose_name = "Operación"

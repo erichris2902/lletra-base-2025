@@ -75,7 +75,7 @@ def assistant_create(request):
                 messages.success(request, _('Assistant created successfully.'))
                 return redirect('assistant_detail', assistant_id=assistant.id)
         except Exception as e:
-            logger.error(f"Error creating assistant: {str(e)}")
+            print(f"Error creating assistant: {str(e)}")
             messages.error(request, _('Error creating assistant: {0}').format(str(e)))
     
     return render(request, 'openai_assistant/assistant_form.html')
@@ -118,7 +118,7 @@ def assistant_update(request, assistant_id):
                 messages.success(request, _('Assistant updated successfully.'))
                 return redirect('assistant_detail', assistant_id=assistant.id)
         except Exception as e:
-            logger.error(f"Error updating assistant: {str(e)}")
+            print(f"Error updating assistant: {str(e)}")
             messages.error(request, _('Error updating assistant: {0}').format(str(e)))
     
     tools = assistant.tools.all()
@@ -144,7 +144,7 @@ def assistant_delete(request, assistant_id):
             messages.success(request, _('Assistant deleted successfully.'))
             return redirect('assistant_list')
         except Exception as e:
-            logger.error(f"Error deleting assistant: {str(e)}")
+            print(f"Error deleting assistant: {str(e)}")
             messages.error(request, _('Error deleting assistant: {0}').format(str(e)))
     
     return render(request, 'openai_assistant/assistant_confirm_delete.html', {
@@ -198,7 +198,7 @@ def chat_create(request, assistant_id=None):
             messages.success(request, _('Chat created successfully.'))
             return redirect('chat_detail', chat_id=chat.id)
         except Exception as e:
-            logger.error(f"Error creating chat: {str(e)}")
+            print(f"Error creating chat: {str(e)}")
             messages.error(request, _('Error creating chat: {0}').format(str(e)))
     
     return render(request, 'openai_assistant/chat_create.html', {
@@ -219,7 +219,7 @@ def chat_delete(request, chat_id):
             messages.success(request, _('Chat deleted successfully.'))
             return redirect('chat_list')
         except Exception as e:
-            logger.error(f"Error deleting chat: {str(e)}")
+            print(f"Error deleting chat: {str(e)}")
             messages.error(request, _('Error deleting chat: {0}').format(str(e)))
     
     return render(request, 'openai_assistant/chat_confirm_delete.html', {
@@ -254,7 +254,7 @@ def send_message(request, chat_id):
             ]
         })
     except Exception as e:
-        logger.error(f"Error sending message: {str(e)}")
+        print(f"Error sending message: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
 # API views for programmatic access
@@ -342,7 +342,7 @@ def api_assistant_create(request):
                 'created_at': assistant.created_at.isoformat()
             }, status=status.HTTP_201_CREATED)
     except Exception as e:
-        logger.error(f"Error creating assistant: {str(e)}")
+        print(f"Error creating assistant: {str(e)}")
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
@@ -429,7 +429,7 @@ def api_chat_create(request):
     except Assistant.DoesNotExist:
         return Response({'error': 'Assistant not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        logger.error(f"Error creating chat: {str(e)}")
+        print(f"Error creating chat: {str(e)}")
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
@@ -461,5 +461,5 @@ def api_send_message(request, chat_id):
     except Chat.DoesNotExist:
         return Response({'error': 'Chat not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        logger.error(f"Error sending message: {str(e)}")
+        print(f"Error sending message: {str(e)}")
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

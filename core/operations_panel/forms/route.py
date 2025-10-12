@@ -10,8 +10,7 @@ class RouteForm(BaseModelForm):
     """
     layout = [
         {"type": "row", "fields": [
-            {"name": "name", "size": 6},
-            {"name": "client", "size": 6},
+            {"name": "name", "size": 12},
         ]},
 
         {"type": "callout", "title": "Locaciones", "sections": [
@@ -39,7 +38,6 @@ class RouteForm(BaseModelForm):
             "name",
             "initial_location",
             "route_stops",
-            "client",
             "notes",
             "destination_location",
             "direct_distance",

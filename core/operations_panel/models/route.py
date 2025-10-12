@@ -2,7 +2,6 @@ from django.db import models
 
 from core.operations_panel.models.delivery_location import DeliveryLocation
 
-from core.operations_panel.models.client import Client
 from core.system.functions import extract_best_coincidence_from_field_in_model
 from core.system.models import BaseModel
 
@@ -33,12 +32,6 @@ class Route(BaseModel):
         related_name="routes_as_stop",
         blank=True,
         verbose_name="Paradas intermedias"
-    )
-
-    client = models.ForeignKey(
-        Client,
-        on_delete=models.PROTECT,
-        verbose_name="Cliente"
     )
 
     notes = models.TextField(

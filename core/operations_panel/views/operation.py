@@ -101,6 +101,7 @@ class FolioOperationListView(AdminListView):
             data['success'] = True
             data['message'] = f"Factura generada correctamente"
         except Exception as e:
+            print(e)
             data['error'] = str(e)
         return data
 
@@ -116,6 +117,7 @@ class FolioOperationListView(AdminListView):
             data['success'] = True
             data['message'] = f"Factura subida a Google Drive correctamente"
         except Exception as e:
+            print(e)
             data['error'] = str(e)
         return data
 
@@ -373,6 +375,7 @@ class ShipmentOperationListView(AdminListView):
             data['success'] = True
             data['message'] = f"Factura generada correctamente"
         except Exception as e:
+            print(e)
             data['error'] = str(e)
 
     def handle_upload_to_drive(self, request, data):
@@ -386,6 +389,7 @@ class ShipmentOperationListView(AdminListView):
             data['success'] = True
             data['message'] = f"Factura subida a Google Drive correctamente"
         except Exception as e:
+            print(e)
             data['error'] = str(e)
 
     def get_queryset(self):

@@ -72,6 +72,7 @@ class Command(BaseCommand):
                         with open(tools_input, 'r') as f:
                             tools_data = json.load(f)
                     except Exception as e:
+                        print(e)
                         raise CommandError(f"Error reading tools file: {str(e)}")
                 else:
                     # Try to parse as JSON string
@@ -100,4 +101,5 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'OpenAI Assistant ID: {openai_id}'))
             
         except Exception as e:
+            print(e)
             raise CommandError(f"Error creating assistant: {str(e)}")

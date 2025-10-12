@@ -20,16 +20,6 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 def process_update(bot, update_data):
-    """
-    Process a Telegram update.
-
-    Args:
-        bot (TelegramBot): The bot that received the update
-        update_data (dict): The update data from Telegram
-
-    Returns:
-        dict: Response data to send back to Telegram
-    """
     try:
         # Determine the type of update
         if 'message' in update_data:
@@ -43,23 +33,13 @@ def process_update(bot, update_data):
         elif 'message_reaction' in update_data:
             return process_message_reaction(bot, update_data['message_reaction'])
         else:
-            logger.warning(f"Unhandled update type: {update_data}")
+            print(f"Unhandled update type: {update_data}")
             return {"status": "unhandled_update_type"}
     except Exception as e:
-        logger.exception(f"Error processing update: {str(e)}")
+        print(f"Error processing update: {str(e)}")
         return {"status": "error", "message": str(e)}
 
 def process_message(bot, message_data):
-    """
-    Process a message update.
-
-    Args:
-        bot (TelegramBot): The bot that received the message
-        message_data (dict): The message data from Telegram
-
-    Returns:
-        dict: Response data
-    """
     with transaction.atomic():
         # Get or create the user
         user = get_or_create_telegram_user(message_data.get('from', {}))
@@ -185,7 +165,7 @@ def process_message(bot, message_data):
                 reply_to_message_id=message_data.get('message_id')
             )
             
-            logger.info(f"Converted {count} pre-folios to folios")
+            print(f"Converted {count} pre-folios to folios")
             return {"status": "folios_assigned", "count": count}
 
         if ('text' in message_data and
@@ -222,7 +202,7 @@ def process_message(bot, message_data):
                 reply_to_message_id=message_data.get('message_id')
             )
 
-            logger.info(f"Converted {count} operations to is_packing_ready")
+            print(f"Converted {count} operations to is_packing_ready")
             return {"status": "is_packing_ready_assigned", "count": count}
 
         # Process regular messages through OpenAI Assistant
@@ -255,7 +235,7 @@ def process_edited_message(bot, message_data):
         try:
             chat = TelegramChat.objects.get(telegram_id=message_data['chat']['id'])
         except TelegramChat.DoesNotExist:
-            logger.warning(f"Chat not found for edited message: {message_data}")
+            print(f"Chat not found for edited message: {message_data}")
             return {"status": "chat_not_found"}
 
         # Get the message
@@ -272,7 +252,7 @@ def process_edited_message(bot, message_data):
 
             return {"status": "message_updated", "message_id": str(message.id)}
         except TelegramMessage.DoesNotExist:
-            logger.warning(f"Message not found for editing: {message_data}")
+            print(f"Message not found for editing: {message_data}")
             return {"status": "message_not_found"}
 
 def process_callback_query(bot, callback_data):
@@ -323,7 +303,7 @@ def process_message_reaction(bot, reaction_data):
         try:
             chat = TelegramChat.objects.get(telegram_id=reaction_data['chat']['id'])
         except TelegramChat.DoesNotExist:
-            logger.warning(f"Chat not found for reaction: {reaction_data}")
+            print(f"Chat not found for reaction: {reaction_data}")
             return {"status": "chat_not_found"}
         print(1)
         print(chat.telegram_group)
@@ -366,7 +346,7 @@ def process_message_reaction(bot, reaction_data):
                                         reply_text,
                                         reply_to_message_id=message.telegram_id
                                     )
-                                    logger.info(f"Pre-folio {pre_folio} assigned to operation {message.operation.id}")
+                                    print(f"Pre-folio {pre_folio} assigned to operation {message.operation.id}")
 
                             # Handle thumbs down reaction (👎)
                             elif emoji_value == '👎':
@@ -386,7 +366,7 @@ def process_message_reaction(bot, reaction_data):
                                     reply_text,
                                     reply_to_message_id=message.telegram_id
                                 )
-                                logger.info(f"Operation {message.operation.id} canceled")
+                                print(f"Operation {message.operation.id} canceled")
 
                     # Remove old reactions if specified
                     for emoji in reaction_data.get('old_reaction', []):
@@ -398,7 +378,7 @@ def process_message_reaction(bot, reaction_data):
 
                     return {"status": "reaction_processed"}
                 except TelegramMessage.DoesNotExist:
-                    logger.warning(f"Message not found for reaction: {reaction_data}")
+                    print(f"Message not found for reaction: {reaction_data}")
                     return {"status": "message_not_found"}
             elif chat.telegram_group.name == "Embarques Lletra":
                 try:
@@ -438,7 +418,7 @@ def process_message_reaction(bot, reaction_data):
                                         message.telegram_id,
                                     )
 
-                                    logger.info(f"Sent missing items for operation {latest_operation.id}")
+                                    print(f"Sent missing items for operation {latest_operation.id}")
                                     return {"status": "missing_items_sent", "operation_id": latest_operation.id}
                                 else:
                                     # No operations found
@@ -451,13 +431,13 @@ def process_message_reaction(bot, reaction_data):
                                         reply_to_message_id=message.telegram_id,
                                     )
 
-                                    logger.info("No operations found for missing items")
+                                    print("No operations found for missing items")
                                     return {"status": "no_operations_found"}
 
                     # Default response for non-text messages
                     return {"status": "message_processed", "message_id": str(message.id)}
                 except TelegramMessage.DoesNotExist:
-                    logger.warning(f"Message not found for reaction: {reaction_data}")
+                    print(f"Message not found for reaction: {reaction_data}")
                     return {"status": "message_not_found"}
         return {"status": "emoji_group_not_found"}
 
@@ -661,7 +641,7 @@ def process_message_with_assistant(bot, message, user):
 
         return {"status": "assistant_response_sent"}
     except Exception as e:
-        logger.exception(f"Error processing message with assistant: {str(e)}")
+        print(f"Error processing message with assistant: {str(e)}")
 
         # Send error message to the user
         send_telegram_message(
@@ -888,7 +868,7 @@ def create_telegram_message(bot, message_data, chat, user):
                 chat=chat
             )
         except TelegramMessage.DoesNotExist:
-            logger.warning(f"Reply message not found: {reply_message_id}")
+            print(f"Reply message not found: {reply_message_id}")
 
     # Determine media type and file ID
     media_type = ''
@@ -1002,7 +982,7 @@ def send_telegram_message(bot, chat_id, text, reply_to_message_id=None, image=No
                         chat=chat
                     )
                 except TelegramMessage.DoesNotExist:
-                    logger.warning(f"Reply message not found: {reply_to_message_id}")
+                    print(f"Reply message not found: {reply_to_message_id}")
             
             # Create the message object for the outgoing message
             # Note: sender is None because it's from the bot, not a user
@@ -1018,8 +998,8 @@ def send_telegram_message(bot, chat_id, text, reply_to_message_id=None, image=No
                 media_url=media_url
             )
             
-            logger.info(f"Stored outgoing message: {message.id}")
+            print(f"Stored outgoing message: {message.id}")
         except Exception as e:
-            logger.exception(f"Error storing outgoing message: {str(e)}")
+            print(f"Error storing outgoing message: {str(e)}")
     
     return response_data

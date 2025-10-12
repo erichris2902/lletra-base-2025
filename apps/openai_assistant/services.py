@@ -86,7 +86,7 @@ class OpenAIService:
             return openai_assistant.id
 
         except Exception as e:
-            logger.error(f"Error creating assistant in OpenAI: {str(e)}")
+            print(e)
             raise
 
     def update_assistant(self, assistant: Assistant) -> str:
@@ -131,7 +131,7 @@ class OpenAIService:
             return openai_assistant.id
 
         except Exception as e:
-            logger.error(f"Error updating assistant in OpenAI: {str(e)}")
+            print(e)
             raise
 
     def delete_assistant(self, assistant: Assistant) -> bool:
@@ -152,7 +152,7 @@ class OpenAIService:
             return True
 
         except Exception as e:
-            logger.error(f"Error deleting assistant from OpenAI: {str(e)}")
+            print(e)
             raise
 
     def create_thread(self) -> str:
@@ -167,7 +167,7 @@ class OpenAIService:
             return thread.id
 
         except Exception as e:
-            logger.error(f"Error creating thread in OpenAI: {str(e)}")
+            print(e)
             raise
 
     def add_message_to_thread(self, chat: Chat, content: str, role: str = 'user') -> Tuple[str, str]:
@@ -198,7 +198,7 @@ class OpenAIService:
             return chat.openai_thread_id, message.id
 
         except Exception as e:
-            logger.error(f"Error adding message to thread in OpenAI: {str(e)}")
+            print(e)
             raise
 
     def run_assistant(self, chat: Chat) -> Run:
@@ -226,7 +226,7 @@ class OpenAIService:
             return run
 
         except Exception as e:
-            logger.error(f"Error running assistant in OpenAI: {str(e)}")
+            print(e)
             raise
 
     def wait_for_run_completion(self, thread_id: str, run_id: str, timeout: int = 300) -> Run:
@@ -287,7 +287,7 @@ class OpenAIService:
             return run
 
         except Exception as e:
-            logger.error(f"Error submitting tool outputs in OpenAI: {str(e)}")
+            print(e)
             raise
 
     def get_messages(self, thread_id: str, limit: int = 20) -> List[Dict]:
@@ -310,7 +310,7 @@ class OpenAIService:
             return messages.data
 
         except Exception as e:
-            logger.error(f"Error getting messages from OpenAI: {str(e)}")
+            print(e)
             raise
 
     def process_run_with_tools(self, chat: Chat, run: Run, user: TelegramUser=None) -> Tuple[Run, List[Message]]:
@@ -340,7 +340,7 @@ class OpenAIService:
             try:
                 tool = Tool.objects.get(assistant=chat.assistant, name=tool_name)
             except Tool.DoesNotExist:
-                logger.warning(f"Tool {tool_name} not found in database")
+                print(f"Tool {tool_name} not found in database")
 
             # Create a system message for the tool call
             system_message = Message.objects.create(
@@ -463,16 +463,6 @@ class OpenAIService:
         return new_messages
 
     def send_message_and_get_response(self, chat: Chat, content: str, user: TelegramUser=None) -> List[Message]:
-        """
-        Send a message to the assistant and get the response.
-
-        Args:
-            chat: The Chat model instance
-            content: The message content
-
-        Returns:
-            List[Message]: List of new messages (including the response)
-        """
         # Add user message to local database
         user_message = Message.objects.create(
             chat=chat,

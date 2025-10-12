@@ -5,3 +5,4 @@ data_import
 staticfiles
 credentials.json
 services.json
+.env
