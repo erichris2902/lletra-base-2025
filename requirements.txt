@@ -46,7 +46,7 @@ python-dotenv~=1.0.0
 whitenoise~=6.6.0
 
 # GIS
-GDAL>=3.4.3  # Comment this out for Heroku deployment, as it's provided by the buildpack
+#GDAL>=3.4.3  # Comment this out for Heroku deployment, as it's provided by the buildpack
 
 packaging~=25.0
 requests~=2.32.4

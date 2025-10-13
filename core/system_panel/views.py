@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 
 from core.system.models import Category, Section
 from core.system.views import AdminTemplateView, AdminListView
-from core.system_panel.forms import CategoryForm, SectionForm, AssistantForm
+from core.system_panel.forms import CategoryForm, SectionForm, AssistantForm, ActionEngineForm
 from apps.openai_assistant.models import Assistant
 
 
@@ -53,3 +53,28 @@ class AssistantListView(AdminListView):
     form_path = 'base/elements/forms/form.html'
     section = 'Asistentes de IA'
     category = 'OpenAI'
+
+
+class ActionEngineView(AdminTemplateView):
+    template_name = 'system_panel/actions_form.html'
+
+    form_action = "ExecuteActionEngine"
+    form_type = "vertical"
+    title = "Motor de acciones"
+    section = "Motor de acciones"
+    category = "Facturacion MX"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form = ActionEngineForm()
+        context.update({
+            'form_action': self.form_action,
+            'form': form,
+            'form_type': self.form_type,
+            'add_form_layout': getattr(form, 'layout', []),
+            'add_form_fields': {name: form[name] for name in form.fields},
+            'title': self.title,
+            'category': self.category,
+            'section': self.section,
+        })
+        return context
