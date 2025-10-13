@@ -56,3 +56,5 @@ fuzzywuzzy~=0.18.0
 polyline~=2.0.2
 geopy~=2.4.1
 folium~=0.20.0
+
+python-docx~=1.2.0
