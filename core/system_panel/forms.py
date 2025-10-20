@@ -86,3 +86,37 @@ class ActionEngineForm(BaseForm):
             action_classes.replace("form-control", "").strip() + " form-select"
         ).strip()
         self.fields["file"].widget.attrs.setdefault("accept", ".xlsx,.xls")
+
+
+class ReportEngineForm(BaseForm):
+
+    REPORT_CHOICES = [
+        ("folios", "Folios"),
+        ("facturacion", "Facturacion"),
+        ("packing_asturiano", "Packing de Asturiano"),
+    ]
+    layout = [
+        {
+            "type": "row",
+            "fields": [
+                {"name": "report_type", "size": 6},
+                {"name": "fecha_inicial", "size": 3},
+                {"name": "fecha_final", "size": 3},
+            ],
+        },
+    ]
+
+    report_type = forms.ChoiceField(
+        label="Tipo de reporte",
+        choices=REPORT_CHOICES,
+    )
+
+    fecha_inicial = forms.DateField(
+        label="Fecha inicial",
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+
+    fecha_final = forms.DateField(
+        label="Fecha final",
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )

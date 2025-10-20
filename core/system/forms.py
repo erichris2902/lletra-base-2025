@@ -38,25 +38,45 @@ class BaseForm(forms.Form):
         super().__init__(*args, **kwargs)
         for form in self.visible_fields():
             field = form.field
-            field.widget.attrs['class'] = 'form-control'
+            classes = field.widget.attrs.get('class', '')
+            if 'form-control' not in classes:
+                classes += ' form-control'
+            # Si el campo es de tipo DateField o DateTimeField
+            if isinstance(field, DateTimeField):
+                field.widget = TextInput(attrs=field.widget.attrs)
+                if 'flatpickr' not in classes:
+                    classes += ' flatpickr'
+                if 'flatpickr-datetime' not in classes:
+                    classes += ' flatpickr-datetime'
+                # 🟨 Aquí se ajusta al formato que espera Flatpickr (d/m/Y H:i)
+                initial_value = self.initial.get(form.name)
+                if initial_value:
+                    if isinstance(initial_value, datetime):
+                        field.initial = initial_value.strftime('%d/%m/%Y %H:%M')
+                    else:
+                        try:
+                            parsed = initial_value
+                            if parsed:
+                                field.initial = parsed.strftime('%d/%m/%Y %H:%M')
+                        except Exception:
+                            pass
+            elif isinstance(field, DateField):
+                field.widget = TextInput(attrs=field.widget.attrs)
+                if 'flatpickr' not in classes:
+                    classes += ' flatpickr'
+                if 'flatpickr-date' not in classes:
+                    classes += ' flatpickr-date'
+            field.widget.attrs['class'] = classes.strip()
             field.widget.attrs['autocomplete'] = 'off'
             field.widget.attrs['placeholder'] = form.field.label
             field.widget.attrs['size'] = '12'
 
-            # Campo de fecha o datetime
-            if isinstance(field, DateTimeField):
-                field.widget = TextInput(attrs=field.widget.attrs)
-                field.widget.attrs['class'] += ' flatpickr flatpickr-datetime'
-            elif isinstance(field, DateField):
-                field.widget = TextInput(attrs=field.widget.attrs)
-                field.widget.attrs['class'] += ' flatpickr flatpickr-date'
-
-        # Formatear fechas iniciales para Flatpickr
-        for name, value in self.initial.items():
-            if isinstance(value, datetime):
-                self.initial[name] = localtime(value).strftime("%d/%m/%Y %H:%M")
-            elif isinstance(value, date):
-                self.initial[name] = value.strftime("%d/%m/%Y")
+            # Formatear fechas iniciales para Flatpickr
+            for name, value in self.initial.items():
+                if isinstance(value, datetime):
+                    self.initial[name] = localtime(value).strftime("%d/%m/%Y %H:%M")
+                elif isinstance(value, date):
+                    self.initial[name] = value.strftime("%d/%m/%Y")
 
 
 class BaseModelForm(ModelForm):

@@ -1,0 +1,116 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+
+{% block extra_header %}
+    <style>
+        .wrap {
+            max-width: 720px;
+            margin: 16px auto;
+            font-family: system-ui
+        }
+
+        video {
+            transform: scaleX(-1);
+            width: 100%;
+            border-radius: 8px
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            margin: 8px 0
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="wrap">
+        <h1>Capturar empleado</h1>
+
+        <div class="row">
+            <button id="startBtn">Iniciar cámara</button>
+            <button id="captureBtn" disabled>Capturar muestra</button>
+            <button id="finishBtn" disabled>Finalizar y subir</button>
+            <span id="count">0 muestras</span>
+        </div>
+
+        <video id="video" autoplay playsinline></video>
+        <p id="status">Cargando modelos...</p>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <!-- Cargar face-api.js antes del script local -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script>
+        const API_BASE = "/api";                      // tu backend
+        const WEIGHTS = `${location.origin}/static/lib/capture/weights`; // ruta a modelos
+        let video, samples = [];
+
+        async function loadModels() {
+            await faceapi.nets.tinyFaceDetector.loadFromUri(WEIGHTS);
+            await faceapi.nets.faceLandmark68Net.loadFromUri(WEIGHTS);
+            await faceapi.nets.faceRecognitionNet.loadFromUri(WEIGHTS);
+        }
+
+        async function startCam() {
+            video = document.getElementById('video');
+            const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
+            video.srcObject = stream;
+            await new Promise(r => video.onloadedmetadata = r);
+        }
+
+        async function capture() {
+            const det = await faceapi
+                .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({inputSize: 320, scoreThreshold: .5}))
+                .withFaceLandmarks()
+                .withFaceDescriptor();
+
+            if (!det) {
+                document.getElementById('status').textContent = "No se detecta rostro";
+                return;
+            }
+            // descriptor 512D
+            samples.push(Array.from(det.descriptor));
+            document.getElementById('count').textContent = `${samples.length} muestras`;
+            document.getElementById('status').textContent = "Muestra capturada";
+        }
+
+        async function finish() {
+            if (samples.length < 5) {
+                if (!confirm("Tienes menos de 5 muestras. ¿Subir de todas formas?")) return;
+            }
+
+            // Prepara los parámetros
+            const form = new FormData();
+            form.append('action', 'add'); // por convención si lo necesitas
+            form.append('descriptors', JSON.stringify(samples));
+            form.append('csrfmiddlewaretoken', csrfToken);
+
+            // Usa tu helper de AJAX
+            submit_with_ajax(window.location.pathname, form, function (data) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Embeddings guardados',
+                    text: `Se ha guardado el empleado`
+                }).then(() => {
+                    window.history.back(); // 🔄 recarga la página actual
+                });
+            }, function (data) {
+                Swal.fire({icon: 'error', title: 'Error', text: data.error || 'No se pudo guardar'});
+            });
+        }
+
+        (async function init() {
+            await loadModels();
+            document.getElementById('status').textContent = "Listo para enrolar";
+            document.getElementById('startBtn').onclick = async () => {
+                await startCam();
+                document.getElementById('captureBtn').disabled = false;
+                document.getElementById('finishBtn').disabled = false;
+            };
+            document.getElementById('captureBtn').onclick = capture;
+            document.getElementById('finishBtn').onclick = finish;
+        })();
+    </script>
+{% endblock %}

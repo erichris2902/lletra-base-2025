@@ -1,0 +1,67 @@
+<script>
+    {% if datatable_actions %}
+        {% include 'static/employee/dropdown.js' %}
+    {% endif %}
+    function getData() {
+        tblClient = new DataTable('#main_datatable', {
+            order: [[0, "desc"]],
+            dom: 'frtip',
+            buttons: [
+                'copyHtml5', 'excelHtml5', 'csvHtml5', 'pdfHtml5', 'colvis'
+            ],
+            lengthChange: true,
+            pageLength: 50,
+            responsive: true,
+            autoWidth: false,
+            destroy: true,
+            deferRender: true,
+            ajax: {
+                url: window.location.pathname,
+                type: 'POST',
+                data: function (d) {
+                    return {
+                        action: 'searchdata',
+                        csrfmiddlewaretoken: csrfToken
+                    };
+                },
+                dataSrc: ""
+            },
+            columns: [
+                {% for column in datatable_keys %}
+                    {"data": "{{ column }}"},
+                {% endfor %}
+                {% if datatable_actions %}
+                    {"data": "id"},
+                {% endif %}
+            ],
+            columnDefs: [
+                {
+                    targets: [-1],
+                    className: 'text-center',
+                    orderable: false,
+                    render: function (data, type, row) {
+                        {% if datatable_actions %}
+                            return dropdown(data, type, row);
+                        {% else %}
+                            return data;
+                        {% endif %}
+                    }
+                }
+            ],
+            rowCallback: function (row, data) {
+                {% if callback_js %}
+                    {{ callback_js }}
+                {% else %}
+                    {% include 'static/employee/row_callback.js' %}
+                {% endif %}
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        getData();
+        {% if datatable_actions %}
+            {% include 'static/employee/actions.js' %}
+        {% endif %}
+    });
+</script>

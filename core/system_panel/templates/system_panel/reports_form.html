@@ -1,0 +1,57 @@
+{% extends "base/layout.html" %}
+{% load static %}
+
+{% block title %}Reportería{% endblock %}
+
+{% block content %}
+    <div class="pagetitle d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="bx bx-bar-chart-alt-2 me-2"></i>Reportería</h1>
+            <nav>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Sistema</a></li>
+                    <li class="breadcrumb-item active">Reportería</li>
+                </ol>
+            </nav>
+        </div>
+
+    </div>
+
+    <section class="section">
+        <div class="row">
+            <div class="col-12 col-lg-10 col-xl-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bx bx-line-chart me-2"></i>Generar reporte</h5>
+                    </div>
+
+                    <form id="ReportForm" method="post">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            {% include "base/elements/forms/render_with_layout.html" with add_form=form add_form_layout=add_form_layout add_form_fields=add_form_fields %}
+                        </div>
+
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bx bx-bar-chart me-1"></i> Generar reporte
+                                </button>
+                                <a href="javascript:history.back()" class="btn btn-secondary">
+                                    <i class="bx bx-x me-1"></i> Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        init_catalogs();
+    </script>
+
+{% endblock %}

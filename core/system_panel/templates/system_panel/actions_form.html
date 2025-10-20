@@ -4,23 +4,31 @@
 {% block title %}Motor de acciones{% endblock %}
 
 {% block content %}
-<div class="pagetitle">
-    <h1>Motor de acciones</h1>
-    <nav>
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/">Facturación</a></li>
-            <li class="breadcrumb-item active">Motor de acciones</li>
-        </ol>
-    </nav>
+<div class="pagetitle d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bx bx-cog me-2"></i>Motor de acciones</h1>
+        <nav>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Sistema</a></li>
+                <li class="breadcrumb-item active">Motor de acciones</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- 🔹 Botón para ir a los Templates -->
+    <a href="https://docs.google.com/spreadsheets/d/1aKLGNr-fVZygNE8-tnWRp0GVk93-oC2a_11FwlaKWVU/edit?usp=sharing" class="btn btn-outline-primary d-flex align-items-center"  target="_blank">
+        <i class="bx bx-file me-2"></i> Ver Templates
+    </a>
 </div>
 
 <section class="section">
     <div class="row">
         <div class="col-12 col-lg-10 col-xl-8">
             <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Carga de acciones</h5>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bx bx-task me-2"></i>Carga de acciones</h5>
                 </div>
+
                 <form id="ActionEngineForm" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="{{ form_action }}">
@@ -29,8 +37,12 @@
                     </div>
                     <div class="card-footer">
                         <div class="d-flex justify-content-end gap-2">
-                            <button type="submit" class="btn btn-primary">Ejecutar acción</button>
-                            <a href="javascript:history.back()" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bx bx-play-circle me-1"></i> Ejecutar acción
+                            </button>
+                            <a href="javascript:history.back()" class="btn btn-secondary">
+                                <i class="bx bx-x me-1"></i> Cancelar
+                            </a>
                         </div>
                     </div>
                 </form>

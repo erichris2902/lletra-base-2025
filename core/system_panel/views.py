@@ -1,9 +1,11 @@
+import dateutil
+from dateutil.utils import today
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 
 from core.system.models import Category, Section
 from core.system.views import AdminTemplateView, AdminListView
-from core.system_panel.forms import CategoryForm, SectionForm, AssistantForm, ActionEngineForm
+from core.system_panel.forms import CategoryForm, SectionForm, AssistantForm, ActionEngineForm, ReportEngineForm
 from apps.openai_assistant.models import Assistant
 
 
@@ -67,6 +69,33 @@ class ActionEngineView(AdminTemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         form = ActionEngineForm()
+        context.update({
+            'form_action': self.form_action,
+            'form': form,
+            'form_type': self.form_type,
+            'add_form_layout': getattr(form, 'layout', []),
+            'add_form_fields': {name: form[name] for name in form.fields},
+            'title': self.title,
+            'category': self.category,
+            'section': self.section,
+        })
+        return context
+
+class ReportEngineView(AdminTemplateView):
+    template_name = 'system_panel/reports_form.html'
+
+    form_action = "ExecuteReportEngine"
+    form_type = "vertical"
+    title = "Motor de reportes"
+    section = "Motor de reportes"
+    category = "Reporteria"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        report_form = ReportEngineForm()
+        report_form.fields["fecha_inicial"].initial = today()
+        report_form.fields["fecha_final"].initial = today() + dateutil.relativedelta.relativedelta(days=1)
+        form = report_form
         context.update({
             'form_action': self.form_action,
             'form': form,

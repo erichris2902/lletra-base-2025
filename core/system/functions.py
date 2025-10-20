@@ -91,6 +91,8 @@ def dispatch_user(system):
         return True, reverse_lazy('rh_panel:dashboard')
     elif system == SystemEnum.COMERCIAL:
         return True, reverse_lazy('commercial_panel:dashboard')
+    elif system == SystemEnum.ATTENDANCE:
+        return True, reverse_lazy('rh_panel:capture_attendance')
     elif system == SystemEnum.NONE:
         return True, reverse_lazy('admin_panel:logout')
     return False, ""

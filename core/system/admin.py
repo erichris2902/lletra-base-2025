@@ -225,3 +225,10 @@ admin.site.register(LeadIndustry)
 admin.site.register(LeadExpense)
 admin.site.register(Lead)
 admin.site.register(Quotation)
+
+
+from django.contrib import admin
+from core.rh_panel.models import Employee, Embedding
+
+admin.site.register(Employee)
+admin.site.register(Embedding)

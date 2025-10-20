@@ -21,8 +21,8 @@ def telegram_webhook(request, bot_username):
     try:
         # Get the bot by username
         bot = TelegramBot.objects.get(username=bot_username, is_active=True)
-        response_data = {"success": True}
-        return JsonResponse(response_data)
+        #response_data = {"success": True}
+        #return JsonResponse(response_data)
         
         # Parse the update data
         update_data = json.loads(request.body)
