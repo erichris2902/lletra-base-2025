@@ -1,6 +1,5 @@
 import os
 import time
-import logging
 import json
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
@@ -14,8 +13,6 @@ import uuid
 
 from ..telegram_bots.models import TelegramUser
 from ..telegram_bots.quote import register_quote
-
-logger = logging.getLogger(__name__)
 
 
 def make_json_safe(obj):

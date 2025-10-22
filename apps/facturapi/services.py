@@ -1,6 +1,5 @@
 import os
 import json
-import logging
 from decimal import Decimal, ROUND_HALF_UP
 
 import requests
@@ -9,7 +8,6 @@ from django.utils.dateparse import parse_datetime
 
 from apps.facturapi.models import FacturapiInvoice, FacturapiInvoiceItem, FacturapiProduct, FacturapiInvoicePayment
 
-logger = logging.getLogger(__name__)
 FACTURAPI_BASE_URL = 'https://www.facturapi.io/v2'
 DEFAULT_TIMEOUT = 10  # segundos
 D2 = Decimal('0.01')

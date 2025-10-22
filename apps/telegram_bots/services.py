@@ -1,4 +1,3 @@
-import logging
 import requests
 import json
 
@@ -16,7 +15,6 @@ from .models import (
     TelegramMessage, TelegramReaction, TelegramWebApp
 )
 
-logger = logging.getLogger(__name__)
 User = get_user_model()
 
 def process_update(bot, update_data):

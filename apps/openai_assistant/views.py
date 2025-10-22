@@ -14,12 +14,10 @@ from rest_framework.response import Response
 from rest_framework import status
 
 import json
-import logging
 
 from .models import Assistant, Chat, Message, Tool, ToolExecution
 from .services import OpenAIService
 
-logger = logging.getLogger(__name__)
 openai_service = OpenAIService()
 
 # Web views for UI

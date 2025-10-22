@@ -3,7 +3,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 import json
-import logging
 import hashlib
 import hmac
 
@@ -12,7 +11,6 @@ from .models import (
 )
 from .services import process_update
 
-logger = logging.getLogger(__name__)
 User = get_user_model()
 
 @csrf_exempt

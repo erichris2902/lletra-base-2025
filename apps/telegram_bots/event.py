@@ -1,13 +1,10 @@
 import json
-import logging
 from urllib.request import Request
 from googleapiclient.discovery import build
 
 from apps.google_drive.services import get_credentials_from_user
 from apps.telegram_bots.models import TelegramUser
 from core.system.models import SystemUser
-
-logger = logging.getLogger(__name__)
 
 
 def register_event(tool_input, telegram_user: TelegramUser=None):

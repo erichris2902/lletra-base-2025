@@ -9,7 +9,6 @@ from django.db.models import Q
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
-import logging
 
 from django.utils.safestring import mark_safe
 
@@ -21,7 +20,6 @@ from .forms import FacturapiTaxForm, FacturapiInvocieForm, SelectItemForm, Factu
 from .models import FacturapiInvoice, FacturapiTax, FacturapiInvoicePayment
 from .models import FacturapiProduct, FacturapiInvoiceItem
 
-logger = logging.getLogger(__name__)
 PRODUCT_KEY_RE = re.compile(r'^products\[(\d+)\]\[(\w+)\]$')
 PAYMENT_KEY_RE = re.compile(r'^payments\[(\d+)\]\[(\w+)\]$')
 

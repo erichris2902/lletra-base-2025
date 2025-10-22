@@ -1,5 +1,4 @@
 import os
-import logging
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseNotFound
@@ -19,7 +18,6 @@ from .services import (
 )
 from .models import GoogleDriveCredential, GoogleDriveFolder, GoogleDriveFile
 
-logger = logging.getLogger(__name__)
 
 
 @login_required

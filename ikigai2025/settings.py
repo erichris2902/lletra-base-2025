@@ -52,7 +52,6 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
 
     # Third-party apps
-    'channels',  # For WebSocket support
     'storages',  # For AWS S3 and other storage backends
     'rest_framework',  # For API development
     'widget_tweaks',  # For form rendering
@@ -144,22 +143,6 @@ if db_from_env:
     # Ensure we're using PostGIS
     DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 
-
-
-ASGI_APPLICATION = "lletra2025.asgi.application"
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [(
-                "redis-18292.c83.us-east-1-2.ec2.redns.redis-cloud.com",
-                18292
-            )],
-            "password": "DreamBack12!",
-        },
-    },
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -285,49 +268,6 @@ if not DEBUG:
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
-
-# Import local settings if they exist
-for module_name in os.environ.get('LOCAL_SETTINGS_MODULES', '').split(','):
-    if module_name:
-        try:
-            module = importlib.import_module(f'ikigai2025.local_settings.{module_name}')
-            globals().update({k: v for k, v in vars(module).items() if not k.startswith('_')})
-        except ImportError:
-            print(f"Cannot import {module_name} settings.")
-
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,  # Mantiene los logs predeterminados de Django
-    'formatters': {
-        'verbose': {
-            'format': '{asctime} [{levelname}] {name} - {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname}: {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'file': {
-            'level': 'DEBUG',  # O INFO, WARNING, etc.
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'debug.log'),  # Cambia el nombre si quieres
-            'formatter': 'verbose'
-        },
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-    },
-    'loggers': {
-        'apps.telegram_bots': {  # Puedes usar "__name__" o el nombre del paquete
-            'handlers': ['file', 'console'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-    }
-}
 
 
 REDIS_URL = os.environ.get("REDISCLOUD_URL")

@@ -199,9 +199,7 @@ def get_embarques_lletra_group_info():
         tuple: (bot_token, group_chat_id, bot) or (None, None, None) if not found
     """
     from apps.telegram_bots.models import TelegramBot
-    import logging
 
-    logger = logging.getLogger(__name__)
 
     try:
         bot_token = TelegramBot.objects.get(username='prueba_lletra_bot').token
@@ -248,9 +246,7 @@ def send_operation_missing_items(operation_id, chat_id, message_id=None):
         bool: True if message was sent successfully
     """
     from apps.telegram_bots.models import TelegramBot, TelegramMessage, TelegramChat
-    import logging
 
-    logger = logging.getLogger(__name__)
 
     try:
         # Get the operation

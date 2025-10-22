@@ -1,7 +1,6 @@
 import os
 import io
 import json
-import logging
 import hashlib
 from datetime import datetime, timedelta
 from google.oauth2.credentials import Credentials
@@ -14,7 +13,6 @@ from django.utils import timezone
 
 from .models import GoogleDriveCredential, GoogleDriveServiceAccount, GoogleDriveFolder, GoogleDriveFile
 
-logger = logging.getLogger(__name__)
 
 # Google Drive API scopes
 SCOPES = ['https://www.googleapis.com/auth/drive.file',

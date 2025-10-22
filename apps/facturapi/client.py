@@ -1,6 +1,5 @@
 # apps/facturapi/client.py
 import os
-import logging
 import requests
 from typing import Dict, Any
 from django.conf import settings
@@ -11,7 +10,6 @@ from .mappers import (
     invoice_to_facturapi_payload,
 )
 
-logger = logging.getLogger(__name__)
 
 FACTURAPI_BASE_URL = "https://www.facturapi.io/v2"
 DEFAULT_TIMEOUT = 25

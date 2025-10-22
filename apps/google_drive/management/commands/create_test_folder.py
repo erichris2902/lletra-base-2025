@@ -1,4 +1,3 @@
-import logging
 import os
 
 from django.core.management.base import BaseCommand, CommandError
@@ -9,7 +8,6 @@ from apps.google_drive.services import (
     create_folder_with_service_account, check_folder_exists_with_service_account, get_drive_service
 )
 
-logger = logging.getLogger(__name__)
 User = get_user_model()
 
 # Check if service account should be used
