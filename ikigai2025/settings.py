@@ -144,12 +144,19 @@ if db_from_env:
     # Ensure we're using PostGIS
     DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 
-# Channels configuration
+
+
+ASGI_APPLICATION = "lletra2025.asgi.application"
+
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [os.environ.get('REDIS_URL', 'redis://localhost:6379/0')],
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(
+                "redis-18292.c83.us-east-1-2.ec2.redns.redis-cloud.com",
+                18292
+            )],
+            "password": "DreamBack12!",
         },
     },
 }
@@ -321,6 +328,18 @@ LOGGING = {
         },
     }
 }
+
+
+REDIS_URL = os.environ.get("REDISCLOUD_URL")
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+
+# Opcional: ajustes adicionales
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
 
 # Configure Django Heroku
 django_heroku.settings(locals())

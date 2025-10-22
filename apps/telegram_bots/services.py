@@ -354,8 +354,8 @@ def process_message_reaction(bot, reaction_data):
                                 message.operation.status = 'CANCELED'
 
                                 # Delete any assigned folio/pre-folio
-                                #message.operation.folio = None
-                                #message.operation.pre_folio = None
+                                message.operation.folio = None
+                                message.operation.pre_folio = None
                                 message.operation.save()
 
                                 # Reply with cancellation confirmation

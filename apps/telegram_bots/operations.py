@@ -33,10 +33,11 @@ def register_operations(tool_input):
 
                     results.append({
                         "status": "success",
-                        "operation_id": operation.id,
-                        "folio": operation.pre_folio
+                        "operation": operation_data,
+                        "message": "se genero exitosamente la operacion"
                     })
             except Exception as e:
+                print("ERROR")
                 print(e)
                 results.append({
                     "status": "error",
@@ -108,9 +109,13 @@ def create_operation_from_data(data):
 
     if not route:
         print("ROUTE NOT FOUND")
+        print(data)
+        print(1)
         origin = DeliveryLocation.get_or_create_by_str(data.get('origen'))
+        print(2)
         #destination = get_or_create_delivery_location(data.get('destino'))
         destination = DeliveryLocation.get_or_create_by_str(data.get('destino'))
+        print(3)
         print(origin)
         print(destination)
         if shipment_type.ASTURIANO:

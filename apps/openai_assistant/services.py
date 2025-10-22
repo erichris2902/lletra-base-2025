@@ -247,6 +247,7 @@ class OpenAIService:
                 thread_id=thread_id,
                 run_id=run_id
             )
+            print(run.status)
 
             if run.status in ['completed', 'failed', 'cancelled', 'expired']:
                 return run
@@ -358,10 +359,10 @@ class OpenAIService:
                 status='in_progress',
                 openai_tool_call_id=tool_call.id
             )
-            print(chat)
-            print(run)
-            print(user)
-            print(tool_name)
+            #print(chat)
+            #print(run)
+            #print(user)
+            #print(tool_name)
             # Execute the appropriate tool based on the tool name
             output = None
             if tool_name == 'register_operations':
@@ -392,7 +393,9 @@ class OpenAIService:
                 "tool_call_id": str(tool_call.id),
                 "output": json.dumps(output_safe)
             })
-
+            print(output_safe)
+        print("-----------")
+        print(tool_outputs)
         # Submit tool outputs back to OpenAI
         updated_run = self.submit_tool_outputs(
             thread_id=chat.openai_thread_id,

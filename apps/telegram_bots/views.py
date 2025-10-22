@@ -30,6 +30,7 @@ def telegram_webhook(request, bot_username):
         
         # Process the update
         response_data = process_update(bot, update_data)
+        print("FINALIZAO")
         print(response_data)
         return JsonResponse(response_data)
     except TelegramBot.DoesNotExist:

@@ -5,9 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy
 from django.utils import timezone
-from django_celery_results.utils import now_localtime
 
 from core.rh_panel.forms import EmployeeForm
 from core.rh_panel.models import Employee, Embedding, Attendance

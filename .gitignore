@@ -6,3 +6,4 @@ staticfiles
 credentials.json
 services.json
 .env
+commands.txt
