@@ -1,2 +1,2 @@
-web: daphne ikigai2025.wsgi:application --port $PORT --bind 0.0.0.0
+web: gunicorn ikigai2025.wsgi
 worker: celery -A ikigai2025 worker --loglevel=info

@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'storages',  # For AWS S3 and other storage backends
     'rest_framework',  # For API development
     'widget_tweaks',  # For form rendering
-    'django_celery_results',  # For Celery task results
+    #'django_celery_results',  # For Celery task results
 
     # Project apps - System (Base)
     'core.system',
@@ -141,6 +141,9 @@ db_from_env = dj_database_url.config(conn_max_age=600, ssl_require=True)
 if db_from_env:
     DATABASES['default'].update(db_from_env)
     # Ensure we're using PostGIS
+    DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+
+if 'ENGINE' not in DATABASES['default'] or 'postgis' not in DATABASES['default']['ENGINE']:
     DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 
 
@@ -270,7 +273,7 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
 
-REDIS_URL = os.environ.get("REDISCLOUD_URL")
+REDIS_URL = os.environ.get("REDISCLOUD_URL", "redis://localhost:6379/0")
 
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
