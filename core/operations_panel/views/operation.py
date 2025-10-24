@@ -5,17 +5,21 @@ from collections import defaultdict
 
 from django.db import transaction
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 
 from core.operations_panel.choices import AsturianoPacking
+from core.operations_panel.forms.cargo import AssignCargoToOperationForm
 from core.operations_panel.forms.distribution_packing import DistributionPackingForm
 from core.operations_panel.forms.operation import OperationForm, OperationFolioWebsiteForm, OperationApprovalForm, \
     OperationFolioForm, OperationShipmentForm
 from core.operations_panel.forms.route import RouteShipmentForm
-from core.operations_panel.forms.transported_product import TransportedProductsFormByCSV
+from core.operations_panel.forms.transported_product import TransportedProductsFormByCSV, \
+    OperationTransportedProductForm
+from core.operations_panel.models import Cargo
 from core.operations_panel.models.distribution_packing import DistributionPacking
 from core.operations_panel.models.operation import Operation
 from core.operations_panel.models.route import Route
-from core.operations_panel.models.transported_product import TransportedProduct
+from core.operations_panel.models.transported_product import TransportedProduct, OperationTransportedProduct
 from core.system.views import AdminListView
 
 
@@ -163,6 +167,13 @@ class ShipmentOperationListView(AdminListView):
     category = 'Embarques'
     dropdown_action_path = 'operations_panel/shipment/table/actions.js'
     static_path = 'operations_panel/shipment/table/base.html'
+    catalogs = [
+        {
+            'id': 'id_products',
+            'service': 'TransportedProducts',
+            'placeholder': '',
+        },
+    ]
 
     def parse_packing_data(self, querydict):
         data = defaultdict(dict)
@@ -395,3 +406,66 @@ class ShipmentOperationListView(AdminListView):
     def get_queryset(self):
         # Puedes adaptar esto si usas SoftDeleteModel
         return self.model.objects.exclude(Q(folio__isnull=True) | Q(folio="")).all()
+
+    def handle_assign_cargo(self, request, data):
+        operation_id = request.POST.get("operation_id")
+        cargo_id = request.POST.get("cargo_id")
+
+        operation = get_object_or_404(Operation, pk=operation_id)
+        cargo = get_object_or_404(Cargo, pk=cargo_id)
+
+        for product in cargo.products.all():
+            OperationTransportedProduct.objects.create(
+                operation=operation,
+                transported_product=product,
+                weight=product.weight,
+                amount=product.amount
+            )
+
+        data["success"] = True
+        data["message"] = f"Productos de la carga '{cargo.identifier}' asignados a {operation.identifier}"
+        return data
+
+    def handle_assignproducts(self, request, data):
+        operation_id = request.POST["id"]
+        product_ids = request.POST["transported_product"].split(",")
+        weight = request.POST["weight"].split(",")
+        amount = request.POST["amount"].split(",")
+
+        operation = get_object_or_404(Operation, pk=operation_id)
+        products = TransportedProduct.objects.filter(id__in=product_ids)
+
+        for index in range(0, products.count()):
+            OperationTransportedProduct.objects.create(
+                operation=operation,
+                transported_product=products[index],
+                weight=products[index].weight,
+                amount=products[index].amount
+            )
+
+            products[index].id = None
+            products[index].weight = weight[index]
+            products[index].amount = amount[index]
+            products[index].save()
+            operation.transported_products.add(products[index])
+            operation.save()
+
+        data["success"] = True
+        data["message"] = f"{products.count()} productos asignados a {operation.folio}"
+        return data
+
+    def handle_get_assign_cargo_form(self, request, data):
+        operation = Operation.objects.get(pk=request.POST.get('id'))
+        data['id'] = str(operation.id)
+        data["form"] = self.render_others_form(request, operation, AssignCargoToOperationForm(), "AssignCargo", data=data)
+        return data
+
+    def handle_get_assign_products_form(self, request, data):
+        operation = Operation.objects.get(pk=request.POST.get('id'))
+        self.form_path = 'operations_panel/shipment/transported_product_form.html'
+        data['id'] = str(operation.id)
+        data['products'] = []
+        for product in operation.transported_products.all():
+            data['products'].append(json.loads(product.to_json()))
+        data["form"] = self.render_others_form(request, operation, OperationTransportedProductForm(), "AssignProducts", data=data)
+        return data

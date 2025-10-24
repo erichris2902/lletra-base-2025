@@ -1,5 +1,6 @@
 from django.urls import path
-from . import views
+
+from apps.openai_assistant import views
 
 app_name = 'openai_assistant'
 
@@ -16,8 +17,7 @@ urlpatterns = [
     path('chats/create/<uuid:assistant_id>/', views.chat_create, name='chat_create_with_assistant'),
     path('chats/<uuid:chat_id>/', views.chat_detail, name='chat_detail'),
     path('chats/<uuid:chat_id>/delete/', views.chat_delete, name='chat_delete'),
-    path('chats/<uuid:chat_id>/send/', views.send_message, name='send_message'),
-    
+
     # API URLs
     path('api/assistants/', views.api_assistant_list, name='api_assistant_list'),
     path('api/assistants/<uuid:assistant_id>/', views.api_assistant_detail, name='api_assistant_detail'),
@@ -25,6 +25,6 @@ urlpatterns = [
     
     path('api/chats/', views.api_chat_list, name='api_chat_list'),
     path('api/chats/<uuid:chat_id>/', views.api_chat_detail, name='api_chat_detail'),
-    path('api/chats/create/', views.api_chat_create, name='api_chat_create'),
+    path('api/chats/create/', views.chat_create, name='api_chat_create'),
     path('api/chats/<uuid:chat_id>/send/', views.api_send_message, name='api_send_message'),
 ]

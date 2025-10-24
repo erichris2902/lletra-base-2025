@@ -5,9 +5,6 @@ from core.system.models import BaseModel
 
 
 class Cargo(BaseModel):
-    """
-    Model for cargo (load). A cargo can have multiple transported products.
-    """
     identifier = models.CharField(max_length=255, verbose_name="Identificador")
     products = models.ManyToManyField(TransportedProduct, related_name="cargos", verbose_name="Productos transportados")
 

@@ -291,3 +291,7 @@ CELERY_WORKER_MAX_MEMORY_PER_CHILD = 100000  # ~100MB
 
 # Configure Django Heroku
 django_heroku.settings(locals())
+
+
+import os
+print(os.getenv("REDISCLOUD_URL"))

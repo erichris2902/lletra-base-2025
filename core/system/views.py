@@ -114,12 +114,15 @@ class AdminListView(AdminView, ListView):
 
     def render_others_form(self, request, instance, form, action, data=None):
         form_instance = form
+        print(data)
         context = {
             'form': form_instance,
             'form_action': action,
             'form_type': self.form_type,
             'id': instance.id if instance else None,
-            'data': data
+            'data': data,
+            'add_form_layout': getattr(form_instance, 'layout', []),
+            'add_form_fields': {name: form_instance[name] for name in form_instance.fields},
         }
         html = render(request, self.form_path, context)
         return html.content.decode("utf-8")

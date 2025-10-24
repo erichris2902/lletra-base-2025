@@ -10,9 +10,9 @@ from django.utils.crypto import get_random_string
 
 from core.sales_panel.models.commercial import StatusDeCotizacion
 from core.system.functions import get_file_path
-from .models import (
-    TelegramBot, TelegramUser, TelegramChat, 
-    TelegramMessage, TelegramReaction, TelegramWebApp
+from apps.telegram_bots.models import (
+    TelegramBot, TelegramUser, TelegramChat,
+    TelegramMessage, TelegramReaction, TelegramWebApp, TelegramGroup
 )
 
 User = get_user_model()
@@ -55,8 +55,6 @@ def process_message(bot, message_data):
                     "No tienes permiso para interactuar con este bot"
                 )
             return {"status": "permission_denied"}
-
-        # If we get here, user is not None
 
         # Add user to chat participants if not already there
         if chat and chat.type == 'private':
@@ -132,7 +130,6 @@ def process_message(bot, message_data):
             message_data['text'].strip().lower() == "asignar folios" and
             chat.telegram_group and 
             chat.telegram_group.name == "Folios Lletra"):
-            
 
             # Find all operations with pre-folios but no folios
             from core.operations_panel.models import Operation
@@ -203,17 +200,17 @@ def process_message(bot, message_data):
             print(f"Converted {count} operations to is_packing_ready")
             return {"status": "is_packing_ready_assigned", "count": count}
 
-        # Process regular messages through OpenAI Assistant
         if 'text' in message_data:
-            # For group chats, only process messages that mention the bot
             if chat.type in ['group', 'supergroup']:
-                # Check if the bot is mentioned in the message
                 if f"@{bot.username}" in message_data['text']:
                     return process_message_with_assistant(bot, message, user)
-                # If not mentioned, don't process the message
                 return {"status": "not_mentioned_in_group"}
-            # For private chats, process all messages
             else:
+                send_telegram_message(
+                    bot,
+                    chat.telegram_id,
+                    "Procesando..."
+                )
                 return process_message_with_assistant(bot, message, user)
     return {"status": "not_found"}
 
@@ -612,16 +609,6 @@ def handle_switch_assistant_command(bot, message, assistant_id):
     return {"status": "assistant_switched" if success else "assistant_switch_failed"}
 
 def process_message_with_assistant(bot, message, user):
-    """
-    Process a message through the OpenAI Assistant.
-
-    Args:
-        bot (TelegramBot): The bot that received the message
-        message (TelegramMessage): The message object
-
-    Returns:
-        dict: Response data
-    """
     from .openai_integration import TelegramOpenAIIntegration
 
     try:
@@ -795,7 +782,6 @@ def get_or_create_telegram_chat(chat_data):
 
         # Check if we need to associate with a TelegramGroup or create one
         if chat_type in ['group', 'supergroup'] and not chat.telegram_group:
-            from .models import TelegramGroup
             try:
                 group = TelegramGroup.objects.get(telegram_id=telegram_id)
                 chat.telegram_group = group
@@ -826,7 +812,6 @@ def get_or_create_telegram_chat(chat_data):
 
         # If it's a group chat, try to associate with a TelegramGroup or create one
         if chat_type in ['group', 'supergroup']:
-            from .models import TelegramGroup
             try:
                 group = TelegramGroup.objects.get(telegram_id=telegram_id)
                 chat.telegram_group = group
@@ -908,19 +893,7 @@ def create_telegram_message(bot, message_data, chat, user):
     return message
 
 def send_telegram_message(bot, chat_id, text, reply_to_message_id=None, image=None, **kwargs):
-    """
-    Send a message to a Telegram chat and store it in the database.
-
-    Args:
-        bot (TelegramBot): The bot to send the message from
-        chat_id (int): The Telegram chat ID
-        text (str): The message text
-        reply_to_message_id (int, optional): Message ID to reply to
-        **kwargs: Additional parameters for the Telegram API
-
-    Returns:
-        dict: The response from Telegram
-    """
+    print(f"send_telegram_message: {chat_id}, {text}, {reply_to_message_id}, {image}")
     if image:
         url = f"https://api.telegram.org/bot{bot.token}/sendPhoto"
         files = {}

@@ -17,3 +17,10 @@ class CargoListView(AdminListView):
     form_path = 'base/elements/forms/form.html'
     section = 'Cargas'
     category = 'Operaciones'
+    catalogs = [
+        {
+            'id': 'id_transported_product',
+            'service': 'TransportedProducts',
+            'placeholder': '',
+        },
+    ]

@@ -1,7 +1,8 @@
 from django import forms
 
-from core.operations_panel.models.transported_product import TransportedProduct
-from core.system.forms import BaseModelForm
+from core.operations_panel.models.transported_product import TransportedProduct, OperationTransportedProduct
+from core.system.forms import BaseModelForm, BaseForm
+
 
 class TransportedProductForm(BaseModelForm):
     """
@@ -46,3 +47,21 @@ class TransportedProductsFormByCSV(forms.Form):
             ]},
         ]},
     ]
+
+
+class OperationTransportedProductForm(BaseModelForm):
+    layout = [
+        {"type": "row", "fields": [
+            {"name": "transported_product", "size": 6},
+            {"name": "amount", "size": 3},
+            {"name": "weight", "size": 3},
+        ]},
+    ]
+
+    class Meta:
+        model = OperationTransportedProduct
+        fields = [
+            "transported_product",
+            "amount",
+            "weight"
+        ]

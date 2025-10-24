@@ -10,6 +10,9 @@ function dropdown(data, type, row) {
     dropdown += '<a rel="update_route" class="dropdown-item" type="button">Verificar ruta</a>';
     if (row.shipment_type === 'ASTURIANO') {
         dropdown += '<a rel="update_packing" class="dropdown-item" type="button">Distribuir packing</a>';
+    }else{
+        dropdown += '<a rel="get_assign_cargo_form" class="dropdown-item" type="button">Asignar carga</a>';
+        dropdown += '<a rel="get_assign_products_form" class="dropdown-item" type="button">Asignar producto</a>';
     }
     dropdown += '<hr class="dropdown-divider">';
     dropdown += '<a rel="delete" class="dropdown-item" type="button">Eliminar</a>';

@@ -1,5 +1,17 @@
 
 
+$('#main_datatable tbody').on('click', 'a[rel="get_assign_cargo_form"]', function () {
+    const tr = tblClient.cell($(this).closest('td, li')).index();
+    const data = tblClient.row(tr.row).data();
+    LoadForm(data.id, "get_assign_cargo_form");
+});
+
+$('#main_datatable tbody').on('click', 'a[rel="get_assign_products_form"]', function () {
+    const tr = tblClient.cell($(this).closest('td, li')).index();
+    const data = tblClient.row(tr.row).data();
+    LoadForm(data.id, "get_assign_products_form");
+});
+
 $('#main_datatable tbody').on('click', 'a[rel="update_cargo"]', function () {
     const tr = tblClient.cell($(this).closest('td, li')).index();
     const data = tblClient.row(tr.row).data();

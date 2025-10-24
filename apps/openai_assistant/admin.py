@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import Assistant, Tool, Chat, Message, ToolExecution
+from .models import Assistant, Tool, Chat, Message
 
 class ToolInline(admin.TabularInline):
     model = Tool
@@ -59,44 +59,6 @@ class ChatAdmin(admin.ModelAdmin):
         }),
     )
 
-class ToolExecutionInline(admin.TabularInline):
-    model = ToolExecution
-    extra = 0
-    fields = ('tool_name', 'status', 'created_at')
-    readonly_fields = ('tool_name', 'status', 'created_at', 'input_data', 'output_data')
-    can_delete = False
-    max_num = 0
-
-@admin.register(Message)
-class MessageAdmin(admin.ModelAdmin):
-    list_display = ('get_chat_title', 'role', 'get_content_preview', 'created_at')
-    list_filter = ('role', 'created_at')
-    search_fields = ('content', 'chat__title', 'chat__user__username')
-    readonly_fields = ('chat', 'role', 'content', 'openai_message_id', 'created_at')
-    inlines = [ToolExecutionInline]
-    fieldsets = (
-        (None, {
-            'fields': ('chat', 'role', 'content')
-        }),
-        (_('OpenAI Information'), {
-            'fields': ('openai_message_id',),
-            'classes': ('collapse',)
-        }),
-        (_('Metadata'), {
-            'fields': ('created_at',),
-            'classes': ('collapse',)
-        }),
-    )
-    
-    def get_chat_title(self, obj):
-        return obj.chat.title
-    get_chat_title.short_description = _('Chat')
-    get_chat_title.admin_order_field = 'chat__title'
-    
-    def get_content_preview(self, obj):
-        return obj.content[:50] + '...' if len(obj.content) > 50 else obj.content
-    get_content_preview.short_description = _('Content')
-
 @admin.register(Tool)
 class ToolAdmin(admin.ModelAdmin):
     list_display = ('name', 'type', 'assistant', 'created_at')
@@ -109,30 +71,6 @@ class ToolAdmin(admin.ModelAdmin):
         }),
         (_('Parameters'), {
             'fields': ('parameters',),
-            'classes': ('collapse',)
-        }),
-        (_('Metadata'), {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
-
-@admin.register(ToolExecution)
-class ToolExecutionAdmin(admin.ModelAdmin):
-    list_display = ('tool_name', 'status', 'created_at')
-    list_filter = ('status', 'created_at')
-    search_fields = ('tool_name', 'message__content')
-    readonly_fields = ('message', 'tool', 'tool_name', 'input_data', 'output_data', 'status', 'openai_tool_call_id', 'created_at', 'updated_at')
-    fieldsets = (
-        (None, {
-            'fields': ('message', 'tool', 'tool_name', 'status')
-        }),
-        (_('Data'), {
-            'fields': ('input_data', 'output_data'),
-            'classes': ('collapse',)
-        }),
-        (_('OpenAI Information'), {
-            'fields': ('openai_tool_call_id',),
             'classes': ('collapse',)
         }),
         (_('Metadata'), {

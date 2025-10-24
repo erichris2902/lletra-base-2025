@@ -6,6 +6,7 @@ from django.views.generic import FormView
 
 from apps.facturapi.models import FacturapiProduct
 from apps.facturapi.services import get_headers
+from core.operations_panel.models import TransportedProduct
 
 
 def getCatalogProductsURL():
@@ -21,7 +22,16 @@ class CatalogView(FormView):
             action = request.POST['action']
             if action == 'Search':
                 catalog = request.POST['catalog']
-                if catalog == 'ProductAndServiceCatalog':
+                if catalog == 'TransportedProducts':
+                    products = TransportedProduct.objects.filter(description__icontains=request.POST['term'])
+                    data["results"] = []
+                    for i in range(0, len(products)):
+                        element = {}
+                        element['id'] = products[i].id
+                        element['text'] = products[i].description + ": " + products[i].unit_key
+                        data["results"].append(element)
+                    data["pagination"] = {"more": True}
+                elif catalog == 'ProductAndServiceCatalog':
                     url = getCatalogProductsURL() + request.POST['term']
                     headers = get_headers()
                     resp = requests.get(url, headers=headers)

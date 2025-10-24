@@ -88,6 +88,9 @@
                 }
 
                 // 5) Init Select2
+
+                const isMultiple = $el.is('[multiple]') || $el.data('multiple') === true;
+
                 $el.css('width', '100%').select2({
                     theme: 'bootstrap-5',
                     width: '100%',
@@ -95,7 +98,8 @@
                     placeholder: '{{ catalog.placeholder|default:"Buscar" }}',
                     language: 'es',
                     minimumInputLength: 3,
-                    allowClear: false,
+                    allowClear: isMultiple ? false : true,  // en múltiples no tiene mucho sentido
+                    multiple: isMultiple,                   // fuerza el modo múltiple
                     ajax: {
                         url: '/system/catalog',
                         type: 'POST',

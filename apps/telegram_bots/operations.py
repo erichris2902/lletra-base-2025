@@ -3,7 +3,7 @@ from datetime import datetime
 
 from django.db import transaction
 from apps.telegram_bots.models import TelegramGroup
-from apps.telegram_bots.services import send_telegram_message
+from apps.telegram_bots.services.services import send_telegram_message
 from core.operations_panel.choices import ShipmentType, OperationStatus, UnitType
 from core.operations_panel.models import Operation, Route, Client, DeliveryLocation, Supplier, Driver, Vehicle
 from core.system.functions import extract_best_coincidence_from_field_in_model
@@ -11,6 +11,7 @@ from core.system.functions import extract_best_coincidence_from_field_in_model
 
 @transaction.atomic
 def register_operations(tool_input):
+    print("REGISTER OPERATIONS")
     try:
         # Parse the input JSON
         input_data = json.loads(tool_input)
@@ -23,6 +24,7 @@ def register_operations(tool_input):
 
         # Process each operation
         for operation_data in operations_data:
+            print(operation_data)
             try:
                 with transaction.atomic():
                     # Create the operation
@@ -44,7 +46,8 @@ def register_operations(tool_input):
                     "error": str(e),
                     "data": operation_data
                 })
-
+            print("----------------")
+            print(results)
         return {"results": results}
 
     except Exception as e:

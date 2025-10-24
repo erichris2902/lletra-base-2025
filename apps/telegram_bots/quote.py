@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from apps.telegram_bots.models import TelegramGroup, TelegramUser, TelegramBot, TelegramChat, TelegramMessage
-from apps.telegram_bots.services import send_telegram_message
+from apps.telegram_bots.services.services import send_telegram_message
 from core.sales_panel.models.commercial import Quotation
 from core.system.functions import normalize_string
 from core.system.models import SystemUser

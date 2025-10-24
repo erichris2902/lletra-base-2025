@@ -5,23 +5,49 @@ from core.system.forms import BaseModelForm
 
 
 class OperationForm(BaseModelForm):
+    layout = [
+        {"type": "row", "fields": [
+            {"name": "folio", "size": 3},
+            {"name": "client", "size": 5},
+            {"name": "supplier", "size": 4},
+        ]},
+        {"type": "row", "fields": [
+            {"name": "driver", "size": 4},
+            {"name": "vehicle", "size": 4},
+            {"name": "vehicle_box", "size": 4},
+        ]},
+        {"type": "callout", "title": "Ruta", "sections": [
+            {"type": "row", "fields": [
+                {"name": "route", "size": 12},
+            ]},
+        ]},
+        {"type": "callout", "title": "Horarios de carga/descarga", "sections": [
+            {"type": "row", "fields": [
+                {"name": "cargo_appointment", "size": 4},
+                {"name": "download_appointment", "size": 4},
+                {"name": "scheduled_departure_time", "size": 4},
+            ]},
+        ]},
+        {"type": "row", "fields": [
+            {"name": "notes", "size": 12},
+        ]},
+    ]
+
     class Meta:
         model = Operation
         fields = [
+            "folio",
             "client",
             "supplier",
             "driver",
             "vehicle",
-            "vehicle_type",
-            "operation_date",
-            "shipment_type",
-            "status",
-            "notes",
-            "need_cartaporte",
+            "vehicle_box",
+            "route",
             "cargo_appointment",
             "download_appointment",
             "scheduled_departure_time",
-            "raw_payload",
+            "need_cartaporte",
+            "notes",
         ]
 
         widgets = {
@@ -29,10 +55,6 @@ class OperationForm(BaseModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # If this is a new operation, don't show the status field
-        if not kwargs.get('instance'):
-            self.fields['status'].widget = forms.HiddenInput()
-            self.fields['status'].initial = 'PENDING'
 
 
 class OperationFolioWebsiteForm(BaseModelForm):

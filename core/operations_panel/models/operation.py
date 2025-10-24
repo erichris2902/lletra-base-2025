@@ -16,9 +16,6 @@ from core.system.models import BaseModel
 
 
 class Operation(BaseModel):
-    """
-    Modelo para operaciones.
-    """
     folio = models.CharField(_("Folio"), max_length=10, unique=True, null=True, blank=True)
     pre_folio = models.CharField(_("Pre-folio"), max_length=10, null=True, blank=True, db_index=True)
 
@@ -200,18 +197,6 @@ class Operation(BaseModel):
         return message
 
     def format_operation_missing_items_message(self):
-        """
-        Format a message with missing items for an operation.
-        This is an empty function that will be filled with the actual message content later.
-
-        Args:
-            operation (Operation): The Operation instance to check
-
-        Returns:
-            str: Formatted message with missing items
-        """
-        # This function will be filled with the actual message content later
-        # For now, it returns a placeholder message
         try:
             missing_items = self.get_operation_missing_items()
             message = self.format_missing_items(missing_items)
@@ -250,11 +235,6 @@ class Operation(BaseModel):
 
     @staticmethod
     def generate_pre_folio():
-        """
-        Generate a pre-folio for a new operation.
-        Format: [Letter][Number] where letter is based on the current year (2020=A, 2021=B, etc.)
-        and number is sequential.
-        """
         current_year = now().year
         prefix = chr(65 + (current_year - 2020))  # 2020 = A, ..., 2025 = F, etc.
 
@@ -273,10 +253,6 @@ class Operation(BaseModel):
         )
 
         def extract_number(value):
-            """
-                Extrae la parte numérica del folio, ignorando la letra inicial y cualquier letra al final.
-                Ej: 'F0003B' -> 3, 'F0123' -> 123
-                """
             if not value:
                 return 0
             match = re.match(r'^[A-Z](\d{4})', value)
@@ -338,10 +314,6 @@ class Operation(BaseModel):
         self.save(update_fields=['status'])
 
     def upload_invoice_to_drive(self, user):
-        """
-        Upload the invoice to Google Drive.
-        This is a placeholder method that should be implemented with actual Google Drive integration.
-        """
         import datetime
 
         if not self.shipment_invoice:
@@ -386,7 +358,7 @@ class Operation(BaseModel):
             message_text = self.format_operation_notification()
 
             # Send the message
-            from apps.telegram_bots.services import send_telegram_message
+            from apps.telegram_bots.services.services import send_telegram_message
             response = send_telegram_message(bot, group_chat_id, message_text)
 
             # If the message was sent successfully, link it to the operation
@@ -493,7 +465,7 @@ class Operation(BaseModel):
             message_text = self.format_operation_approved_notification()
 
             # Send the message
-            from apps.telegram_bots.services import send_telegram_message
+            from apps.telegram_bots.services.services import send_telegram_message
             response = send_telegram_message(bot, group_chat_id, message_text)
 
             # If the message was sent successfully, link it to the operation

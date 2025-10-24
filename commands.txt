@@ -1,10 +1,16 @@
 # Webhook a web
 python manage.py setup_webhook prueba_lletra_bot --base-url https://lletrabase-eab0df519ae0.herokuapp.com
 
-python manage.py setup_webhook prueba_lletra_bot --base-url https://aaa12a2845ca.ngrok-free.app
+python manage.py setup_webhook prueba_lletra_bot --base-url https://5dc4ada7683d.ngrok-free.app
 
 #Crear respaldo local (Correr en CMD)
 pg_dump -Fc --no-acl --no-owner -h localhost -p 5432 -U postgres lletra-base> mi_base.dump
 
 #Subir a base de datos de Heroku
 pg_restore --verbose --clean --no-acl --no-owner -h casrkuuedp6an1.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com -U u837fefrkqnstm -d d17o35h3tgomh8 "mi_base.dump"
+
+
+
+
+REDIS
+celery -A ikigai2025 worker -l info --pool=solo --concurrency=1

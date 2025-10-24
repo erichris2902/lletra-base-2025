@@ -1,29 +1,18 @@
 from django.conf import settings
 from django.db import transaction
-from apps.openai_assistant.services import OpenAIService
+from apps.openai_assistant.services import AssistantService, ChatService
 from apps.openai_assistant.models import Assistant
-from .models import TelegramChat, TelegramMessage, TelegramUser
+from apps.telegram_bots.models import TelegramChat, TelegramMessage, TelegramUser
 
 
 class TelegramOpenAIIntegration:
-    """
-    Service class for integrating Telegram with OpenAI Assistants.
-    """
     
     def __init__(self):
-        """Initialize the OpenAI service."""
-        self.openai_service = OpenAIService()
-    
+        self.openai_service = AssistantService()
+        self.chat_service = ChatService()
+
     def process_message(self, message: TelegramMessage, user: TelegramUser=None):
-        """
-        Process a Telegram message through the active OpenAI Assistant.
-        
-        Args:
-            message (TelegramMessage): The Telegram message to process
-            
-        Returns:
-            str: The response from the Assistant
-        """
+        print("PROCCESS_MESSAGE")
         chat = message.chat
         
         # Get or set the default assistant
@@ -38,31 +27,18 @@ class TelegramOpenAIIntegration:
             openai_chat = chat.set_active_assistant(assistant)
         
         # Send the message to the OpenAI Assistant and get the response
-        new_messages = self.openai_service.send_message_and_get_response(
-            openai_chat, message.text, user
-        )
+        new_messages = self.chat_service.send_message(openai_chat, message.text, user)
         
         # Get the assistant's response (last message with role='assistant')
         assistant_responses = [m for m in new_messages if m.role == 'assistant']
         if assistant_responses:
+            print(assistant_responses)
             return assistant_responses[-1].content
-        
+        print("END_PROCCESS_MESSAGE")
         return "I'm processing your message. Please wait a moment."
     
     def switch_assistant(self, chat: TelegramChat, assistant_identifier: str):
-        """
-        Switch the active assistant for a chat.
-        
-        Args:
-            chat (TelegramChat): The Telegram chat
-            assistant_identifier (str): The identifier for the assistant
-            
-        Returns:
-            tuple: (success, message)
-        """
         try:
-            # Try to find the assistant by the identifier
-            # First try by ID
             assistant = None
             try:
                 assistant = Assistant.objects.get(pk=assistant_identifier)
@@ -83,10 +59,4 @@ class TelegramOpenAIIntegration:
             return False, f"Error switching assistant: {str(e)}"
     
     def get_available_assistants(self):
-        """
-        Get a list of available assistants.
-        
-        Returns:
-            list: List of active assistants
-        """
         return Assistant.objects.filter(is_active=True)
