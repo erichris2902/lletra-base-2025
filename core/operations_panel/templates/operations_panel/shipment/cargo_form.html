@@ -23,6 +23,7 @@
                 <input type="hidden" name="action" value="{{ form_action }}">
                 <input id="updatableId" type="hidden" name="id" value="{{ id }}">
                 {% if additional_data %}{% include additional_data %}{% endif %}
+
                 {% include "base/elements/forms/render_with_layout.html" with add_form=page.form add_form_layout=page.layout add_form_fields=page.fields %}
             </div>
         {% endfor %}
@@ -40,6 +41,14 @@
             <input id="updatableId" type="hidden" name="id" value="{{ id }}">
             {% if additional_data %}{% include additional_data %}{% endif %}
             {% include "base/elements/forms/render_with_layout.html" with add_form=form %}
+            <div class="row">
+                <a href="https://docs.google.com/spreadsheets/d/1uHw_ZP9mypZpYbM9VA38fEZ0CS7X7nMnm5Ga5tl_RF8/edit?usp=sharing"
+                   target="_blank"
+                   class="btn btn-primary d-flex align-items-center justify-content-center shadow-sm"
+                   style="border-radius: 12px; padding: 12px 24px; font-size: 16px; font-weight: 500;">
+                    <i class="bi bi-box-seam me-2"></i> Llenar plantilla de productos
+                </a>
+            </div>
         </div>
     </div>
 {% endif %}

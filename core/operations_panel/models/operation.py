@@ -117,8 +117,8 @@ class Operation(BaseModel):
         result["products_amount"] = str(self.transported_products.count())
         result["distance"] = str(self.route.direct_distance) if self.route else "0"
         result["shipment_type"] = self.shipment_type
-        result["origin"] = str(self.route.initial_location)
-        result["destination"] = str(self.route.destination_location)
+        result["origin"] = str(self.route.initial_location.address)
+        result["destination"] = str(self.route.destination_location.address)
         result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route.route_stops else "[]"
         return result
 

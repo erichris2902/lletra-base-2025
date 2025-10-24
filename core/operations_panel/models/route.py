@@ -86,15 +86,6 @@ class Route(BaseModel):
         return f"{self.initial_location} - {self.destination_location}"
 
     def look_for_route(name):
-        """
-        Get or create a DeliveryLocation by name using fuzzy matching.
-
-        Args:
-            name (str): Location name
-
-        Returns:
-            Route: The found or created Route instance
-        """
         if not name:
             return None
 

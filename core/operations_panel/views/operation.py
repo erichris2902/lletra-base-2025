@@ -169,7 +169,7 @@ class ShipmentOperationListView(AdminListView):
     static_path = 'operations_panel/shipment/table/base.html'
     catalogs = [
         {
-            'id': 'id_products',
+            'id': 'id_transported_product',
             'service': 'TransportedProducts',
             'placeholder': '',
         },
@@ -223,15 +223,13 @@ class ShipmentOperationListView(AdminListView):
         self.form_action = "update_cargo"
         data['id'] = str(operation.id)
         self.form_path = 'operations_panel/shipment/cargo_form.html'
-        print(operation)
-        print(operation.transported_products.all())
         products = operation.transported_products.all()
         products_data = {
             'products': [],
         }
         for product in products:
             products_data['products'].append(json.loads(product.to_json()))
-        data['form'] = self.render_others_form(request, operation, TransportedProductsFormByCSV, "update_cargo",
+        data['form'] = self.render_others_form(request, operation, TransportedProductsFormByCSV(), "update_cargo",
                                                products_data)
 
     def handle_update_packing(self, request, data):

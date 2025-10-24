@@ -36,4 +36,4 @@ class OperationTransportedProduct(BaseModel):
     amount = models.IntegerField(verbose_name="Cantidad")
 
     def __str__(self):
-        return f"{self.transported_product.description} ({self.amount}x) - {self.operation.identifier}"
+        return f"{self.transported_product.description} ({self.amount}x) - {self.operation.folio}"

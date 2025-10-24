@@ -12,9 +12,6 @@ from ikigai2025.settings import GOOGLE_MAPS_API_KEY
 
 
 class Address(BaseModel):
-    """
-    Modelo para direcciones.
-    """
     street = models.CharField(max_length=255, verbose_name="Calle", blank=True, null=True)
     exterior_number = models.CharField(max_length=35, verbose_name="Número exterior", blank=True, null=True)
     interior_number = models.CharField(max_length=35, blank=True, null=True, verbose_name="Número interior")

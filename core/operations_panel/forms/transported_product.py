@@ -49,6 +49,8 @@ class TransportedProductsFormByCSV(forms.Form):
     ]
 
 
+
+
 class OperationTransportedProductForm(BaseModelForm):
     layout = [
         {"type": "row", "fields": [

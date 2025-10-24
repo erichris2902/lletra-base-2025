@@ -8,10 +8,8 @@ import uuid
 
 
 class BaseModel(models.Model):
-    """
-    Abstract base model that provides common fields for all models.
-    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    old_id = models.IntegerField(blank=True, null=True)
     created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
 
@@ -20,9 +18,6 @@ class BaseModel(models.Model):
         ordering = ['-created_at']
 
     def to_dict(self, exclude_fields=None):
-        """
-        Returns a dictionary representation of the model instance.
-        """
         if exclude_fields is None:
             exclude_fields = []
             data = model_to_dict(self, exclude=exclude_fields)
@@ -31,20 +26,11 @@ class BaseModel(models.Model):
         return data
 
     def to_json(self, exclude_fields=None):
-        """
-        Returns a JSON representation of the model instance.
-        """
         return json.dumps(self.to_dict(exclude_fields), default=str)
 
 
 
     def to_display_dict(self, keys=None):
-        """
-        Retorna un diccionario amigable para datatable:
-        - Campos simples: su valor.
-        - FK/M2M: su __str__ (o lista de __str__).
-        Si keys se pasa, solo regresa esos campos.
-        """
         from django.db.models.fields.related import ForeignKey, OneToOneField, ManyToManyField
         from django.db.models.fields.reverse_related import ManyToOneRel, ManyToManyRel
 
@@ -69,9 +55,6 @@ class BaseModel(models.Model):
 
 
 class ActiveModel(BaseModel):
-    """
-    Abstract model that extends BaseModel with an active status field.
-    """
     is_active = models.BooleanField(_("Is active"), default=True)
 
     class Meta:
@@ -79,9 +62,6 @@ class ActiveModel(BaseModel):
 
 
 class TimestampedModel(BaseModel):
-    """
-    Abstract model that extends BaseModel with additional timestamp fields.
-    """
     published_at = models.DateTimeField(_("Published at"), null=True, blank=True)
 
     def publish(self):
@@ -96,9 +76,6 @@ class TimestampedModel(BaseModel):
 
 
 class OrderedModel(BaseModel):
-    """
-    Abstract model that extends BaseModel with ordering capabilities.
-    """
     order = models.PositiveIntegerField(_("Order"), default=0)
 
     class Meta:
@@ -107,9 +84,6 @@ class OrderedModel(BaseModel):
 
 
 class SoftDeleteModel(BaseModel):
-    """
-    Abstract model that extends BaseModel with soft delete functionality.
-    """
     deleted_at = models.DateTimeField(_("Deleted at"), null=True, blank=True)
 
     def delete(self, using=None, keep_parents=False):
@@ -130,9 +104,6 @@ class SoftDeleteModel(BaseModel):
 
 
 class SlugModel(BaseModel):
-    """
-    Abstract model that extends BaseModel with a slug field.
-    """
     slug = models.SlugField(_("Slug"), max_length=255, unique=True)
 
     class Meta:

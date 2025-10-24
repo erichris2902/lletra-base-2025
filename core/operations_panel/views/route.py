@@ -10,9 +10,6 @@ from core.system.views import AdminListView
 from polyline import decode
 
 class RouteListView(AdminListView):
-    """
-    List view for routes.
-    """
     model = Route
     form = RouteForm
     template_name = 'base/elements/views/datatable_list.html'
@@ -26,11 +23,13 @@ class RouteListView(AdminListView):
     dropdown_action_path = 'operations_panel/route/table/actions.js'
     static_path = 'operations_panel/route/table/base.html'
 
+    def handle_searchdata(self, request, data):
+        queryset = self.get_queryset().exclude(name__contains="OPERATION")
+        data = [obj.to_display_dict(keys=self.datatable_keys) for obj in queryset]
+        return data
+
 
 class RouteMapView(LoginRequiredMixin, TemplateView):
-    """
-    Visualiza el mapa de una ruta optimizada desde Google Maps API.
-    """
     template_name = 'operations_panel/route_map.html'
 
     def get_context_data(self, **kwargs):
