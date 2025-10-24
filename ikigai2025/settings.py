@@ -289,6 +289,9 @@ CELERY_ACKS_LATE = True
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 10
 CELERY_WORKER_MAX_MEMORY_PER_CHILD = 100000  # ~100MB
 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = int(os.environ.get("DATA_UPLOAD_MAX_NUMBER_FIELDS", 1000))
+
+
 # Configure Django Heroku
 django_heroku.settings(locals())
 
