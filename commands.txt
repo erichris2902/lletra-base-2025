@@ -13,3 +13,11 @@ pg_restore --verbose --clean --no-acl --no-owner -h casrkuuedp6an1.cluster-czrs8
 
 REDIS
 celery -A ikigai2025 worker -l info --pool=solo --concurrency=1
+
+
+address
+client
+delivery_location
+route
+supplier
+driver

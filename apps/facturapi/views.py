@@ -346,7 +346,7 @@ class InvoiceListView(AdminListView):
     static_path = 'facturapi/invoice/base.html'
 
     def get_queryset(self):
-        qs = self.model.objects.exclude(status="canceled")
+        qs = self.model.objects.exclude(status="canceled").prefetch_related("customer")
         search_term = self.request.GET.get('q')
         if search_term:
             search_fields = getattr(self, 'search_fields', ['name'])
@@ -368,7 +368,6 @@ class InvoiceListView(AdminListView):
         obj_id = request.POST.get('id')
         instance = get_object_or_404(self.model, pk=obj_id)
         instance.cancel(request.POST["issue"], request.POST["substitute"])
-
 
     def render_cancel_form(self, request, instance, form, action):
         form_instance = form
@@ -395,7 +394,7 @@ class CanceledInvoiceListView(InvoiceListView):
     section = 'Facturas Canceladas'
 
     def get_queryset(self):
-        qs = self.model.objects.filter(status="canceled")
+        qs = self.model.objects.filter(status="canceled").prefetch_related("customer")
         search_term = self.request.GET.get('q')
         if search_term:
             search_fields = getattr(self, 'search_fields', ['name'])
@@ -410,7 +409,7 @@ class IncomeInvoiceListView(InvoiceListView):
     section = 'Facturas de Ingreso'
 
     def get_queryset(self):
-        qs = self.model.objects.filter(type="I")
+        qs = self.model.objects.filter(type="I").prefetch_related("customer")
         search_term = self.request.GET.get('q')
         if search_term:
             search_fields = getattr(self, 'search_fields', ['name'])
@@ -425,7 +424,7 @@ class PaymentInvoiceListView(InvoiceListView):
     section = 'Complementos de pago'
 
     def get_queryset(self):
-        qs = self.model.objects.filter(type="P")
+        qs = self.model.objects.filter(type="P").prefetch_related("customer")
         search_term = self.request.GET.get('q')
         if search_term:
             search_fields = getattr(self, 'search_fields', ['name'])
@@ -440,7 +439,7 @@ class OutcomeInvoiceListView(InvoiceListView):
     section = 'Facturas de Egreso'
 
     def get_queryset(self):
-        qs = self.model.objects.filter(type="E")
+        qs = self.model.objects.filter(type="E").prefetch_related("customer")
         search_term = self.request.GET.get('q')
         if search_term:
             search_fields = getattr(self, 'search_fields', ['name'])
@@ -455,7 +454,7 @@ class TranslateInvoiceListView(InvoiceListView):
     section = 'Facturas de Egreso'
 
     def get_queryset(self):
-        qs = self.model.objects.filter(type="E")
+        qs = self.model.objects.filter(type="E").prefetch_related("customer")
         search_term = self.request.GET.get('q')
         if search_term:
             search_fields = getattr(self, 'search_fields', ['name'])

@@ -4,6 +4,7 @@ import requests
 from typing import Dict, Any
 from django.conf import settings
 
+from ikigai2025.settings import FACTURAPI_API_KEY
 from .mappers import (
     client_to_facturapi_payload,
     product_to_facturapi_payload,
@@ -15,7 +16,7 @@ FACTURAPI_BASE_URL = "https://www.facturapi.io/v2"
 DEFAULT_TIMEOUT = 25
 
 def _get_key():
-    key = os.environ.get("FACTURAPI_TEST_KEY") if settings.DEBUG else os.environ.get("FACTURAPI_LIVE_KEY")
+    key = FACTURAPI_API_KEY
     if not key:
         raise RuntimeError("Llave de FacturAPI no configurada (FACTURAPI_TEST_KEY / FACTURAPI_LIVE_KEY)")
     return key

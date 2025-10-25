@@ -10,9 +10,6 @@ from core.system.models import BaseModel
 
 
 class FacturapiInvoice(BaseModel):
-    """
-    Información de facturas de FacturAPI.
-    """
     STATUS_CHOICES = (
         ('valid', _('Vigente')),
         ('canceled', _('Cancelado')),
@@ -36,7 +33,7 @@ class FacturapiInvoice(BaseModel):
     #customer = models.CharField(_('Tipo de comprobante'), max_length=2, default='I', choices=CFDI_TYPES)  # I, E, T, etc.
     type = models.CharField(_('Tipo de comprobante'), max_length=2, default='I', choices=CFDI_TYPES)  # I, E, T, etc.
     use = models.CharField(_('Uso del CFDI'), max_length=5, choices=CFDI_USE, default="G03", blank=True, null=True)
-    payment_form = models.CharField(_('Forma de pago'), max_length=5, choices=PAYMENT_METHOD_CHOICES, default="PPD")
+    payment_form = models.CharField(_('Forma de pago'), max_length=5, choices=PAYMENT_METHOD_CHOICES, default="PPD", null=True)
     payment_method = models.CharField(_("Método de pago"), max_length=3, choices=PAYMENT_FORMS, default="99",
                                       blank=True, null=True)
     currency = models.CharField(_('Moneda'), max_length=10, default="MXN")
@@ -54,6 +51,7 @@ class FacturapiInvoice(BaseModel):
     uuid = models.CharField(_('UUID del SAT'), max_length=36, blank=True, null=True)
     series = models.CharField(_('Serie'), max_length=50, blank=True, null=True)
     folio_number = models.IntegerField(_('Folio'), blank=True, null=True)
+    amount_due = models.DecimalField(_('Por pagar'), default=0, max_digits=12, decimal_places=2)
     total = models.DecimalField(_('Total'), default=0, max_digits=12, decimal_places=2)
 
     stamp_date = models.DateTimeField(_('Fecha de timbrado'), blank=True, null=True)

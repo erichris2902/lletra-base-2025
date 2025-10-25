@@ -9,9 +9,6 @@ from core.system.models import BaseModel
 
 
 class Client(BaseModel):
-    """
-    Modelo para clientes.
-    """
     name = models.CharField(max_length=100, verbose_name="Nombre comercial")
     business_name = models.CharField(max_length=100, verbose_name="Razón social")
     rfc = models.CharField(max_length=13, blank=True, null=True, verbose_name="RFC")

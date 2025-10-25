@@ -9,9 +9,6 @@ from core.system.functions import extract_best_coincidence_from_field_in_model
 from core.system.models import BaseModel
 
 class Supplier(BaseModel):
-    """
-    Modelo para proveedores.
-    """
     code = models.CharField(max_length=20, unique=True, verbose_name="Código")
     business_name = models.CharField(max_length=100, verbose_name="Razón social")
     tax_regime = models.CharField(

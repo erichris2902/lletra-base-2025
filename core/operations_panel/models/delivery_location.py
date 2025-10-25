@@ -7,9 +7,6 @@ from core.system.functions import extract_best_coincidence_from_field_in_model
 from core.system.models import BaseModel
 
 class DeliveryLocation(BaseModel):
-    """
-    Modelo para ubicaciones de entrega.
-    """
     name = models.CharField(max_length=100, verbose_name="Nombre")
     business_name = models.CharField(max_length=100, verbose_name="Razón social")
     rfc = models.CharField(max_length=13, verbose_name="RFC")

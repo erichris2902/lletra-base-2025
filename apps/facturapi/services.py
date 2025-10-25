@@ -7,6 +7,7 @@ from django.conf import settings
 from django.utils.dateparse import parse_datetime
 
 from apps.facturapi.models import FacturapiInvoice, FacturapiInvoiceItem, FacturapiProduct, FacturapiInvoicePayment
+from ikigai2025.settings import FACTURAPI_API_KEY
 
 FACTURAPI_BASE_URL = 'https://www.facturapi.io/v2'
 DEFAULT_TIMEOUT = 10  # segundos
@@ -27,7 +28,7 @@ def get_facturapi_key():
     """
     Get the FacturAPI key from settings.
     """
-    api_key = os.environ.get('FACTURAPI_TEST_KEY') if settings.DEBUG else os.environ.get('FACTURAPI_LIVE_KEY')
+    api_key = FACTURAPI_API_KEY
     if not api_key:
         print("FACTURAPI_KEY not set in env")
         raise ValueError("FACTURAPI_KEY not set in env")

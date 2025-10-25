@@ -2,10 +2,12 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 
+from core.operations_panel.models.address import Address
 from core.operations_panel.models.distribution_packing import DistributionPacking
 from core.sales_panel.models.commercial import LeadCategory, LeadContact, LeadIndustry, LeadExpense, Lead, \
     Quotation
-from core.operations_panel.models import Operation, TransportedProduct, Cargo, Route, DeliveryLocation
+from core.operations_panel.models import Operation, TransportedProduct, Cargo, Route, DeliveryLocation, Supplier, \
+    Client, Driver
 from core.system.models import SystemUser, Category, Section
 
 
@@ -210,10 +212,14 @@ class SystemUserAdmin(UserAdmin):
 
 # Register models with the admin site
 admin.site.register(SystemUser, SystemUserAdmin)
+admin.site.register(Client)
 admin.site.register(Category)
 admin.site.register(Section)
 admin.site.register(Operation)
+admin.site.register(Driver)
 admin.site.register(TransportedProduct)
+admin.site.register(Address)
+admin.site.register(Supplier)
 admin.site.register(Cargo)
 admin.site.register(Route)
 admin.site.register(DeliveryLocation)

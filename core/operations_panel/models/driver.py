@@ -6,9 +6,6 @@ from core.system.functions import extract_best_coincidence_from_field_in_model
 from core.system.models import BaseModel
 
 class Driver(BaseModel):
-    """
-    Modelo para conductores.
-    """
     name = models.CharField(max_length=100, verbose_name="Nombre")
     last_name = models.CharField(max_length=100, verbose_name="Apellido paterno")
     mother_last_name = models.CharField(max_length=100, verbose_name="Apellido materno")
@@ -23,7 +20,6 @@ class Driver(BaseModel):
         if not name:
             return None
 
-        # Split name into parts (assuming format: First Last Mother)
         name_parts = name.split()
         if len(name_parts) >= 3:
             first_name = name_parts[0]

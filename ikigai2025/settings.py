@@ -243,7 +243,7 @@ TELEGRAM_NOTIFICATION_BOT_TOKEN = os.environ.get('TELEGRAM_NOTIFICATION_BOT_TOKE
 TELEGRAM_OPERATIONS_GROUP_ID = os.environ.get('TELEGRAM_OPERATIONS_GROUP_ID', '-4856478963')
 
 # FacturAPI configuration
-FACTURAPI_API_KEY = os.environ.get('FACTURAPI_API_KEY', '')
+FACTURAPI_API_KEY = os.environ.get('FACTURAPI_LIVE_KEY', '')
 
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -289,12 +289,8 @@ CELERY_ACKS_LATE = True
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 10
 CELERY_WORKER_MAX_MEMORY_PER_CHILD = 100000  # ~100MB
 
-DATA_UPLOAD_MAX_NUMBER_FIELDS = int(os.environ.get("DATA_UPLOAD_MAX_NUMBER_FIELDS", 1000))
+DATA_UPLOAD_MAX_NUMBER_FIELDS = int(os.environ.get("DATA_UPLOAD_MAX_NUMBER_FIELDS", 100000))
 
 
 # Configure Django Heroku
 django_heroku.settings(locals())
-
-
-import os
-print(os.getenv("REDISCLOUD_URL"))
