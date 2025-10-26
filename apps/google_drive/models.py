@@ -57,7 +57,8 @@ class GoogleDriveFolder(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-        related_name="google_drive_folders"
+        related_name="google_drive_folders",
+        null=True, blank=True
     )
     name = models.CharField(_("Folder Name"), max_length=255)
     drive_id = models.CharField(_("Google Drive ID"), max_length=255)
@@ -85,7 +86,8 @@ class GoogleDriveFile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-        related_name="google_drive_files"
+        related_name="google_drive_files",
+        null=True, blank=True
     )
     name = models.CharField(_("File Name"), max_length=255)
     drive_id = models.CharField(_("Google Drive ID"), max_length=255)

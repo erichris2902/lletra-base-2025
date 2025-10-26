@@ -130,10 +130,6 @@ class DashboardView(View):
 
 @method_decorator(login_required, name='dispatch')
 class FolderView(View):
-    """
-    View for displaying folder contents.
-    """
-
     def get(self, request, folder_id):
         try:
             # Get the folder

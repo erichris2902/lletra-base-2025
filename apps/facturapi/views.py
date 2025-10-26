@@ -336,7 +336,7 @@ class InvoiceListView(AdminListView):
     model = FacturapiInvoice
     template_name = 'base/elements/views/datatable_list.html'
     datatable_headers = ["Fecha", "Folio", "Status", "Cancelacion", "Folio fiscal", "Receptor", "Total", "Tipo"]
-    datatable_keys = ["created_at", "folio_number", "status", "cancellation_status", "uuid", "customer", "total", "type"]
+    datatable_keys = ["stamp_date", "folio_number", "status", "cancellation_status", "uuid", "customer", "total", "type"]
     datatable_actions = True
     title = model._meta.verbose_name_plural.title()
     section = 'Facturas Vigentes'

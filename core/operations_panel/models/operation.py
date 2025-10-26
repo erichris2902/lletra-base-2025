@@ -1,7 +1,13 @@
+import os
 import re
+import tempfile
 from datetime import datetime, time
 from django.db import models
 from packaging.utils import _
+
+from apps.facturapi.services import download_invoice_pdf, download_invoice_xml
+from apps.google_drive.services import check_folder_exists_with_service_account, create_folder_with_service_account, \
+    upload_file_with_service_account
 from core.operations_panel.models.client import Client
 from core.operations_panel.models.supplier import Supplier
 from core.operations_panel.models.driver import Driver
@@ -120,6 +126,14 @@ class Operation(BaseModel):
         result["origin"] = str(self.route.initial_location.address)
         result["destination"] = str(self.route.destination_location.address)
         result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route.route_stops else "[]"
+        return result
+
+    def to_operations_general_view(self, keys=None):
+        result = self.to_display_dict(keys)
+        print(self.folio)
+        result["is_invoice_ready"] = str(self.shipment_invoice is not None)
+        result["is_ready_to_invoice"] = str(self.is_ready_for_invoicing())
+        result["is_packing_ready"] = str(self.is_packing_ready)
         return result
 
     def get_operation_missing_items(self):
@@ -313,29 +327,101 @@ class Operation(BaseModel):
         self.status = OperationStatus.INVOICED
         self.save(update_fields=['status'])
 
-    def upload_invoice_to_drive(self, user):
-        import datetime
-
+    def upload_invoice_to_drive(self, user=None):
+        """
+        Descarga la factura (PDF y XML) desde FacturAPI y la sube a Google Drive.
+        Estructura:
+            Facturacion/
+                └── <Cliente>/
+                    └── <Año>/
+                        └── <Mes YYYY-MM>/
+                            └── <Folio>/
+                                ├── factura.pdf
+                                └── factura.xml
+        """
         if not self.shipment_invoice:
             raise ValueError("Cannot upload invoice that hasn't been generated")
 
         if not self.client:
             raise ValueError("Cannot upload invoice without a client")
 
-        # This is a simplified example. In a real implementation, you would:
-        # 1. Get or create a folder for the client
-        # 2. Get or create a subfolder for the current month/year
-        # 3. Upload the invoice PDF to that folder
-        # 4. Save the file reference to this operation
+        invoice = self.shipment_invoice
 
-        # For demonstration purposes, we'll just set up the folder structure
-        current_month = datetime.datetime.now().strftime('%Y-%m')
+        # --- 1️⃣ Definir estructura de carpetas ---
+        ROOT_FOLDER_ID = "1YPzEEXIGOj2Rs-lpLrd0Z94llJNoiaRF"
+        FACTURACION_NAME = "Facturacion"
+        current_year = str(self.cargo_appointment.year)
+        current_month = str(self.cargo_appointment.month).zfill(2)
+        client_name = self.client.name.replace("/", "-")
+        folio_folder_name = self.folio or str(invoice.folio_number or "SIN-FOLIO")
 
-        # In a real implementation, you would use the GoogleDriveService to:
-        # 1. Find or create the client folder
-        # 2. Find or create the month folder
-        # 3. Upload the invoice file
+        # --- 2️⃣ Obtener o crear jerarquía de carpetas ---
+        facturacion_id = check_folder_exists_with_service_account(FACTURACION_NAME, ROOT_FOLDER_ID)
+        if not facturacion_id:
+            facturacion_id = create_folder_with_service_account(FACTURACION_NAME, ROOT_FOLDER_ID)
 
+        client_folder_id = check_folder_exists_with_service_account(client_name, facturacion_id)
+        if not client_folder_id:
+            client_folder_id = create_folder_with_service_account(client_name, facturacion_id)
+
+        # Guardar cliente folder en BD si no existe
+        if not self.client_folder_id:
+            client_folder, _ = GoogleDriveFolder.objects.get_or_create(
+                user=user,
+                drive_id=client_folder_id,
+                defaults={"name": client_name},
+            )
+            self.client_folder = client_folder
+            self.save(update_fields=["client_folder"])
+
+        year_folder_id = check_folder_exists_with_service_account(current_year, client_folder_id)
+        if not year_folder_id:
+            year_folder_id = create_folder_with_service_account(current_year, client_folder_id)
+
+        month_folder_id = check_folder_exists_with_service_account(current_month, year_folder_id)
+        if not month_folder_id:
+            month_folder_id = create_folder_with_service_account(current_month, year_folder_id)
+
+        folio_folder_id = check_folder_exists_with_service_account(folio_folder_name, month_folder_id)
+        if not folio_folder_id:
+            folio_folder_id = create_folder_with_service_account(folio_folder_name, month_folder_id)
+
+        # --- 3️⃣ Descargar archivos desde FacturAPI ---
+        facturapi_id = invoice.facturapi_id
+        if not facturapi_id:
+            raise ValueError("Invoice has no FacturAPI ID")
+
+        pdf_result = download_invoice_pdf(facturapi_id)
+        xml_result = download_invoice_xml(facturapi_id)
+
+        # FacturAPI devuelve (bytes, filename)
+        pdf_content, pdf_filename = pdf_result if isinstance(pdf_result, tuple) else (pdf_result, str(self.folio + ".pdf"))
+        xml_content, xml_filename = xml_result if isinstance(xml_result, tuple) else (xml_result, str(self.folio + ".xml"))
+
+        # Validación
+        if not isinstance(pdf_content, (bytes, bytearray)):
+            raise TypeError(f"Expected PDF content as bytes, got {type(pdf_content)}")
+        if not isinstance(xml_content, (bytes, bytearray)):
+            raise TypeError(f"Expected XML content as bytes, got {type(xml_content)}")
+
+        # Guardar temporalmente
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as pdf_temp:
+            pdf_temp.write(pdf_content)
+            pdf_path = pdf_temp.name
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".xml") as xml_temp:
+            xml_temp.write(xml_content)
+            xml_path = xml_temp.name
+
+        # Subir a Drive
+        upload_file_with_service_account(pdf_path, folio_folder_id, overwrite=True, file_name=self.folio + ".pdf")
+        upload_file_with_service_account(xml_path, folio_folder_id, overwrite=True, file_name=self.folio + ".xml")
+
+        # --- 7️⃣ Limpieza de temporales ---
+        os.remove(pdf_path)
+        os.remove(xml_path)
+
+        print(f"✅ Factura {invoice.series}-{invoice.folio_number} subida correctamente a Drive")
         return self.invoice_file
 
     def notify_operation_created(self):

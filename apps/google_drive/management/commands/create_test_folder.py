@@ -44,11 +44,7 @@ class Command(BaseCommand):
             return False
 
     def handle_service_account(self, parent_folder_id=None):
-        """
-        Handle folder creation using service account.
-        """
         # Check if folder already exists
-        print(1)
         existing_folder_id = check_folder_exists_with_service_account("prueba", parent_folder_id)
         if existing_folder_id:
             self.stdout.write(

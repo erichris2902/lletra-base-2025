@@ -148,16 +148,6 @@ def get_service_account_credentials():
 
 
 def get_drive_service(user=None):
-    """
-    Get a Google Drive service instance.
-
-    Args:
-        user (optional): The Django user. If not provided and USE_SERVICE_ACCOUNT is True,
-                        service account credentials will be used.
-
-    Returns:
-        Resource: The Google Drive service instance, or None if credentials not found.
-    """
     # Use service account if configured and no user is provided
     if USE_SERVICE_ACCOUNT and user is None:
         try:
@@ -697,7 +687,6 @@ def check_folder_exists_with_service_account(folder_name, parent_folder_id=None)
 
         items = results.get('files', [])
         if items:
-            print(f"Found folder '{folder_name}' with ID {items[0]['id']} using service account")
             return items[0]['id']
 
         return None
@@ -707,7 +696,7 @@ def check_folder_exists_with_service_account(folder_name, parent_folder_id=None)
         return None
 
 
-def upload_file_with_service_account(file_path, folder_id=None, overwrite=True):
+def upload_file_with_service_account(file_path, folder_id=None, overwrite=True, file_name=None):
     """
     Upload a file to Google Drive using service account credentials.
 
@@ -727,7 +716,7 @@ def upload_file_with_service_account(file_path, folder_id=None, overwrite=True):
         return None
 
     # Get file name and calculate MD5 checksum
-    file_name = os.path.basename(file_path)
+    file_name = file_name or os.path.basename(file_path)
     md5_checksum = calculate_md5(file_path)
 
     # Check if file already exists

@@ -38,21 +38,16 @@ class OperationListView(AdminListView):
     static_path = 'operations_panel/operation/table/base.html'
 
     def handle_searchdata(self, request, data):
-        """
-        Retorna todos los registros como lista de dicts.
-        """
-        # Obtén los objetos de la tabla (o filtra según tus necesidades)
         queryset = self.get_queryset()
         datatable_keys = self.datatable_keys
-        data = [obj.to_operations_view(keys=datatable_keys) for obj in self.get_queryset()]
+        data = [obj.to_operations_general_view(keys=datatable_keys) for obj in self.get_queryset()]
         return data
 
     def handle_release(self, request, data):
         pass
 
     def get_queryset(self):
-        # Puedes adaptar esto si usas SoftDeleteModel
-        return self.model.objects.exclude(Q(folio__isnull=True) | Q(folio="")).all()
+        return self.model.objects.exclude(Q(folio__isnull=True) | Q(folio="")).prefetch_related("client", "driver", "vehicle", "route", "shipment_invoice", "transported_products").all()
 
 
 class FolioOperationListView(AdminListView):

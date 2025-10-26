@@ -103,9 +103,6 @@ class UnitStatus(models.TextChoices):
 
 
 class UnitType(models.TextChoices):
-    """
-    Choices for vehicle types.
-    """
     TORTON = 'TORTHON', _('TORTHON')
     TRAILER = 'TRACTO', _('TRACTO')
     BOX = 'CAJA', _('CAJA')
@@ -123,12 +120,10 @@ class UnitType(models.TextChoices):
     HOPPER = "TOLVA", _("TOLVA")
     CARRIER = "MADRINA", _("MADRINA")
     UTILITY = "VEHICULO UTILITARIO", _("VEHICULO UTILITARIO")
+    OTHER = "SIN ESPECIFICAR", _("SIN ESPECIFICAR")
 
 
 class ShipmentType(models.TextChoices):
-    """
-    Choices for shipment types.
-    """
     THREE_B = '3B', _('3B')
     ASTURIANO = 'ASTURIANO', _('Asturiano')
     GENERAL = 'GENERAL', _('General')
