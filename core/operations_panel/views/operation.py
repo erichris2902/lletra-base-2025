@@ -232,20 +232,24 @@ class ShipmentOperationListView(AdminListView):
                                                products_data)
 
     def handle_update_packing(self, request, data):
+        print(1)
         operation = Operation.objects.get(pk=request.POST.get('id'))
         querydict = request.POST  # o el QueryDict que compartiste
         parsed = self.parse_packing_data(querydict)
+        print(2)
         for key, value in parsed.items():
             dp = DistributionPacking.objects.get(operation=operation, pk=key)
             dp.weight = value['weight']
             dp.amount = value['amount']
             dp.distribution = value['distribution']
             dp.save()
+        print(3)
         all_packings = DistributionPacking.objects.filter(operation=operation)
         has_cvz_ab = all_packings.filter(distribution=AsturianoPacking.CVZ_AB).exists()
         if not has_cvz_ab:
             raise Exception("No se puede distribuir el packing si solo se entrega un tipo de producto")
         # 2.1 Crear una copia de la operación
+        print(4)
         if Operation.objects.filter(folio=operation.folio + "B").exists():
             pass
         else:
@@ -253,6 +257,7 @@ class ShipmentOperationListView(AdminListView):
             operation.folio = operation.folio + "B"  # Debes implementar esta función
             operation.save()
         cvz_operation = operation
+        print(5)
         ab_operation = Operation.objects.get(pk=request.POST.get('id'))
         # 3. Reasignar DistributionPacking y TransportedProduct
         for dp in all_packings:
@@ -271,10 +276,12 @@ class ShipmentOperationListView(AdminListView):
                 dp.distribution = AsturianoPacking.CVZ
                 dp.save()
                 continue
+        print(6)
         ab_operation = Operation.objects.get(pk=request.POST.get('id'))
         cvz_operation = Operation.objects.get(folio=ab_operation.folio + "B")
         ab_packings = DistributionPacking.objects.filter(operation=ab_operation)
         ab_operation.transported_products.clear()
+        print(7)
         for packing in ab_packings:
             abarrote_product = TransportedProduct.objects.filter(description="ABARROTES_BASE").first()
             abarrote_product.pk = None
@@ -283,8 +290,10 @@ class ShipmentOperationListView(AdminListView):
             abarrote_product.save()
             ab_operation.transported_products.add(abarrote_product)
             ab_operation.save()
+        print(8)
         cvz_packings = DistributionPacking.objects.filter(operation=cvz_operation)
         cvz_operation.transported_products.clear()
+        print(9)
         for packing in cvz_packings:
             cerveza_product = TransportedProduct.objects.filter(description="CERVEZA_BASE").first()
             cerveza_product.pk = None
@@ -294,12 +303,13 @@ class ShipmentOperationListView(AdminListView):
             cerveza_product.save()
             cvz_operation.transported_products.add(cerveza_product)
             cvz_operation.save()
+        print(10)
 
     def handle_get_packing(self, request, data):
         context = {}
         operation = Operation.objects.get(pk=request.POST.get('id'))
         if not Operation.objects.filter(folio=operation.folio + "B").exists():
-            for delivery in operation.deliveries.all():
+            for delivery in operation.route.route_stops.all():
                 packing, _ = DistributionPacking.objects.get_or_create(
                     operation=operation,
                     delivery_shop=delivery,
