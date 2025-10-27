@@ -115,6 +115,11 @@ class Operation(BaseModel):
     def __str__(self):
         return f"Operación {self.folio or self.pre_folio or self.id}"
 
+    def to_folios_view(self, keys=None):
+        result = self.to_display_dict(keys)
+        result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route.route_stops else "[]"
+        return result
+
     def to_operations_view(self, keys=None):
         result = self.to_display_dict(keys)
         result["is_invoice_ready"] = str(self.shipment_invoice is not None)

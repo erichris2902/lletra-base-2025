@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.admin.forms import AdminAuthenticationForm
 from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
@@ -13,17 +14,23 @@ from core.system.views import AdminTemplateView
 
 
 class AdminLoginView(LoginView):
-    """
-    Login view for the admin panel.
-    Uses the login template from the system app.
-    """
     template_name = 'base/elements/pages/login.html'
     redirect_authenticated_user = True
 
+    def form_invalid(self, form):
+        print("=== FORM INVALID DEBUG ===")
+        print("Form data:", form.cleaned_data)
+        print("Errors:", form.errors)
+        print("Request.user:", self.request.user)
+        from django.contrib.auth import authenticate
+        test_user = authenticate(self.request,
+                                 username=self.request.POST.get('username'),
+                                 password=self.request.POST.get('password'))
+        print("Manual authenticate:", test_user)
+        print("==========================")
+        return super().form_invalid(form)
+
     def form_valid(self, form):
-        """
-        Handle successful form validation.
-        """
         username = form.cleaned_data.get('username')
         password = form.cleaned_data.get('password')
         user = authenticate(username=username, password=password)
@@ -61,9 +68,6 @@ class UserDispatchView(LoginRequiredMixin, TemplateView):
     template_name = 'admin_panel/dispatch.html'  # Fallback template
 
     def dispatch(self, request, *args, **kwargs):
-        """
-        Redirect users based on their system type.
-        """
         user = request.user
 
         # Check if user has a system type

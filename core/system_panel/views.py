@@ -1,8 +1,10 @@
 import dateutil
 from dateutil.utils import today
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
+from django.http import HttpResponseBadRequest
 
+from core.operations_panel.views.report.invoice import report_xml_invoices
+from core.operations_panel.views.report.worksheet_folio_operation import report_xml_worksheet_folios_by_date
 from core.system.models import Category, Section
 from core.system.views import AdminTemplateView, AdminListView
 from core.system_panel.forms import CategoryForm, SectionForm, AssistantForm, ActionEngineForm, ReportEngineForm
@@ -89,6 +91,22 @@ class ReportEngineView(AdminTemplateView):
     title = "Motor de reportes"
     section = "Motor de reportes"
     category = "Reporteria"
+
+    def post(self, request, *args, **kwargs):
+        from django.utils.dateparse import parse_date
+        report_type = request.POST.get("report_type")
+        start_date = parse_date(request.POST.get("fecha_inicial"))
+        end_date = parse_date(request.POST.get("fecha_final"))
+
+        if not report_type or not start_date or not end_date:
+            return HttpResponseBadRequest("Faltan parámetros: tipo, fecha de inicio o fecha de fin")
+
+        if report_type == "folios":
+            return report_xml_worksheet_folios_by_date(request)
+        elif report_type == "facturacion":
+            return report_xml_invoices(request)
+
+        return HttpResponseBadRequest("Tipo de reporte no reconocido.")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

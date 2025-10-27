@@ -62,3 +62,4 @@ Pillow~=10.4.0
 django-redis-cache
 gunicorn
 python-Levenshtein
+openpyxl

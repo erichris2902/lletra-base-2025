@@ -1,7 +1,6 @@
 # Webhook a web
 python manage.py setup_webhook prueba_lletra_bot --base-url https://lletrabase-eab0df519ae0.herokuapp.com
-python manage.py setup_webhook prueba_lletra_bot --base-url https://0ede3d03702b.ngrok-free.app
-
+python manage.py setup_webhook prueba_lletra_bot --base-url https://b83b26ad6e7d.ngrok-free.app
 
 
 #Crear respaldo local (Correr en CMD)
@@ -10,14 +9,20 @@ pg_dump -Fc --no-acl --no-owner -h localhost -p 5432 -U postgres lletra-base> mi
 pg_restore --verbose --clean --no-acl --no-owner -h casrkuuedp6an1.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com -U u837fefrkqnstm -d d17o35h3tgomh8 "mi_base.dump"
 
 
-
 REDIS
 celery -A ikigai2025 worker -l info --pool=solo --concurrency=1
+celery -A ikigai2025 worker -l info --pool=solo --concurrency=1 --broker=redis://localhost:6379/0 --result-backend=redis://localhost:6379/0
+
+celery -A ikigai2025 worker -l info --pool=solo --concurrency=1 --broker=redis://localhost:6379/0 --result-backend=redis://localhost:6379/0
 
 
+invoice
 address
 client
 delivery_location
 route
 supplier
 driver
+unit
+operation
+

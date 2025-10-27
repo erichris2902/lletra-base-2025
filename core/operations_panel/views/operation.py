@@ -54,9 +54,9 @@ class FolioOperationListView(AdminListView):
     model = Operation
     form = OperationFolioWebsiteForm
     template_name = 'base/elements/views/datatable_list.html'
-    datatable_headers = ["Control vehicular", "Fecha", "Requiere Porte", "Cliente", "Ruta", "Repartos",
+    datatable_headers = ["Control vehicular", "Fecha", "Cliente", "Ruta", "Repartos",
                          "Unidad", "Operador", "Status"]
-    datatable_keys = ["folio", "operation_date", "need_cartaporte", "client", "route", "deliveries",
+    datatable_keys = ["folio", "operation_date", "client", "route", "deliveries",
                       "vehicle", "driver", "status"]
     datatable_actions = True
     title = model._meta.verbose_name_plural.title()
@@ -127,8 +127,16 @@ class FolioOperationListView(AdminListView):
         # Obtén los objetos de la tabla (o filtra según tus necesidades)
         queryset = self.get_queryset()
         datatable_keys = self.datatable_keys
-        data = [obj.to_operations_view(keys=datatable_keys) for obj in self.get_queryset()]
+        data = [obj.to_folios_view(keys=datatable_keys) for obj in self.get_queryset()]
         return data
+
+    def get_queryset(self):
+        return self.model.objects.exclude(Q(folio__isnull=True) | Q(folio="")).prefetch_related("client", "driver",
+                                                                                                "vehicle", "route",
+                                                                                                "shipment_invoice",
+                                                                                                "transported_products", "route__route_stops",
+                                                                                                "route__initial_location",
+                                                                                                "route__destination_location",).all()
 
 
 class ShipmentOperationListView(AdminListView):

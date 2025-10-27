@@ -97,7 +97,8 @@
                     text: data.error
                 });
             }
-        }).fail(function () {
+        }).fail(function (data) {
+            console.log(data);
             Swal.fire({
                 icon: 'error',
                 title: 'Error de conexión',
