@@ -194,9 +194,6 @@ class ShipmentOperationListView(AdminListView):
 
     def handle_searchdata(self, request, data):
         print(1)
-        """
-        Retorna todos los registros como lista de dicts.
-        """
         # Obtén los objetos de la tabla (o filtra según tus necesidades)
         datatable_keys = self.datatable_keys
         data = [obj.to_operations_view(keys=datatable_keys) for obj in self.get_queryset()]
@@ -406,7 +403,19 @@ class ShipmentOperationListView(AdminListView):
 
     def get_queryset(self):
         # Puedes adaptar esto si usas SoftDeleteModel
-        return self.model.objects.exclude(Q(folio__isnull=True) | Q(folio="")).all()
+        print(1)
+        return self.model.objects.exclude(Q(folio__isnull=True) | Q(folio="")).all().prefetch_related("route__initial_location__address",
+                                                                                                      "route__destination_location__address",
+                                                                                                      "route__destination_location",
+                                                                                                      "route__initial_location",
+                                                                                                      "route__route_stops",
+                                                                                                      "route",
+                                                                                                      "transported_products",
+                                                                                                      "shipment_invoice",
+                                                                                                      "client",
+                                                                                                      "driver",
+                                                                                                      "vehicle",
+                                                                                                      )
 
     def handle_assign_cargo(self, request, data):
         operation_id = request.POST.get("operation_id")

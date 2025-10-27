@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView
 
@@ -13,8 +14,8 @@ class RouteListView(AdminListView):
     model = Route
     form = RouteForm
     template_name = 'base/elements/views/datatable_list.html'
-    datatable_headers = ["Nombre", "Ubicación Inicial", "Cliente", "Notas"]
-    datatable_keys = ["name", "initial_location", "client", "notes"]
+    datatable_headers = ["Nombre", "Ubicación Inicial", "Ubicacion Final", "Repartos", "Notas"]
+    datatable_keys = ["name", "initial_location", "destination_location", "route_stops", "notes"]
     datatable_actions = True
     title = model._meta.verbose_name_plural.title()
     form_path = 'base/elements/forms/form.html'
@@ -27,6 +28,17 @@ class RouteListView(AdminListView):
         queryset = self.get_queryset().exclude(name__contains="OPERATION")
         data = [obj.to_display_dict(keys=self.datatable_keys) for obj in queryset]
         return data
+
+    def get_queryset(self):
+        qs = self.model.objects.all().prefetch_related("route_stops", "initial_location", "destination_location")
+        search_term = self.request.GET.get('q')
+        if search_term:
+            search_fields = getattr(self, 'search_fields', ['name'])
+            q = Q()
+            for field in search_fields:
+                q |= Q(**{f"{field}__icontains": search_term})
+            qs = qs.filter(q)
+        return qs
 
 
 class RouteMapView(LoginRequiredMixin, TemplateView):
