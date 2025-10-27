@@ -6,12 +6,12 @@ function dropdown(data, type, row) {
         dropdown += '<a rel="confirm" class="dropdown-item" type="button">Confirmar packing</a>';
     }
     dropdown += '<a rel="update" class="dropdown-item" type="button">Editar viaje</a>';
-    dropdown += '<a rel="update_cargo" class="dropdown-item" type="button">Asignar carga</a>';
     dropdown += '<a rel="update_route" class="dropdown-item" type="button">Verificar ruta</a>';
     if (row.shipment_type === 'ASTURIANO') {
         dropdown += '<a rel="update_packing" class="dropdown-item" type="button">Distribuir packing</a>';
     }else{
-        dropdown += '<a rel="get_assign_cargo_form" class="dropdown-item" type="button">Asignar carga</a>';
+        dropdown += '<a rel="update_cargo" class="dropdown-item" type="button">Asignar carga por archivo</a>';
+        dropdown += '<a rel="get_assign_cargo_form" class="dropdown-item" type="button">Asignar carga precargada</a>';
         dropdown += '<a rel="get_assign_products_form" class="dropdown-item" type="button">Asignar producto</a>';
     }
     dropdown += '<hr class="dropdown-divider">';

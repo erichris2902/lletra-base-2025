@@ -193,7 +193,6 @@ class ShipmentOperationListView(AdminListView):
         return data
 
     def handle_searchdata(self, request, data):
-        print(1)
         # Obtén los objetos de la tabla (o filtra según tus necesidades)
         datatable_keys = self.datatable_keys
         data = [obj.to_operations_view(keys=datatable_keys) for obj in self.get_queryset()]
@@ -403,7 +402,6 @@ class ShipmentOperationListView(AdminListView):
 
     def get_queryset(self):
         # Puedes adaptar esto si usas SoftDeleteModel
-        print(1)
         return self.model.objects.exclude(Q(folio__isnull=True) | Q(folio="")).all().prefetch_related("route__initial_location__address",
                                                                                                       "route__destination_location__address",
                                                                                                       "route__destination_location",
