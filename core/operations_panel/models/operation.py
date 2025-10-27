@@ -118,6 +118,7 @@ class Operation(BaseModel):
     def to_folios_view(self, keys=None):
         result = self.to_display_dict(keys)
         result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route and self.route.route_stops else "[]"
+        result["folio"] = "SIN FOLIO" if not self.folio else self.folio
         return result
 
     def to_operations_view(self, keys=None):
