@@ -117,7 +117,7 @@ class Operation(BaseModel):
 
     def to_folios_view(self, keys=None):
         result = self.to_display_dict(keys)
-        result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route.route_stops else "[]"
+        result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route and self.route.route_stops else "[]"
         return result
 
     def to_operations_view(self, keys=None):
@@ -130,7 +130,7 @@ class Operation(BaseModel):
         result["shipment_type"] = self.shipment_type
         result["origin"] = str(self.route.initial_location.address)
         result["destination"] = str(self.route.destination_location.address)
-        result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route.route_stops else "[]"
+        result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route and self.route.route_stops else "[]"
         return result
 
     def to_operations_general_view(self, keys=None):

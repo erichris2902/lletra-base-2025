@@ -131,7 +131,7 @@ class FolioOperationListView(AdminListView):
         return data
 
     def get_queryset(self):
-        return self.model.objects.exclude(Q(folio__isnull=True) | Q(folio="")).prefetch_related("client", "driver",
+        return self.model.objects.prefetch_related("client", "driver",
                                                                                                 "vehicle", "route",
                                                                                                 "shipment_invoice",
                                                                                                 "transported_products", "route__route_stops",
