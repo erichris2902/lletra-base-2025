@@ -3,6 +3,7 @@ from dateutil.utils import today
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseBadRequest
 
+from core.operations_panel.views.report.attendance import report_attendance
 from core.operations_panel.views.report.invoice import report_xml_invoices
 from core.operations_panel.views.report.worksheet_folio_operation import report_xml_worksheet_folios_by_date
 from core.system.models import Category, Section
@@ -105,6 +106,8 @@ class ReportEngineView(AdminTemplateView):
             return report_xml_worksheet_folios_by_date(request)
         elif report_type == "facturacion":
             return report_xml_invoices(request)
+        elif report_type == "asistencia":
+            return report_attendance(request)
 
         return HttpResponseBadRequest("Tipo de reporte no reconocido.")
 
