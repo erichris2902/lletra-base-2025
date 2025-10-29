@@ -79,7 +79,7 @@ class InvoiceShipmentIFormView(InvoiceFormView):
 
     def handle_predictproduct(self, request, context):
         operation = Operation.objects.get(id=self.kwargs['operation_id'])
-        if operation.origin.address.zip_code[:2] == "76" and operation.destination.address.zip_code[:2] == "76":
+        if operation.route.initial_location.address.zip_code[:2] == "76" and operation.route.destination_location.address.zip_code[:2] == "76":
             productInvoice = FacturapiProduct.objects.get(sku="BASE-LOCAL")
         else:
             productInvoice = FacturapiProduct.objects.get(sku="BASE-FORANEA")
@@ -87,8 +87,8 @@ class InvoiceShipmentIFormView(InvoiceFormView):
 
         productInvoice.description = operation.folio
         productInvoice.description += " RUTA"
-        productInvoice.description += ", ".join([delivery.name for delivery in operation.deliveries.all()])
-        productInvoice.description += " " + operation.destination.name
+        productInvoice.description += ", ".join([delivery.name for delivery in operation.route.route_stops.all()])
+        productInvoice.description += " " + operation.route.destination_location.name
         productInvoice.description += " " + operation.cargo_appointment.strftime('%d/%m/%Y')
 
         context["price"] = str(productInvoice.price)
@@ -159,3 +159,5 @@ class InvoiceShipmentIFormView(InvoiceFormView):
 
         return form
 
+class InvoiceShipmentTFormView(InvoiceShipmentIFormView):
+    pass
