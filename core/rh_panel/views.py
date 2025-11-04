@@ -6,6 +6,7 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.views.generic import TemplateView
 
 from core.rh_panel.forms import EmployeeForm
 from core.rh_panel.models import Employee, Embedding, Attendance
@@ -71,6 +72,13 @@ class EmployeeListView(AdminListView):
         }
 
 class CaptureView(LoginRequiredMixin, AdminTemplateView):
+    template_name = 'rh_panel/index.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class CaptureLocationView(TemplateView):
     template_name = 'rh_panel/index.html'
 
     def get_context_data(self, **kwargs):

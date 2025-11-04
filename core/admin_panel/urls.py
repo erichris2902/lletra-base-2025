@@ -1,11 +1,13 @@
 from django.urls import path
 from . import views
+from ..rh_panel.views import CaptureLocationView
 
 app_name = 'admin_panel'
 
 urlpatterns = [
     # Login URL
     path('', views.AdminLoginView.as_view(), name='login'),
+    path('capture/', CaptureLocationView.as_view(), name='capture'),
 
     # Logout URL
     path('logout/', views.AdminLogoutView.as_view(), name='logout'),

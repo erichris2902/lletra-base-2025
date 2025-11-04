@@ -159,7 +159,7 @@ async function sendAttendance(employeeId, name, confidence, snapshotBlob, emotio
                 title: 'Error',
                 text: err.error || 'No se pudo registrar la asistencia'
             });
-        }, require_confirmation=false
+        }, require_confirmation = false
     );
 }
 
@@ -285,10 +285,41 @@ async function init() {
     labeledDescriptors = await loadLabeledDescriptors();
     setStatus(`Listo. Personas: ${labeledDescriptors.length}`);
     document.getElementById("startBtn").onclick = async () => {
-        await startCamera();
-        running = true;
-        document.getElementById("stopBtn").disabled = false;
-        loop();
+        setStatus("Verificando ubicación...");
+        if (!navigator.geolocation) {
+            Swal.fire("Error", "Tu navegador no permite obtener ubicación.", "error");
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const userLat = pos.coords.latitude;
+            const userLon = pos.coords.longitude;
+            const dist = haversineDistance(userLat, userLon, CEDIS_COORDS.lat, CEDIS_COORDS.lon);
+
+            console.log(`📍 Distancia al CEDIS: ${dist.toFixed(1)} m`);
+
+            if (dist <= MAX_DISTANCE_METERS) {
+                setStatus("Dentro del CEDIS ✅");
+                await startCamera();
+                running = true;
+                document.getElementById("stopBtn").disabled = false;
+                loop();
+            } else {
+                setStatus(`Fuera del área permitida (${dist.toFixed(1)} m) ❌`);
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Fuera de zona permitida',
+                    html: `Estás a ${dist.toFixed(1)} m del CEDIS. Debes estar dentro de ${MAX_DISTANCE_METERS} m.`,
+                });
+            }
+        }, (err) => {
+            console.error("Error obteniendo ubicación:", err);
+            Swal.fire("Error", "No se pudo obtener tu ubicación. Activa el GPS.", "error");
+        }, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        });
     };
     document.getElementById("stopBtn").onclick = () => {
         running = false;

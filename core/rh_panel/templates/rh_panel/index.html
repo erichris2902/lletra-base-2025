@@ -1,4 +1,4 @@
-{% extends 'base/layout.html' %}
+{% extends 'base/base_layout.html' %}
 {% load static %}
 
 {% block extra_header %}
@@ -98,7 +98,7 @@
 {% endblock %}
 
 
-{% block content %}
+{% block body %}
     <div class="pagetitle">
         <h1>Registro de Asistencia</h1>
     </div>
@@ -152,6 +152,26 @@
     <!-- Face API -->
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="{% static 'lib/capture/app.js' %}"></script>
+
+    <script>
+        const CEDIS_COORDS = {lat: 20.612788944968734, lon: -100.42478443316642}; // ejemplo: Querétaro 20.612788944968734, -100.42478443316642
+        const MAX_DISTANCE_METERS = 20;
+
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // radio de la Tierra en metros
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(Δφ / 2) ** 2 +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ / 2) ** 2;
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            return R * c; // distancia en metros
+        }
+    </script>
 
     <script>
         const fullscreenBtn = document.getElementById("fullscreenBtn");
