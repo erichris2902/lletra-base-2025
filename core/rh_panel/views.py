@@ -1,7 +1,7 @@
 import json
 from datetime import date
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -78,12 +78,71 @@ class CaptureView(LoginRequiredMixin, AdminTemplateView):
         context = super().get_context_data(**kwargs)
         return context
 
-class CaptureLocationView(TemplateView):
+class AllowAnyMixin(AccessMixin):
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+class CaptureLocationView(AllowAnyMixin, TemplateView):
     template_name = 'rh_panel/index.html'
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        data = {}
+        print(request.POST)
+        try:
+            action = request.POST.get('action', '').lower()
+            handler = getattr(self, f'handle_{action}', None)
+            if callable(handler):
+                result = handler(request, data)
+                if result is not None:
+                    data = result
+            else:
+                data['error'] = f'Acción "{action}" no reconocida'
+        except Exception as e:
+            print(e)
+            data['error'] = str(e)
+        return JsonResponse(data, safe=False)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return context
+
+    def handle_add_attendance(self, request, data):
+        try:
+            employee = Employee.objects.get(pk=request.POST["employee_id"])
+        except Employee.DoesNotExist:
+            return {"error": "Empleado no encontrado"}
+
+        now_localtime = timezone.localtime().time()
+
+        # Busca o crea asistencia del día
+        attendance, created = Attendance.objects.get_or_create(
+            employee=employee,
+            date=date.today(),
+            defaults={
+                "check_in": now_localtime,
+                "confidence": request.POST.get("confidence", 0),
+                "emotion_check_in": request.POST.get("emotion", None),
+            }
+        )
+
+        # Si ya existía, marca hora de salida
+        if not created:
+            attendance.check_out = now_localtime
+            # Puedes actualizar también la emoción si la detección fue reciente
+            attendance.emotion_check_out = request.POST.get("emotion", attendance.emotion_check_out)
+            attendance.save(update_fields=["check_out", "emotion_check_out"])
+
+        # Devuelve el estado actual
+        return {
+            "employee": employee.name,
+            "message": employee.name,
+            "check_in": attendance.check_in,
+            "check_out": attendance.check_out,
+            "created": created,
+            "timestamp": now_localtime.strftime("%H:%M:%S"),
+            "status": "entrada" if created else "salida",
+        }
 
 
 class RegisterFaceView(LoginRequiredMixin, AdminTemplateView):

@@ -1,5 +1,5 @@
 // Configuración
-const API_BASE = "/rh/employee/";
+const API_BASE = "/rh/capture/";
 const CONFIDENCE_THRESHOLD = 0.6;
 const MARGIN_TOP2 = 0.12;
 const VOTE_WINDOW = 7;
