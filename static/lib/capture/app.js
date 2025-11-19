@@ -1,6 +1,6 @@
 // Configuración
 const API_BASE = "/rh/capture/";
-const CONFIDENCE_THRESHOLD = 0.6;
+const CONFIDENCE_THRESHOLD = 0.95;
 const MARGIN_TOP2 = 0.12;
 const VOTE_WINDOW = 7;
 const COOLDOWN_MS = 2 * 60 * 1000;
