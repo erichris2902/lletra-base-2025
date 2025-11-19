@@ -136,6 +136,15 @@ async function sendAttendance(employeeId, name, confidence, snapshotBlob, emotio
     form.append("csrfmiddlewaretoken", csrfToken);
     if (snapshotBlob) form.append("snapshot", snapshotBlob, `snap_${Date.now()}.jpg`);
 
+    function stopCamera() {
+        running = false;
+        if (videoEl && videoEl.srcObject) {
+            videoEl.srcObject.getTracks().forEach(t => t.stop());
+            videoEl.srcObject = null;
+        }
+        setStatus("Asistencia registrada");
+    }
+
     // Envío con AJAX
     submit_with_ajax(`${API_BASE}`, form,
         function (data) {
@@ -143,6 +152,7 @@ async function sendAttendance(employeeId, name, confidence, snapshotBlob, emotio
             setStatus(`✅ Asistencia registrada: ${name} (${(confidence * 100).toFixed(1)}%)`);
             const msg = `Asistencia registrada para ${name}.`;
             speakMessage(msg);
+            stopCamera();
             Swal.fire({
                 icon: 'success',
                 title: 'Asistencia registrada',
@@ -159,6 +169,7 @@ async function sendAttendance(employeeId, name, confidence, snapshotBlob, emotio
                 title: 'Error',
                 text: err.error || 'No se pudo registrar la asistencia'
             });
+            running = false;
         }, require_confirmation = false
     );
 }
@@ -249,6 +260,7 @@ async function loop() {
                 if ((highConfidence || sustainedRecognition)) {
                     const snap = await takeSnapshot();
                     const v = votes.find(x => x.employeeId === bestEmp);
+                    running = false;
                     await sendAttendance(bestEmp, v.name, bestAvg, snap, mainExpression);
                     votes = [];
                     recognitionStartTime = null; // reinicia después del envío
