@@ -27,6 +27,7 @@ class AdminView:
 
         # Obtiene categorías ordenadas por prioridad
         categories = Category.objects.filter(system=system).order_by("priority").all()
+        categories = Category.objects.order_by("priority").all()
 
         # Carga secciones relacionadas (evita consultas N+1)
         for category in categories:

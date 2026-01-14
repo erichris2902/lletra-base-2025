@@ -82,17 +82,17 @@ def dispatch_user(system):
     if system == SystemEnum.SYSTEM:
         return True, reverse_lazy('system_panel:dashboard')
     elif system == SystemEnum.OPERACIONES:
-        return True, reverse_lazy('operation_panel:dashboard')
+        return True, reverse_lazy('system_panel:dashboard')
     elif system == SystemEnum.SALE:
-        return True, reverse_lazy('sales_panel:dashboard')
+        return True, reverse_lazy('system_panel:dashboard')
     elif system == SystemEnum.ADMINISTRACION:
-        return True, reverse_lazy('admin_panel:dashboard')
+        return True, reverse_lazy('system_panel:dashboard')
     elif system == SystemEnum.RH:
-        return True, reverse_lazy('rh_panel:dashboard')
+        return True, reverse_lazy('system_panel:dashboard')
     elif system == SystemEnum.COMERCIAL:
-        return True, reverse_lazy('commercial_panel:dashboard')
+        return True, reverse_lazy('system_panel:dashboard')
     elif system == SystemEnum.ATTENDANCE:
-        return True, reverse_lazy('rh_panel:capture_attendance')
+        return True, reverse_lazy('system_panel:capture_attendance')
     elif system == SystemEnum.NONE:
         return True, reverse_lazy('admin_panel:logout')
     return False, ""
