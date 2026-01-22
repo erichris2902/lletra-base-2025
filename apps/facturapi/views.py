@@ -345,15 +345,65 @@ class InvoiceListView(AdminListView):
 
     static_path = 'facturapi/invoice/base.html'
 
-    def get_queryset(self):
-        qs = self.model.objects.exclude(status="canceled").prefetch_related("customer")
-        search_term = self.request.GET.get('q')
-        if search_term:
-            search_fields = getattr(self, 'search_fields', ['name'])
-            q = Q()
+    def handle_searchdata(self, request, data):
+        # DataTables manda esto
+        draw = int(request.POST.get("draw", 1))
+        start = int(request.POST.get("start", 0))
+        length = int(request.POST.get("length", 50))
+        search = (request.POST.get("search", "") or "").strip()
+
+        # 1) queryset base
+        qs = self.get_queryset()
+        records_total = qs.count()
+
+        # 2) filtro por búsqueda
+        if search:
+            search_fields = getattr(self, "search_fields", self.search_fields)
+            search_fields = self._safe_search_fields(search_fields)
+
+            q_obj = Q()
             for field in search_fields:
-                q |= Q(**{f"{field}__icontains": search_term})
-            qs = qs.filter(q)
+                q_obj |= Q(**{f"{field}__icontains": search})
+            qs = qs.filter(q_obj)
+
+        records_filtered = qs.count()
+
+        # 3) orden (opcional, pero recomendado)
+        order_col = request.POST.get("order_col") or '0'
+        order_dir = request.POST.get("order_dir", "asc")
+        if order_col is not None and order_col != "":
+            try:
+                col_idx = int(order_col)
+                col_key = self.datatable_keys[col_idx]  # ej: "name"
+
+                # si es columna virtual, se anota
+                if col_key in self.virtual_search:
+                    qs = qs.annotate(**{col_key: self.virtual_search[col_key]})
+                    order_field = col_key
+                else:
+                    order_field = self.datatable_keys[col_idx]
+
+                order_field = f"-{order_field}"
+
+                qs = qs.order_by(order_field)
+            except (ValueError, IndexError):
+                pass
+
+        # 4) paginación
+        qs_page = qs[start:start + length]
+
+        # 5) data
+        data = [obj.to_display_dict(keys=self.datatable_keys) for obj in qs_page]
+
+        return {
+            "draw": draw,
+            "recordsTotal": records_total,
+            "recordsFiltered": records_filtered,
+            "data": data
+        }
+
+    def get_queryset(self):
+        qs = self.model.objects.all()
         return qs
 
     def handle_getcancelinvoice(self, request, data):

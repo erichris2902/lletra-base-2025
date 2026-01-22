@@ -2,51 +2,52 @@
 {% load static %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">{{ category }}</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="card-title mb-0">{{ section }}</h5>
-                    <div>
-                        {% if action_headers %}
-                            {% block ActionButtonsHeader %}
-                                <button class="btn btn-primary" onclick="LoadForm();">
-                                    <i class="fas fa-plus"></i> Nuevo registro
-                                </button>
-                                <button class="btn btn-success" id="updateBtn" onclick="window.location.reload()">
-                                    <i class="fas fa-sync"></i> Actualizar
-                                </button>
-                            {% endblock %}
-                        {% elif custom_action_headers %}
-                            {% include custom_action_headers %}
-                        {% endif %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ category }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">{{ section }}</h5>
+                        <div>
+                            {% if action_headers %}
+                                {% block ActionButtonsHeader %}
+                                    <button class="btn btn-primary" onclick="LoadForm();">
+                                        <i class="fas fa-plus"></i> Nuevo registro
+                                    </button>
+                                    <button class="btn btn-success" id="updateBtn" onclick="window.location.reload()">
+                                        <i class="fas fa-sync"></i> Actualizar
+                                    </button>
+                                {% endblock %}
+                            {% elif custom_action_headers %}
+                                {% include custom_action_headers %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table id="main_datatable"
+                               class="table table-bordered table-striped table-hover align-middle table-sm w-100">
+                            <thead>
+                            <tr>{% block rows %}{% endblock %}</tr>
+                            </thead>
+                            <tbody>{% block columns %}{% endblock %}</tbody>
+                            <tfoot>
+                            <tr>{% block rowsbottom %}{% endblock %}</tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
-
-                <div id="main_datatable_wrapper" class="dataTables_wrapper dt-bootstrap5">
-                    <table id="main_datatable" class="table table-bordered table-striped dataTable">
-                        <thead>
-                            <tr>{% block rows %}{% endblock %}</tr>
-                        </thead>
-                        <tbody>{% block columns %}{% endblock %}</tbody>
-                        <tfoot>
-                            <tr>{% block rowsbottom %}{% endblock %}</tr>
-                        </tfoot>
-                    </table>
+                <div class="card-footer">
+                    {% block ActionButtons %}{% endblock %}
                 </div>
-            </div>
-            <div class="card-footer">
-                {% block ActionButtons %}{% endblock %}
             </div>
         </div>
     </div>
-</div>
 
-{% include "base/elements/modal.html" %}
+    {% include "base/elements/modal.html" %}
 {% endblock %}
 
 {% block scripts %}
@@ -67,10 +68,10 @@
                 e.preventDefault();
                 const parameters = new FormData(this);
                 submit_with_ajax(window.location.pathname, parameters, function (data) {
-                    Swal.fire({ icon: 'success', title: 'Éxito', text: 'Actualización realizada' });
+                    Swal.fire({icon: 'success', title: 'Éxito', text: 'Actualización realizada'});
                     tblClient.ajax.reload(null, false);
                 }, function (data) {
-                    Swal.fire({ icon: 'error', title: 'Error', text: data.error });
+                    Swal.fire({icon: 'error', title: 'Error', text: data.error});
                 });
             });
         </script>
@@ -82,10 +83,10 @@
                 e.preventDefault();
                 const parameters = new FormData(this);
                 submit_with_ajax(window.location.pathname, parameters, function (data) {
-                    Swal.fire({ icon: 'success', title: 'Éxito', text: 'Registro eliminado' });
+                    Swal.fire({icon: 'success', title: 'Éxito', text: 'Registro eliminado'});
                     tblClient.ajax.reload(null, false);
                 }, function (data) {
-                    Swal.fire({ icon: 'error', title: 'Error', text: data.error });
+                    Swal.fire({icon: 'error', title: 'Error', text: data.error});
                 });
             });
         </script>

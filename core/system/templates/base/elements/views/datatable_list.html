@@ -19,5 +19,11 @@
 {% endblock %}
 
 {% block js %}
-    {# JS adicional específico para esta vista #}
+    <script>
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) {
+                tblClient.ajax.reload(null, false); // mantiene página actual
+            }
+        });
+    </script>
 {% endblock %}

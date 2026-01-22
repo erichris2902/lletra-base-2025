@@ -4,7 +4,7 @@
     {% endif %}
     function getData() {
         tblClient = new DataTable('#main_datatable', {
-            order: [[0, "desc"]],
+            order: [[0, "{{ ordering }}"]],
             dom: 'frtip',
             buttons: [
                 'copyHtml5', 'excelHtml5', 'csvHtml5', 'pdfHtml5', 'colvis'
@@ -15,16 +15,27 @@
             autoWidth: false,
             destroy: true,
             deferRender: true,
+            serverSide: true,
+            processing: true,
+            searching: true,     // por si acaso
+            searchDelay: 400,    // para no spamear requests
             ajax: {
                 url: window.location.pathname,
                 type: 'POST',
                 data: function (d) {
                     return {
                         action: 'searchdata',
+                        draw: d.draw,                 // ✅ FALTABA
+                        search: d.search.value,     // ✅ lo que escribe el usuario
+                        start: d.start,             // ✅ offset
+                        length: d.length,           // ✅ page size
+                        order_col: d.order?.[0]?.column,
+                        order_dir: d.order?.[0]?.dir,
                         csrfmiddlewaretoken: csrfToken
                     };
+
                 },
-                dataSrc: ""
+                dataSrc: "data"
             },
             columns: [
                 {% for column in datatable_keys %}

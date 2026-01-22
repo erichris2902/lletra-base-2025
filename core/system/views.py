@@ -1,12 +1,12 @@
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.views.generic import ListView, TemplateView
-
+from django.db import transaction, models
 from core.system.functions import dispatch_user
 from core.system.models import Category, Section
 
@@ -61,6 +61,56 @@ class AdminListView(AdminView, ListView):
     catalogs = []
     callback_js = None
     search_fields = ['name', 'description', 'rfc']
+    ordering = "asc"
+    virtual_search = {
+        # "name": Concat(
+        #    Coalesce("first_name", Value("")),
+        #    Value(" "),
+        #    Coalesce("last_name", Value("")),
+        #    output_field=CharField()
+        # )
+    }
+
+    def _safe_search_fields(self, fields):
+        safe = []
+        for f in fields:
+            # si ya trae __, asumimos que ya apunta a un campo concreto
+            if "__" in f:
+                safe.append(f)
+                continue
+            try:
+                field = self.model._meta.get_field(f)
+            except FieldDoesNotExist:
+                continue
+            # si es FK, intenta buscar por <fk>__name por default
+            if field.is_relation and field.many_to_one:
+                related_model = field.related_model
+                text_field = self._get_text_field_for_fk(related_model)
+
+                if text_field:
+                    safe.append(f"{f}__{text_field}")
+            else:
+                safe.append(f)
+        return safe
+
+    def _get_text_field_for_fk(self, model):
+        # prioridad de nombres "humanos"
+        preferred = ["name", "first_name", "last_name", "business_name", "title", "username", "email", "folio"]
+
+        fields = {
+            f.name: f
+            for f in model._meta.get_fields()
+            if isinstance(f, (models.CharField, models.TextField))
+        }
+
+        # 1️⃣ usar uno preferido si existe
+        for p in preferred:
+            if p in fields:
+                return p
+
+        # 2️⃣ usar cualquier CharField/TextField
+        return next(iter(fields), None)
+
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -68,13 +118,6 @@ class AdminListView(AdminView, ListView):
 
     def get_queryset(self):
         qs = self.model.objects.all()
-        search_term = self.request.GET.get('q')
-        if search_term:
-            search_fields = getattr(self, 'search_fields', ['name'])
-            q = Q()
-            for field in search_fields:
-                q |= Q(**{f"{field}__icontains": search_term})
-            qs = qs.filter(q)
         return qs
 
     def get_context_data(self, **kwargs):
@@ -146,9 +189,62 @@ class AdminListView(AdminView, ListView):
         return None, form.errors
 
     def handle_searchdata(self, request, data):
-        queryset = self.get_queryset()
-        data = [obj.to_display_dict(keys=self.datatable_keys) for obj in queryset]
-        return data
+        # DataTables manda esto
+        draw = int(request.POST.get("draw", 1))
+        start = int(request.POST.get("start", 0))
+        length = int(request.POST.get("length", 50))
+        search = (request.POST.get("search", "") or "").strip()
+
+        # 1) queryset base
+        qs = self.get_queryset()
+        records_total = qs.count()
+
+        # 2) filtro por búsqueda
+        if search:
+            search_fields = getattr(self, "search_fields", self.search_fields)
+            search_fields = self._safe_search_fields(search_fields)
+
+            q_obj = Q()
+            for field in search_fields:
+                q_obj |= Q(**{f"{field}__icontains": search})
+            qs = qs.filter(q_obj)
+
+        records_filtered = qs.count()
+
+        # 3) orden (opcional, pero recomendado)
+        order_col = request.POST.get("order_col")
+        order_dir = request.POST.get("order_dir", "asc")
+        if order_col is not None and order_col != "":
+            try:
+                col_idx = int(order_col)
+                col_key = self.datatable_keys[col_idx]  # ej: "name"
+
+                # si es columna virtual, se anota
+                if col_key in self.virtual_search:
+                    qs = qs.annotate(**{col_key: self.virtual_search[col_key]})
+                    order_field = col_key
+                else:
+                    order_field = self.datatable_keys[col_idx]
+
+                if order_dir == "desc":
+                    order_field = f"-{order_field}"
+
+                qs = qs.order_by(order_field)
+            except (ValueError, IndexError):
+                pass
+
+        # 4) paginación
+        qs_page = qs[start:start + length]
+
+        # 5) data
+        data = [obj.to_display_dict(keys=self.datatable_keys) for obj in qs_page]
+
+        return {
+            "draw": draw,
+            "recordsTotal": records_total,
+            "recordsFiltered": records_filtered,
+            "data": data
+        }
 
     def handle_add(self, request, data):
         instance, errors = self.save_form(request)

@@ -49,6 +49,16 @@
         .modal-dialog-scrollable .modal-body {
             min-height: 80vh;
         }
+
+        table.dataTable {
+            font-size: 0.875rem; /* ~14px */
+        }
+
+        .table-container {
+            min-height: calc(100vh - 260px);
+            display: flex;
+            flex-direction: column;
+        }
     </style>
 
     {% block extra_header %}{% endblock %}
