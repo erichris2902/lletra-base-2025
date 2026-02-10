@@ -17,4 +17,7 @@ urlpatterns = [
 
     # Dashboard URL for SYSTEM users
     path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
+    path('supplier/payments/', views.SupplierPaymentsListView.as_view(), name='supplier_payments'),
+
+
 ]

@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'core.sales_panel',
     'core.system_panel',
     'core.commercial_panel',
+    'core.supplier_panel',
 
     # Project apps - FacturAPI
     'apps.facturapi',

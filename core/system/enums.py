@@ -13,4 +13,5 @@ class SystemEnum(models.TextChoices):
     SALE = 'SALE', _('VENTAS')
     RH = 'RH', _('RH')
     ATTENDANCE = 'ATTENDANCE', _('ATTENDANCE')
+    SUPPLIER = 'SUPPLIER', _('SUPPLIER')
     # Add more system types as needed

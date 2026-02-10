@@ -15,6 +15,7 @@ from django.utils.safestring import mark_safe
 from core.operations_panel.models import Client
 from core.system.views import AdminListView, AdminTemplateView, PopupView
 from . import services
+from .choices import PAYMENT_METHOD_CHOICES
 from .forms import FacturapiTaxForm, FacturapiInvocieForm, SelectItemForm, FacturapiProductForm, \
     FacturapiInvoicePaymentForm, FacturapiCancelInvoiceForm
 from .models import FacturapiInvoice, FacturapiTax, FacturapiInvoicePayment
@@ -281,6 +282,9 @@ class InvoiceFormView(AdminTemplateView):
 
         taxes = list(FacturapiTax.objects.values('id', 'name', 'type', 'rate', 'factor', 'withholding'))
         context['taxes_json'] = mark_safe(json.dumps(taxes, cls=DjangoJSONEncoder))
+
+        ppds = list(FacturapiInvoice.objects.filter(payment_form="PPD"))
+        context['ppds_json'] = mark_safe(json.dumps(ppds, cls=DjangoJSONEncoder))
 
         context.update({
             'title': self.title,

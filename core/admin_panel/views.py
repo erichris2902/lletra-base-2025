@@ -8,8 +8,10 @@ from django.urls import reverse_lazy, reverse
 from django.http import JsonResponse, HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
 
+from core.operations_panel.models import Supplier
 from core.system.enums import SystemEnum
 from core.system.functions import dispatch_user
+from core.system.models import SystemUser
 from core.system.views import AdminTemplateView
 
 
@@ -17,43 +19,47 @@ class AdminLoginView(LoginView):
     template_name = 'base/elements/pages/login.html'
     redirect_authenticated_user = True
 
-    def form_invalid(self, form):
-        print("=== FORM INVALID DEBUG ===")
-        print("Form data:", form.cleaned_data)
-        print("Errors:", form.errors)
-        print("Request.user:", self.request.user)
-        from django.contrib.auth import authenticate
-        test_user = authenticate(self.request,
-                                 username=self.request.POST.get('username'),
-                                 password=self.request.POST.get('password'))
-        print("Manual authenticate:", test_user)
-        print("==========================")
-        return super().form_invalid(form)
+    def post(self, request, *args, **kwargs):
+        # 1) Tomar credenciales directo del POST (sin AuthenticationForm)
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
 
-    def form_valid(self, form):
-        username = form.cleaned_data.get('username')
-        password = form.cleaned_data.get('password')
-        user = authenticate(username=username, password=password)
+        print("=== MANUAL LOGIN DEBUG ===")
+        print("POST username:", username)
+        print("POST password:", password)
 
+        # 2) Intento normal (usuario ya existe en Django)
+        user = authenticate(request, username=username, password=password)
+        print("authenticate normal:", user)
+
+        # 3) Si falla, intenta tu lógica Supplier -> crear SystemUser -> autenticar
+        if user is None:
+            if Supplier.objects.filter(code=username, rfc=password).exists():
+                user_obj = SystemUser()
+                user_obj.system = SystemEnum.SUPPLIER
+                user_obj.username = username
+                user_obj.set_password(password)
+                user_obj.save()
+
+                user = authenticate(request, username=username, password=password)
+                print("authenticate after create:", user)
+
+        # 4) Si al final hay user, loguea y redirige / responde JSON
         if user is not None:
-            login(self.request, user)
+            login(request, user)
 
-            # Return JSON response for AJAX requests
-            if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'error': False,
-                    'url': self.get_success_url()
-                })
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'error': False, 'url': self.get_success_url()})
 
             return redirect(self.get_success_url())
 
-        # Return JSON response for AJAX requests
-        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({
-                'error': 'Credenciales inválidas'
-            })
+        # 5) Si no, devuelve error (JSON o recarga con invalid)
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'error': 'Credenciales inválidas'}, status=400)
 
-        return self.form_invalid(form)
+        # “Forzar form_invalid” (sin usar el form real)
+        # Puedes mandar un mensaje simple o usar messages framework si quieres.
+        return self.render_to_response(self.get_context_data(error="Credenciales inválidas"))
 
     def get_success_url(self):
         """
@@ -98,3 +104,36 @@ class AdminLogoutView(LogoutView):
         if request.user.is_authenticated:
             logout(request)
         return HttpResponseRedirect(self.success_url)
+
+
+from decimal import Decimal, ROUND_HALF_UP
+
+from django.shortcuts import get_object_or_404
+
+from core.operations_panel.models import Supplier
+from core.supplier_panel.forms import PaymentRequestInvoiceForm, PaymentRequestCommentsForm, \
+    PaymentRequestComplementForm, PaymentRequestCompleteForm
+from core.supplier_panel.models import PaymentRequest
+from core.system.views import AdminTemplateView, AdminListView
+import xml.etree.ElementTree as ET
+
+class SupplierPaymentsListView(AdminListView):
+    model = PaymentRequest
+    form = PaymentRequestCompleteForm
+    template_name = 'base/elements/views/datatable_list.html'
+    datatable_headers = ["Control Vehicular", "Monto", "Status"]
+    datatable_keys = ["vehicle_control", "amount_before_taxes", "status"]
+    datatable_actions = True
+    title = model._meta.verbose_name_plural.title()
+    form_path = 'base/elements/forms/form.html'
+    section = 'Pagos'
+    category = 'Pago a proveedores'
+
+
+
+    def get_queryset(self):
+        qs = self.model.objects.all()
+        return qs
+
+
+

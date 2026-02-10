@@ -1,0 +1,29 @@
+{% extends 'base/elements/views/supplier_panel/list.html' %}
+{% load static %}
+
+{% block rows %}
+    {% include 'base/elements/views/partials/headers.html' %}
+{% endblock %}
+
+{% block rowsbottom %}
+    {% include 'base/elements/views/partials/headers.html' %}
+{% endblock %}
+
+{% block columns %}
+    {# Render dinámico por JS (DataTables) #}
+{% endblock %}
+
+{% block datatable_import %}
+    {# JS específico para este listado #}
+    {% include static_path %}
+{% endblock %}
+
+{% block js %}
+    <script>
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) {
+                tblClient.ajax.reload(null, false); // mantiene página actual
+            }
+        });
+    </script>
+{% endblock %}

@@ -15,5 +15,6 @@ urlpatterns = [
     path('rh/', include("core.rh_panel.urls")),  # RH panel URLs
     path('operations/', include("core.operations_panel.urls")),  # Operations panel URLs
     path('system/', include("core.system_panel.urls")),  # System panel URLs
+    path('supplier/', include("core.supplier_panel.urls")),  # System panel URLs
     path('', include("core.admin_panel.urls")),  # Admin panel URLs at root
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
