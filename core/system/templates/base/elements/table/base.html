@@ -23,6 +23,7 @@
                 url: window.location.pathname,
                 type: 'POST',
                 data: function (d) {
+                    console.log(d);
                     return {
                         action: 'searchdata',
                         draw: d.draw,                 // ✅ FALTABA

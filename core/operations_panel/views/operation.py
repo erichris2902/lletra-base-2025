@@ -47,7 +47,10 @@ class OperationListView(AdminListView):
         pass
 
     def get_queryset(self):
-        return self.model.objects.exclude(Q(folio__isnull=True) | Q(folio="")).prefetch_related("client", "driver", "vehicle", "route", "shipment_invoice", "transported_products").all()
+        return self.model.objects.exclude(Q(folio__isnull=True) | Q(folio="")).prefetch_related("client", "driver",
+                                                                                                "vehicle", "route",
+                                                                                                "shipment_invoice",
+                                                                                                "transported_products").all()
 
 
 class FolioOperationListView(AdminListView):
@@ -121,22 +124,70 @@ class FolioOperationListView(AdminListView):
         return data
 
     def handle_searchdata(self, request, data):
-        """
-        Retorna todos los registros como lista de dicts.
-        """
-        # Obtén los objetos de la tabla (o filtra según tus necesidades)
-        queryset = self.get_queryset()
-        datatable_keys = self.datatable_keys
-        data = [obj.to_folios_view(keys=datatable_keys) for obj in self.get_queryset()]
-        return data
+        # DataTables manda esto
+        draw = int(request.POST.get("draw", 1))
+        start = int(request.POST.get("start", 0))
+        length = int(request.POST.get("length", 50))
+        search = (request.POST.get("search", "") or "").strip()
+
+        # 1) queryset base
+        qs = self.get_queryset()
+        records_total = qs.count()
+
+        # 2) filtro por búsqueda
+        if search:
+            search_fields = getattr(self, "search_fields", self.search_fields)
+            search_fields = self._safe_search_fields(search_fields)
+
+            q_obj = Q()
+            for field in search_fields:
+                q_obj |= Q(**{f"{field}__icontains": search})
+            qs = qs.filter(q_obj)
+
+        records_filtered = qs.count()
+
+        # 3) orden (opcional, pero recomendado)
+        order_col = request.POST.get("order_col")
+        order_dir = request.POST.get("order_dir", "asc")
+        if order_col is not None and order_col != "":
+            try:
+                col_idx = int(order_col)
+                col_key = self.datatable_keys[col_idx]  # ej: "name"
+
+                # si es columna virtual, se anota
+                if col_key in self.virtual_search:
+                    qs = qs.annotate(**{col_key: self.virtual_search[col_key]})
+                    order_field = col_key
+                else:
+                    order_field = self.datatable_keys[col_idx]
+
+                if order_dir == "desc":
+                    order_field = f"-{order_field}"
+
+                qs = qs.order_by(order_field)
+            except (ValueError, IndexError):
+                pass
+
+        # 4) paginación
+        qs_page = qs[start:start + length]
+
+        # 5) data
+        data = [obj.to_folios_view(keys=self.datatable_keys) for obj in qs_page]
+
+        return {
+            "draw": draw,
+            "recordsTotal": records_total,
+            "recordsFiltered": records_filtered,
+            "data": data
+        }
+
 
     def get_queryset(self):
         return self.model.objects.prefetch_related("client", "driver",
-                                                                                                "vehicle", "route",
-                                                                                                "shipment_invoice",
-                                                                                                "transported_products", "route__route_stops",
-                                                                                                "route__initial_location",
-                                                                                                "route__destination_location",).all()
+                                                   "vehicle", "route",
+                                                   "route__route_stops",
+                                                   "route__initial_location",
+                                                   "route__destination_location").all()
 
 
 class ShipmentOperationListView(AdminListView):
@@ -412,18 +463,19 @@ class ShipmentOperationListView(AdminListView):
 
     def get_queryset(self):
         # Puedes adaptar esto si usas SoftDeleteModel
-        return self.model.objects.exclude(Q(folio__isnull=True) | Q(folio="")).all().prefetch_related("route__initial_location__address",
-                                                                                                      "route__destination_location__address",
-                                                                                                      "route__destination_location",
-                                                                                                      "route__initial_location",
-                                                                                                      "route__route_stops",
-                                                                                                      "route",
-                                                                                                      "transported_products",
-                                                                                                      "shipment_invoice",
-                                                                                                      "client",
-                                                                                                      "driver",
-                                                                                                      "vehicle",
-                                                                                                      )
+        return self.model.objects.exclude(Q(folio__isnull=True) | Q(folio="")).all().prefetch_related(
+            "route__initial_location__address",
+            "route__destination_location__address",
+            "route__destination_location",
+            "route__initial_location",
+            "route__route_stops",
+            "route",
+            "transported_products",
+            "shipment_invoice",
+            "client",
+            "driver",
+            "vehicle",
+            )
 
     def handle_assign_cargo(self, request, data):
         operation_id = request.POST.get("operation_id")
@@ -475,7 +527,8 @@ class ShipmentOperationListView(AdminListView):
     def handle_get_assign_cargo_form(self, request, data):
         operation = Operation.objects.get(pk=request.POST.get('id'))
         data['id'] = str(operation.id)
-        data["form"] = self.render_others_form(request, operation, AssignCargoToOperationForm(), "AssignCargo", data=data)
+        data["form"] = self.render_others_form(request, operation, AssignCargoToOperationForm(), "AssignCargo",
+                                               data=data)
         return data
 
     def handle_get_assign_products_form(self, request, data):
@@ -485,5 +538,6 @@ class ShipmentOperationListView(AdminListView):
         data['products'] = []
         for product in operation.transported_products.all():
             data['products'].append(json.loads(product.to_json()))
-        data["form"] = self.render_others_form(request, operation, OperationTransportedProductForm(), "AssignProducts", data=data)
+        data["form"] = self.render_others_form(request, operation, OperationTransportedProductForm(), "AssignProducts",
+                                               data=data)
         return data
