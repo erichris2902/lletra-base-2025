@@ -40,6 +40,8 @@ class OperationListView(AdminListView):
     category = 'Operaciones'
     dropdown_action_path = 'operations_panel/operation/table/actions.js'
     static_path = 'operations_panel/operation/table/base.html'
+    search_fields = ['folio']
+
 
     def handle_searchdata(self, request, data):
         # DataTables manda esto
