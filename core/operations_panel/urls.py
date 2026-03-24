@@ -6,7 +6,8 @@ from core.operations_panel.views.dashboards import DashboardView
 from core.operations_panel.views.delivery_location import DeliveryLocationListView
 from core.operations_panel.views.downloads import DownloadShipmentPDF
 from core.operations_panel.views.driver import DriverListView
-from core.operations_panel.views.invoice_facturapi_shipment import InvoiceShipmentIFormView, InvoiceShipmentTFormView
+from core.operations_panel.views.invoice_facturapi_shipment import InvoiceShipmentIFormView, InvoiceShipmentTFormView, \
+    InvoiceShipmentLocalFormView
 from core.operations_panel.views.operation import FolioOperationListView, OperationListView, ShipmentOperationListView
 from core.operations_panel.views.route import RouteListView, RouteMapView
 from core.operations_panel.views.supplier import SupplierListView
@@ -44,6 +45,7 @@ urlpatterns = [
 
     path('generate_invoice/i/<uuid:operation_id>/', InvoiceShipmentIFormView.as_view(), name='invoice_shipment_i'),
     path('generate_invoice/t/<uuid:operation_id>/', InvoiceShipmentTFormView.as_view(), name='invoice_shipment_t'),
+    path('generate_invoice/local/<uuid:operation_id>/', InvoiceShipmentLocalFormView.as_view(), name='invoice_shipment_t'),
 
     path('download/shipment-invoice/<uuid:operation_id>/no-signed', DownloadShipmentPDF, name='shipment_cartaporte'),
 ]

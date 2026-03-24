@@ -42,6 +42,7 @@ function dropdown(data, type, row) {
     dropdown += '<a rel="update" class="dropdown-item" type="button">Actualizar</a>';
     dropdown += `<a href="/operations/generate_invoice/i/${row.id}/" target="_blank" class="dropdown-item">Cartaporte</a>`;
     dropdown += `<a href="/operations/generate_invoice/t/${row.id}/" target="_blank" class="dropdown-item">Translado</a>`;
+    dropdown += `<a href="/operations/generate_invoice/local/${row.id}/" target="_blank" class="dropdown-item">Local</a>`;
     dropdown += '<hr class="dropdown-divider">';
     if (!row.is_ready_to_invoice) {
         dropdown += `<a href="/operations/routes/shipment-invoice/${row.id}/pdf" target="_blank" class="dropdown-item">PDF</a>`;

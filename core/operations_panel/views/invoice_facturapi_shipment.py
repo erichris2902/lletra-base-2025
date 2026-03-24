@@ -201,3 +201,63 @@ class InvoiceShipmentTFormView(InvoiceShipmentIFormView):
         })
 
         return context
+
+class InvoiceShipmentLocalFormView(InvoiceFormView):
+    template_name = 'operations_panel/invoice_shipment_form.html'
+
+    def handle_generateinvoice(self, request, data):
+        super().handle_generateinvoice(request, data)
+        data['redirect_url'] = "/operations/"
+
+    def handle_predictproduct(self, request, context):
+        operation = Operation.objects.get(id=self.kwargs['operation_id'])
+        productInvoice = FacturapiProduct.objects.get(sku="BASE-LOCAL")
+        productInvoice.name = operation.folio
+
+        productInvoice.description = operation.folio
+        productInvoice.description += " RUTA"
+        if operation.route:
+            productInvoice.description += ", ".join([delivery.name for delivery in operation.route.route_stops.all()])
+            productInvoice.description += " " + operation.route.destination_location.name
+            productInvoice.description += " " + operation.cargo_appointment.strftime('%d/%m/%Y')
+
+        context["price"] = str(productInvoice.price)
+        context["product"] = str(productInvoice.name)
+        context["description"] = str(productInvoice.description)
+        context["id"] = str(productInvoice.id)
+        i = 0
+        for tax in productInvoice.taxes.all():
+            if tax.withholding:
+                i -= tax.rate
+            else:
+                i += tax.rate
+        context["tax"] = str(i)
+        return context
+
+    def set_invoice_form(self, operation):
+        form = FacturapiInvocieForm()
+        if operation.client:
+            client_choices = []
+            client_choices.append((operation.client.id, str(operation.client.name)))
+            form.fields['customer'].widget.choices = client_choices
+            form.fields['customer'].initial = operation.client.id
+        return form
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        operation = get_object_or_404(Operation, pk=self.kwargs['operation_id'])
+        context["form_invoice"] = self.set_invoice_form(operation)
+
+        products = operation.transported_products.all()
+        context['products'] = []
+        for product in products:
+            context['products'].append(json.loads(product.to_json()))
+
+        context['include_invoice_prediction'] = True
+
+        context.update({
+            'add_form_layout': getattr(context["form_invoice"], 'layout', []),
+            'add_form_fields': {name: context["form_invoice"][name] for name in context["form_invoice"].fields},
+        })
+
+        return context
