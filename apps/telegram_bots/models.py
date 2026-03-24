@@ -21,6 +21,13 @@ class TelegramBot(models.Model):
     created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
     is_active = models.BooleanField(_("Is active"), default=True)
+    default_assistant = models.ForeignKey(
+        'openai_assistant.Assistant',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='telegram_bots_default'
+    )
 
     def __str__(self):
         return self.name
@@ -95,7 +102,7 @@ class TelegramChat(models.Model):
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    telegram_id = models.BigIntegerField(_("Telegram Chat ID"), unique=True)
+    telegram_id = models.BigIntegerField(_("Telegram Chat ID"))
     type = models.CharField(_("Chat Type"), max_length=20, choices=CHAT_TYPE_CHOICES)
     title = models.CharField(_("Title"), max_length=255, blank=True)
     username = models.CharField(_("Username"), max_length=255, blank=True)
@@ -117,6 +124,12 @@ class TelegramChat(models.Model):
     )
     created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
+
+    bot = models.ForeignKey(
+        TelegramBot, on_delete=models.CASCADE,
+        related_name="bots_chats",
+        null=True, blank=True,
+    )
 
     def __str__(self):
         if self.type == 'private':

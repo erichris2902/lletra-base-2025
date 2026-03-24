@@ -12,7 +12,7 @@ class TelegramBotAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     fieldsets = (
         (None, {
-            'fields': ('name', 'username', 'token', 'description')
+            'fields': ('name', 'username', 'token', 'description', 'default_assistant')
         }),
         ('Webhook', {
             'fields': ('webhook_url', 'webhook_set')
@@ -51,7 +51,7 @@ class TelegramGroupAdmin(admin.ModelAdmin):
 
 @admin.register(TelegramChat)
 class TelegramChatAdmin(admin.ModelAdmin):
-    list_display = ('telegram_id', 'type', 'title', 'username', 'telegram_group', 'active_assistant', 'created_at')
+    list_display = ('telegram_id', 'type', 'title', 'bot', 'username', 'telegram_group', 'active_assistant', 'created_at')
     list_filter = ('type', 'telegram_group', 'active_assistant')
     search_fields = ('telegram_id', 'title', 'username')
     readonly_fields = ('created_at', 'updated_at')

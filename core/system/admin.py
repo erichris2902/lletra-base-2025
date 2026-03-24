@@ -7,7 +7,7 @@ from core.operations_panel.models.distribution_packing import DistributionPackin
 from core.sales_panel.models.commercial import LeadCategory, LeadContact, LeadIndustry, LeadExpense, Lead, \
     Quotation
 from core.operations_panel.models import Operation, TransportedProduct, Cargo, Route, DeliveryLocation, Supplier, \
-    Client, Driver
+    Client, Driver, Vehicle
 from core.system.models import SystemUser, Category, Section
 
 
@@ -221,6 +221,7 @@ admin.site.register(TransportedProduct)
 admin.site.register(Address)
 admin.site.register(Supplier)
 admin.site.register(Cargo)
+admin.site.register(Vehicle)
 admin.site.register(Route)
 admin.site.register(DeliveryLocation)
 admin.site.register(DistributionPacking)

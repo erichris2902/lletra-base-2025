@@ -1,5 +1,5 @@
 from django.db import transaction
-from ...models import TelegramChat, TelegramGroup
+from ...models import TelegramChat, TelegramGroup, TelegramBot
 
 
 class TelegramChatService:
@@ -14,12 +14,14 @@ class TelegramChatService:
             return None
 
         telegram_id = data['id']
+        bot_id = data['bot_id']
         chat_type = data.get('type', 'private')
         title = data.get('title', '')
         username = data.get('username', '')
 
         chat, created = TelegramChat.objects.get_or_create(
             telegram_id=telegram_id,
+            bot=TelegramBot.objects.get(id=bot_id),
             defaults={
                 'type': chat_type,
                 'title': title,

@@ -19,6 +19,8 @@ class MessageHandler:
     def handle(self, message_data):
         # 1️⃣ Usuario y chat
         print(f"MESSAGE_HANDLER")
+        print(message_data)
+        message_data['chat']['bot_id'] = self.bot.id
         user = TelegramUserService.get_or_create(message_data.get('from'))
         chat = TelegramChatService.get_or_create(message_data.get('chat'))
 
@@ -54,14 +56,14 @@ class MessageHandler:
         if chat.type in ['group', 'supergroup']:
             if f"@{self.bot.username}" in text:
                 print(f"[MessageHandler] Bot mencionado en grupo, procesando con asistente.")
-                response_text = ai_integration.process_message(message, user)
+                response_text = ai_integration.process_message(self.bot, message, user)
                 self.api.send_message(chat.telegram_id, response_text, reply_to=message.telegram_id)
                 return {"status": "assistant_response_sent"}
             return {"status": "not_mentioned_in_group"}
 
         # 6️⃣ Chat privado: procesar con asistente directamente
         self.api.send_message(chat.telegram_id, "Procesando...")
-        response_text = ai_integration.process_message(message, user)
+        response_text = ai_integration.process_message(self.bot, message, user)
         self.api.send_message(chat.telegram_id, response_text, reply_to=message.telegram_id)
 
         return {"status": "assistant_response_sent"}

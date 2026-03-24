@@ -125,6 +125,7 @@ class TaxRegime(models.TextChoices):
 
 
 class VehicleConfig(models.TextChoices):
+    PENDING = 'PENDIENTE', _('PENDIENTE: PENDIENTE')
     VL = 'VL', _('VL: Light cargo vehicle')
     C2 = 'C2', _('C2: Unit truck (2 front wheels, 4 rear wheels)')
     C3 = 'C3', _('C3: Unit truck (2 front wheels, 6–8 rear wheels)')
