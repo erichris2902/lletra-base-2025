@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 from core.operations_panel.models.address import Address
 from core.operations_panel.models.distribution_packing import DistributionPacking
+from core.operations_panel.models.shipment_facturapi_invoice import ShipmentFacturapiInvoice
 from core.sales_panel.models.commercial import LeadCategory, LeadContact, LeadIndustry, LeadExpense, Lead, \
     Quotation
 from core.operations_panel.models import Operation, TransportedProduct, Cargo, Route, DeliveryLocation, Supplier, \
@@ -239,3 +240,4 @@ from core.rh_panel.models import Employee, Embedding
 
 admin.site.register(Employee)
 admin.site.register(Embedding)
+admin.site.register(ShipmentFacturapiInvoice)

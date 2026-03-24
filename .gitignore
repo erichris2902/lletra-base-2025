@@ -7,3 +7,4 @@ credentials.json
 services.json
 .env
 commands.txt
+legacy_plain.sql
