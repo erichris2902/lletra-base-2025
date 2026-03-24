@@ -4,8 +4,9 @@ from decimal import Decimal
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
+from apps.facturapi.choices import CFDI_TYPES
 from apps.facturapi.forms import FacturapiInvocieForm
-from apps.facturapi.models import FacturapiProduct, FacturapiInvoiceItem
+from apps.facturapi.models import FacturapiProduct, FacturapiInvoiceItem, FacturapiInvoice
 from apps.facturapi.views import InvoiceFormView, extract_products_from_post
 from core.operations_panel.forms.shipment_facturapi_invoice import ShipmentFacturapiInvoiceForm
 from core.operations_panel.models.client import Client
@@ -76,6 +77,8 @@ class InvoiceShipmentIFormView(InvoiceFormView):
         shipment_invoice.save()
 
         shipment_invoice.bill()
+
+        data['redirect_url'] = "/operations/"
 
     def handle_predictproduct(self, request, context):
         operation = Operation.objects.get(id=self.kwargs['operation_id'])
@@ -160,4 +163,41 @@ class InvoiceShipmentIFormView(InvoiceFormView):
         return form
 
 class InvoiceShipmentTFormView(InvoiceShipmentIFormView):
-    pass
+
+    def set_invoice_form(self, operation):
+        invoice = FacturapiInvoice()
+        lletra_client = Client.objects.get(rfc='STL191211KM2')
+        invoice.type = 'T'
+        invoice.customer = lletra_client
+        form = FacturapiInvocieForm(instance=invoice)
+        client_choices = []
+        client_choices.append((lletra_client.id, str(lletra_client.name)))
+        form.fields['customer'].widget.choices = client_choices
+        form.fields['customer'].initial = operation.client.id
+        return form
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        operation = get_object_or_404(Operation, pk=self.kwargs['operation_id'])
+        context["form_invoice"] = self.set_invoice_form(operation)
+
+        context["form_invoice"].initial['type'] = 'T'
+
+        context["shipment_invoice_form"] = self.set_shipment_form(operation)
+        products = operation.transported_products.all()
+        context['products'] = []
+        for product in products:
+            context['products'].append(json.loads(product.to_json()))
+
+        context['include_invoice_prediction'] = True
+        context['shipment_invoice_form_layout'] = getattr(context["shipment_invoice_form"], 'layout', [])
+        context['shipment_invoice_form_fields'] = {
+            name: context["shipment_invoice_form"][name] for name in context["shipment_invoice_form"].fields
+        }
+
+        context.update({
+            'add_form_layout': getattr(context["form_invoice"], 'layout', []),
+            'add_form_fields': {name: context["form_invoice"][name] for name in context["form_invoice"].fields},
+        })
+
+        return context

@@ -3,10 +3,12 @@ import uuid
 
 from django.db import models
 from django.db.models import Sum
+from django.template.loader import render_to_string
 from django.utils.timezone import localtime
 from packaging.utils import _
 
 from apps.facturapi.models import FacturapiInvoice
+from apps.facturapi.services import _set_facturapi_invoice_transported_product
 from core.operations_panel.choices import MEXICAN_STATES_KEY, ShipmentType
 
 
@@ -61,7 +63,7 @@ class ShipmentFacturapiInvoice(FacturapiInvoice):
         if self.type == 'I':
             self.bill_type_i_shipment()
         elif self.type == 'T':
-            raise Exception("TODO Invoice T cartaporte")
+            self.bill_type_t_shipment()
         else:
             raise Exception("Las cartaportes solo pueden timbrarse como Ingreso o Translado")
 
@@ -76,23 +78,41 @@ class ShipmentFacturapiInvoice(FacturapiInvoice):
         data["payment_form"] = self.payment_method
         data["payment_method"] = self.payment_form
         data["use"] = self.use
-        print(1)
         data = _set_facturapi_invoice_cfdi_relation(self, data)
         data["items"] = []
-        print(2)
         for invoice_item in self.items.all():
             item = _set_facturapi_invoice_item(invoice_item)
             data["items"].append(item)
-        print(3)
         data["pdf_custom_section"] = self.pdf_custom_section
 
         # Armado de cartaporte
-        print(4)
         data = self.cartaporte_data(data)
         print(data)
-        raise Exception("Llego")
 
-        _send_invoice_to_facturapi(shipment_invoice, data)
+        _send_invoice_to_facturapi(self, data)
+        if self.operation:
+            if self.operation.shipment_invoice == None:
+                self.operation.shipment_invoice = self
+                self.operation.save()
+
+    def bill_type_t_shipment(self):
+        from apps.facturapi.services import _set_facturapi_invoice_base_data, _set_facturapi_invoice_cfdi_relation, \
+            _set_facturapi_invoice_item, _send_invoice_to_facturapi
+        data = _set_facturapi_invoice_base_data(self)
+        data = _set_facturapi_invoice_cfdi_relation(self, data)
+        items = _set_facturapi_invoice_transported_product(self.operation)
+        data["items"] = items
+        data["pdf_custom_section"] = self.pdf_custom_section
+
+        # Armado de cartaporte
+        data = self.cartaporte_data(data)
+        print(data)
+
+        _send_invoice_to_facturapi(self, data)
+        if self.operation:
+            if self.operation.shipment_invoice == None:
+                self.operation.shipment_invoice = self
+                self.operation.save()
 
     def cartaporte_data(self, data):
         data["namespaces"] = []
@@ -102,56 +122,55 @@ class ShipmentFacturapiInvoice(FacturapiInvoice):
         namespace["schema_location"] = "http://www.sat.gob.mx/CartaPorte31 http://www.sat.gob.mx/sitio_internet/cfd/CartaPorte/CartaPorte31.xsd"
         data["namespaces"].append(namespace)
         data["complements"] = []
-
         cartaporte = {}
         cartaporte["type"] = "custom"
 
         cartaporte[
             "data"] = "<cartaporte31:CartaPorte Version=\"3.1\" TranspInternac=\"No\" TotalDistRec=\"{total_distance_km}\" IdCCP=\"{ccp_id}\">".format(
             total_distance_km=str(self.total_distance_km),
-            ccp_id="CCC" + self.ccp_id if self.ccp_id else ""
+            ccp_id=self.ccp_id if self.ccp_id else ""
         )
         cartaporte["data"] += "<cartaporte31:Ubicaciones>"
         cartaporte["data"] += "<cartaporte31:Ubicacion TipoUbicacion=\"Origen\" RFCRemitenteDestinatario=\"{sender_rfc}\" FechaHoraSalidaLlegada=\"{departure_at}\">".format(
-            sender_rfc=self.operation.origin.rfc,
-            departure_at=localtime(self.departure_at).strftime("%Y-%m-%dT%H:%M:%S")
+            sender_rfc=self.operation.route.initial_location.rfc,
+            departure_at=localtime(self.operation.scheduled_departure_time).strftime("%Y-%m-%dT%H:%M:%S")
         )
         cartaporte["data"] += "<cartaporte31:Domicilio Calle=\"{street}\" CodigoPostal=\"{zip_code}\" Estado=\"{state}\" NumeroExterior=\"{exterior_number}\" Pais=\"{country}\"/>".format(
-            street=self.operation.origin.address.street,
-            zip_code=self.operation.origin.address.zip_code,
-            state=self.operation.origin.address.state,
-            exterior_number=self.operation.origin.address.exterior_number,
+            street=self.operation.route.initial_location.address.street,
+            zip_code=self.operation.route.initial_location.address.zip_code,
+            state=MEXICAN_STATES_KEY[self.operation.route.initial_location.address.state],
+            exterior_number=self.operation.route.initial_location.address.exterior_number,
             country="MEX"
         )
         cartaporte["data"] += "</cartaporte31:Ubicacion>"
-        for delivery in self.operation.deliveries.all():
-            cartaporte["data"] += "<cartaporte31:Ubicacion TipoUbicacion=\"Destino\" RFCRemitenteDestinatario=\"{delivery_rfc}\" DistanciaRecorrida=\"{total_distance_km}\" FechaHoraSalidaLlegada=\"{departure_at}\">".format(
-                delivery_rfc=delivery.rfc,
-                total_distance_km=str(0),
-                departure_at=localtime(self.departure_at).strftime("%Y-%m-%dT%H:%M:%S")
-            )
-            cartaporte["data"] += "<cartaporte31:Domicilio Calle=\"{street}\" CodigoPostal=\"{zip_code}\" Estado=\"{state}\" NumeroExterior=\"{exterior_number}\" Pais=\"{country}\"/>".format(
-                street=delivery.address.street,
-                zip_code=delivery.address.zip_code,
-                state=MEXICAN_STATES_KEY[delivery.address.state],
-                exterior_number=delivery.address.exterior_number,
-                country="MEX"
-            )
-            cartaporte["data"] += "</cartaporte31:Ubicacion>"
+        # distancia_por_parada = float(self.total_distance_km) / (len(self.operation.route.route_stops.all()) + 1)
+        # for delivery in self.operation.route.route_stops.all():
+        #     cartaporte["data"] += "<cartaporte31:Ubicacion TipoUbicacion=\"Destino\" RFCRemitenteDestinatario=\"{delivery_rfc}\" DistanciaRecorrida=\"{total_distance_km}\" FechaHoraSalidaLlegada=\"{departure_at}\">".format(
+        #         delivery_rfc=delivery.rfc,
+        #         total_distance_km=str(distancia_por_parada),
+        #         departure_at=localtime(self.operation.download_appointment).strftime("%Y-%m-%dT%H:%M:%S")
+        #     )
+        #     cartaporte["data"] += "<cartaporte31:Domicilio Calle=\"{street}\" CodigoPostal=\"{zip_code}\" Estado=\"{state}\" NumeroExterior=\"{exterior_number}\" Pais=\"{country}\"/>".format(
+        #         street=delivery.address.street,
+        #         zip_code=delivery.address.zip_code,
+        #         state=MEXICAN_STATES_KEY[delivery.address.state],
+        #         exterior_number=delivery.address.exterior_number,
+        #         country="MEX"
+        #     )
+        #     cartaporte["data"] += "</cartaporte31:Ubicacion>"
         cartaporte["data"] += "<cartaporte31:Ubicacion TipoUbicacion=\"Destino\" RFCRemitenteDestinatario=\"{destination_rfc}\" FechaHoraSalidaLlegada=\"{scheduled_arrival_at}\" DistanciaRecorrida=\"{total_distance_km}\">".format(
-            destination_rfc=self.operation.destination.rfc,
-            scheduled_arrival_at=localtime(self.scheduled_arrival_at).strftime("%Y-%m-%dT%H:%M:%S"),
+            destination_rfc=self.operation.route.destination_location.rfc,
+            scheduled_arrival_at=localtime(self.operation.download_appointment).strftime("%Y-%m-%dT%H:%M:%S"),
             total_distance_km=str(self.total_distance_km)
         )
         cartaporte["data"] += "<cartaporte31:Domicilio Calle=\"{street}\" CodigoPostal=\"{zip_code}\"  Estado=\"{state}\" NumeroExterior=\"{exterior_number}\" Pais=\"{country}\"/>".format(
-            street=self.operation.destination.address.street,
-            zip_code=self.operation.destination.address.zip_code,
-            state=self.operation.destination.address.state,
-            exterior_number=self.operation.destination.address.exterior_number,
+            street=self.operation.route.destination_location.address.street,
+            zip_code=self.operation.route.destination_location.address.zip_code,
+            state=MEXICAN_STATES_KEY[self.operation.route.destination_location.address.state],
+            exterior_number=self.operation.route.destination_location.address.exterior_number,
             country="MEX"
         )
         cartaporte["data"] += "</cartaporte31:Ubicacion></cartaporte31:Ubicaciones>"
-
         cartaporte["data"] += "<cartaporte31:Mercancias PesoBrutoTotal=\"{products_weight}\" UnidadPeso=\"{weight_key}\" NumTotalMercancias=\"{products_amount}\" >".format(
             products_amount=len(self.operation.transported_products.all()),
             products_weight=self.operation.transported_products.aggregate(total=Sum('weight'))['total'],
@@ -169,7 +188,7 @@ class ShipmentFacturapiInvoice(FacturapiInvoice):
                 cartaporte["data"] += "<cartaporte31:Mercancia BienesTransp=\"{transported_product_key}\" Cantidad=\"{amount}\" ClaveUnidad=\"{unit_key}\" Descripcion=\"{description}\" PesoEnKg=\"{weight}\" MaterialPeligroso=\"No\" />".format(
                     transported_product_key=product.transported_product_key,
                     amount=product.amount,
-                    unit_key=product.unit_key,
+                    unit_key=product.unit_key.split(':')[0],
                     description=product.description,
                     weight=product.weight,
                 )
@@ -177,11 +196,10 @@ class ShipmentFacturapiInvoice(FacturapiInvoice):
                 cartaporte["data"] += "<cartaporte31:Mercancia BienesTransp=\"{transported_product_key}\" Cantidad=\"{amount}\" ClaveUnidad=\"{unit_key}\" Descripcion=\"{description}\" PesoEnKg=\"{weight}\" />".format(
                     transported_product_key=product.transported_product_key,
                     amount=product.amount,
-                    unit_key=product.unit_key,
+                    unit_key=product.unit_key.split(':')[0],
                     description=product.description,
                     weight=product.weight,
                 )
-
         cartaporte["data"] += "<cartaporte31:Autotransporte NumPermisoSCT=\"{sct_permit_number}\"  PermSCT=\"{sct_permit_type}\">".format(
             sct_permit_number=self.sct_permit_number,
             sct_permit_type=self.sct_permit_type
@@ -217,7 +235,6 @@ class ShipmentFacturapiInvoice(FacturapiInvoice):
         data["complements"].append(cartaporte)
 
         data["pdf_custom_section"] = self.custom_cartaporte_data()
-
         return data
 
     def custom_cartaporte_data(self):
@@ -225,21 +242,21 @@ class ShipmentFacturapiInvoice(FacturapiInvoice):
         context['Cartaporte'] = {}
         context['Cartaporte']['Origen'] = {}
         context['Cartaporte']['Destino'] = {}
-        context['Cartaporte']['idccp'] = "CCC" + self.ccp_id if self.ccp_id else ""
+        context['Cartaporte']['idccp'] = self.ccp_id if self.ccp_id else ""
         context['Cartaporte']['TotalDistRec'] = self.operation.route.optimized_distance
-        context['Cartaporte']['Origen']['FechaHoraSalida'] = localtime(self.departure_at).strftime("%Y-%m-%dT%H:%M:%S")
-        context['Cartaporte']['Origen']['NombreRemitente'] = self.operation.origin.name
-        context['Cartaporte']['Origen']['RFCRemitente'] = self.operation.origin.rfc
-        context['Cartaporte']['Origen']['Calle'] = self.operation.origin.address.street
-        context['Cartaporte']['Origen']['CodigoPostal'] = self.operation.origin.address.zip_code
-        context['Cartaporte']['Origen']['Colonia'] = self.operation.origin.address.colony
-        context['Cartaporte']['Origen']['Estado'] = self.operation.origin.address.state
+        context['Cartaporte']['Origen']['FechaHoraSalida'] = localtime(self.operation.scheduled_departure_time).strftime("%Y-%m-%dT%H:%M:%S")
+        context['Cartaporte']['Origen']['NombreRemitente'] = self.operation.route.initial_location.name
+        context['Cartaporte']['Origen']['RFCRemitente'] = self.operation.route.initial_location.rfc
+        context['Cartaporte']['Origen']['Calle'] = self.operation.route.initial_location.address.street
+        context['Cartaporte']['Origen']['CodigoPostal'] = self.operation.route.initial_location.address.zip_code
+        context['Cartaporte']['Origen']['Colonia'] = self.operation.route.initial_location.address.colony
+        context['Cartaporte']['Origen']['Estado'] = self.operation.route.initial_location.address.state
         context['Cartaporte']['Origen']['Municipio'] = ""
-        context['Cartaporte']['Origen']['Localidad'] = self.operation.origin.address.city
-        context['Cartaporte']['Origen']['NumeroExterior'] = self.operation.origin.address.exterior_number
+        context['Cartaporte']['Origen']['Localidad'] = self.operation.route.initial_location.address.city
+        context['Cartaporte']['Origen']['NumeroExterior'] = self.operation.route.initial_location.address.exterior_number
         context['Cartaporte']['Origen']['Pais'] = "MEX"
         context['Cartaporte']['MiddlePoint'] = []
-        for delivery in self.operation.deliveries.all():
+        for delivery in self.operation.route.route_stops.all():
             point_element = {}
             point_element['NombreRemitente'] = delivery.name
             point_element['RFCDestinatario'] = delivery.rfc
@@ -252,22 +269,22 @@ class ShipmentFacturapiInvoice(FacturapiInvoice):
             point_element['NumeroExterior'] = delivery.address.exterior_number
             point_element['Pais'] = "MEX"
             context['Cartaporte']['MiddlePoint'].append(point_element)
-        context['Cartaporte']['Destino']['FechaHoraSalida'] = localtime(self.scheduled_arrival_at).strftime("%Y-%m-%dT%H:%M:%S")
-        context['Cartaporte']['Destino']['NombreRemitente'] = self.operation.destination.name
-        context['Cartaporte']['Destino']['RFCDestinatario'] = self.operation.destination.rfc
-        context['Cartaporte']['Destino']['Calle'] = self.operation.destination.address.street
-        context['Cartaporte']['Destino']['CodigoPostal'] = self.operation.destination.address.zip_code
-        context['Cartaporte']['Destino']['Colonia'] = self.operation.destination.address.colony
-        context['Cartaporte']['Destino']['Estado'] = self.operation.destination.address.state
+        context['Cartaporte']['Destino']['FechaHoraSalida'] = localtime(self.operation.download_appointment).strftime("%Y-%m-%dT%H:%M:%S")
+        context['Cartaporte']['Destino']['NombreRemitente'] = self.operation.route.destination_location.name
+        context['Cartaporte']['Destino']['RFCDestinatario'] = self.operation.route.destination_location.rfc
+        context['Cartaporte']['Destino']['Calle'] = self.operation.route.destination_location.address.street
+        context['Cartaporte']['Destino']['CodigoPostal'] = self.operation.route.destination_location.address.zip_code
+        context['Cartaporte']['Destino']['Colonia'] = self.operation.route.destination_location.address.colony
+        context['Cartaporte']['Destino']['Estado'] = self.operation.route.destination_location.address.state
         context['Cartaporte']['Destino']['Municipio'] = ""
-        context['Cartaporte']['Destino']['Localidad'] = self.operation.destination.address.city
-        context['Cartaporte']['Destino']['NumeroExterior'] = self.operation.destination.address.exterior_number
+        context['Cartaporte']['Destino']['Localidad'] = self.operation.route.destination_location.address.city
+        context['Cartaporte']['Destino']['NumeroExterior'] = self.operation.route.destination_location.address.exterior_number
         context['Cartaporte']['Destino']['Pais'] = "MEX"
         context['Cartaporte']['Products'] = []
         for product in self.operation.transported_products.all():
             product_element = {}
             product_element['Cantidad'] = product.amount
-            product_element['ClaveUnidad'] = product.unit_key
+            product_element['ClaveUnidad'] = product.unit_key.split(':')[0]
             product_element['BienesTransp'] = product.transported_product_key
             product_element['Descripcion'] = product.description
             product_element['Moneda'] = product.currency
@@ -301,17 +318,17 @@ class ShipmentFacturapiInvoice(FacturapiInvoice):
         if self.operation.shipment_type == ShipmentType.ASTURIANO:
             context['is_asturiano'] = True
             context['asturiano_links'] = []
-            for tienda in self.operation.deliveries.all():
+            for tienda in self.operation.route.route_stops.all():
                 link = {}
                 link["name"] = tienda.name
                 context['asturiano_links'].append(link)
         if self.operation.shipment_type == ShipmentType.THREE_B:
             context['is_3b'] = True
             context['3b_links'] = []
-            for tienda in self.operation.deliveries.all():
+            for tienda in self.operation.route.route_stops.all():
                 link = {}
                 link["name"] = tienda.name
                 context['3b_links'].append(link)
 
-        #pdf_custom_section = render_to_string('operations_panel/cartaporte/cartaporte.html', context=context)
-        return context
+        pdf_custom_section = render_to_string('operations_panel/cartaporte/cartaporte.html', context=context)
+        return pdf_custom_section

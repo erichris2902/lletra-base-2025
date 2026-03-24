@@ -8,19 +8,23 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
 from core.operations_panel.choices import AsturianoPacking
+from core.operations_panel.forms.address import AddressForm
 from core.operations_panel.forms.cargo import AssignCargoToOperationForm
+from core.operations_panel.forms.delivery_location import DeliveryLocationForm
 from core.operations_panel.forms.distribution_packing import DistributionPackingForm
 from core.operations_panel.forms.operation import OperationForm, OperationFolioWebsiteForm, OperationApprovalForm, \
     OperationFolioForm, OperationShipmentForm
 from core.operations_panel.forms.route import RouteShipmentForm
 from core.operations_panel.forms.transported_product import TransportedProductsFormByCSV, \
     OperationTransportedProductForm
-from core.operations_panel.models import Cargo
+from core.operations_panel.models import Cargo, DeliveryLocation
+from core.operations_panel.models.address import Address
 from core.operations_panel.models.distribution_packing import DistributionPacking
 from core.operations_panel.models.operation import Operation
 from core.operations_panel.models.route import Route
 from core.operations_panel.models.transported_product import TransportedProduct, OperationTransportedProduct
 from core.system.views import AdminListView
+from django.http import HttpResponse, Http404
 
 
 class OperationListView(AdminListView):
@@ -296,10 +300,62 @@ class ShipmentOperationListView(AdminListView):
         return data
 
     def handle_searchdata(self, request, data):
-        # Obtén los objetos de la tabla (o filtra según tus necesidades)
-        datatable_keys = self.datatable_keys
-        data = [obj.to_operations_view(keys=datatable_keys) for obj in self.get_queryset()]
-        return data
+        # DataTables manda esto
+        draw = int(request.POST.get("draw", 1))
+        start = int(request.POST.get("start", 0))
+        length = int(request.POST.get("length", 50))
+        search = (request.POST.get("search", "") or "").strip()
+
+        # 1) queryset base
+        qs = self.get_queryset()
+        records_total = qs.count()
+
+        # 2) filtro por búsqueda
+        if search:
+            search_fields = getattr(self, "search_fields", self.search_fields)
+            search_fields = self._safe_search_fields(search_fields)
+
+            q_obj = Q()
+            for field in search_fields:
+                q_obj |= Q(**{f"{field}__icontains": search})
+            qs = qs.filter(q_obj)
+
+        records_filtered = qs.count()
+
+        # 3) orden (opcional, pero recomendado)
+        order_col = request.POST.get("order_col")
+        order_dir = request.POST.get("order_dir", "asc")
+        if order_col is not None and order_col != "":
+            try:
+                col_idx = int(order_col)
+                col_key = self.datatable_keys[col_idx]  # ej: "name"
+
+                # si es columna virtual, se anota
+                if col_key in self.virtual_search:
+                    qs = qs.annotate(**{col_key: self.virtual_search[col_key]})
+                    order_field = col_key
+                else:
+                    order_field = self.datatable_keys[col_idx]
+
+                if order_dir == "desc":
+                    order_field = f"-{order_field}"
+
+                qs = qs.order_by(order_field)
+            except (ValueError, IndexError):
+                pass
+
+        # 4) paginación
+        qs_page = qs[start:start + length]
+
+        # 5) data
+        data = [obj.to_operations_view(keys=self.datatable_keys) for obj in qs_page]
+
+        return {
+            "draw": draw,
+            "recordsTotal": records_total,
+            "recordsFiltered": records_filtered,
+            "data": data
+        }
 
     def handle_get_route(self, request, data):
         operation = self.model.objects.get(pk=request.POST.get('id'))
@@ -310,6 +366,26 @@ class ShipmentOperationListView(AdminListView):
         data['id'] = str(operation.route.id)
         data['form'] = self.render_form(request, operation.route)
 
+    def handle_get_origin(self, request, data):
+        operation = self.model.objects.get(pk=request.POST.get('id'))
+        origin = operation.route.initial_location.address
+        self.model = Address
+        self.form = AddressForm
+        self.form_action = "update_origin"
+
+        data['id'] = str(origin.id)
+        data['form'] = self.render_form(request, origin)
+
+    def handle_get_destiny(self, request, data):
+        operation = self.model.objects.get(pk=request.POST.get('id'))
+        destiny = operation.route.destination_location.address
+        self.model = Address
+        self.form = AddressForm
+        self.form_action = "update_destiny"
+
+        data['id'] = str(destiny.id)
+        data['form'] = self.render_form(request, destiny)
+
     def handle_update_route(self, request, data):
         route = Route.objects.get(pk=request.POST.get('id'))
         form = RouteShipmentForm(request.POST, instance=route)
@@ -317,6 +393,22 @@ class ShipmentOperationListView(AdminListView):
             instance = form.save()
             data['success'] = True
             data['message'] = f"Ruta actualizada exitosamente"
+
+    def handle_update_origin(self, request, data):
+        route = Address.objects.get(pk=request.POST.get('id'))
+        form = AddressForm(request.POST, instance=route)
+        if form.is_valid():
+            instance = form.save()
+            data['success'] = True
+            data['message'] = f"Direccion de origen actualizada exitosamente"
+
+    def handle_update_destiny(self, request, data):
+        route = Address.objects.get(pk=request.POST.get('id'))
+        form = AddressForm(request.POST, instance=route)
+        if form.is_valid():
+            instance = form.save()
+            data['success'] = True
+            data['message'] = f"Direccion de destino actualizada exitosamente"
 
     def handle_get_cargo(self, request, data):
         context = {}
@@ -593,3 +685,5 @@ class ShipmentOperationListView(AdminListView):
         data["form"] = self.render_others_form(request, operation, OperationTransportedProductForm(), "AssignProducts",
                                                data=data)
         return data
+
+

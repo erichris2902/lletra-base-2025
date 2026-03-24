@@ -1,0 +1,683 @@
+{% extends 'operations_panel/report.html' %}
+{% load static %}
+
+
+
+{% block content %}
+
+    <!-- Main content -->
+    <section class="invoice">
+        <!-- title row -->
+        <div class="row mb-3">
+            <div class="col-4 logo-box">
+                <img src="{% static 'img/logo.png' %}" alt="Logo">
+            </div>
+
+            <div class="col-8">
+                <div class="header-box">
+                    <div class="section-title">Datos del comprobante</div>
+                    <table class="mini-table compact">
+                        <tr>
+                            <td class="label">Folio</td>
+                            <td class="value">{{ Factura.folio_number|default:"-" }}</td>
+                            <td class="label">Tipo</td>
+                            <td class="value">{{ Factura.type|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Folio fiscal</td>
+                            <td class="value">{{ Factura.uuid|default:"-" }}</td>
+                            <td class="label">Lugar emisión</td>
+                            <td class="value">76146</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Fecha emisión</td>
+                            <td class="value">{{ Factura.stamp.date|default:"-" }}</td>
+                            <td class="label">Fecha certificación</td>
+                            <td class="value">{{ Factura.stamp.date|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Certificado SAT</td>
+                            <td class="value">{{ Factura.stamp.sat_cert_number|default:"-" }}</td>
+                            <td class="label"></td>
+                            <td class="value"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- info row -->
+        <div class="row invoice-info" style="margin-top: 30px">
+            <div class="col-sm-6 invoice-col">
+                <div class="row">
+                    <div class="col-11" style="border: 1px solid black;border-radius: 10px;">
+                        <div style="text-align: center;border-bottom: 1px solid gray;">Emisor</div>
+                        <div class="row">
+                            <div class="col-4 ">
+                                <b>RAZON SOCIAL </b><br>
+                                <b>RFC</b> <br>
+                                <b>DOMICILIO</b><br>
+                                <b>TELEFONO</b><br>
+                                <b>REGIMEN F.</b><br>
+                            </div>
+                            <div class="col-8 ">
+                                SERVICIOS TECNOLOGICOS Y LOGISTICOS LLETRA S DE RL DE CV<br>
+                                STL191211KM2<br>
+                                76030, MEX<br>
+                                MARIANO PERRUSQUIA 102, LOCAL 1 SAN ANGEL, QUERÉTARO, QRO<br>
+                                601 - General de Ley Personas Morales<br>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- /.col -->
+            <div class="col-sm-6 invoice-col">
+                <div class="row">
+                    <div class="col-11" style="border: 1px solid black;border-radius: 10px;">
+                        <div style="text-align: center;border-bottom: 1px solid gray;">RECEPTOR</div>
+                        <div class="row">
+                            <div class="col-4 ">
+                                <b>RAZON SOCIAL </b><br>
+                                <b>RFC</b> <br>
+                                <b>DOMICILIO</b><br>
+                                <b>USO DE CFDI</b><br>
+                            </div>
+                            <div class="col-8 ">
+                                {{ Factura.customer.business_name }}<br>
+                                {{ Factura.customer.rfc }}<br>
+                                {{ Factura.customer.address }}<br>
+                                {{ Factura.use }}<br>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th style="text-align: center">
+                    COMPLEMENTO CARTA PORTE AUTOTRANSPORTE
+                </th>
+            </tr>
+            </thead>
+        </table>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <td>
+                    VERSION: 4.0
+                </td>
+                <td>
+                    TRANSPORTE INTERNACIONAL: No
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    TOTAL DISTANCIA RECORRIDA: {{ Cartaporte.TotalDistRec }}
+                </td>
+                <td>
+                    VIA DE ENTRADA: 01
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    IdCCP: {{ Cartaporte.idccp }}
+                </td>
+                <td>
+                </td>
+            </tr>
+            </thead>
+        </table>
+
+
+        <table class="table" style="width: 100%">
+            <thead>
+            <tr>
+                <th colspan="2" style="text-align: center">
+                    ORIGEN
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>
+                    REMITENTE: {{ Cartaporte.Origen.NombreRemitente }}
+                </td>
+                <td>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    RFC REMITENTE: {{ Cartaporte.Origen.RFCRemitente }}
+                </td>
+                <td>
+                    FECHA Y HORA DE SALIDA: {{ Cartaporte.Origen.FechaHoraSalida }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    DOMICILIO
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    CALLE: {{ Cartaporte.Origen.Calle|upper }}
+                </td>
+                <td>
+                    NO EXTERIOR: {{ Cartaporte.Origen.NumeroExterior|upper }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    COLONIA: {{ Cartaporte.Origen.Colonia|upper }}
+                </td>
+                <td>
+                    LOCALIDAD: {{ Cartaporte.Origen.Localidad|upper }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    MUNICIPIO: {{ Cartaporte.Origen.Municipio|upper }}
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    ESTADO: {{ Cartaporte.Origen.Estado|upper }}
+                </td>
+                <td>
+                    CP: {{ Cartaporte.Origen.CodigoPostal|upper }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    REFERENCIA:
+                </td>
+                <td>
+                    PAIS: {{ Cartaporte.Origen.Pais|upper }}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+
+
+        {% for point in Cartaporte.MiddlePoint %}
+            <table class="table">
+                <thead>
+                <tr>
+                    <th colspan="2" style="text-align: center">
+                        REPARTO
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        DESTINATARIO: {{ point.NombreRemitente }}
+                    </td>
+                    <td>
+                        RFC DESTINATARIO: {{ point.RFCRemitente }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                    </td>
+                    <td>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        DOMICILIO
+                    </td>
+                    <td>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        CALLE: {{ point.Calle|upper }}
+                    </td>
+                    <td>
+                        NO EXTERIOR: {{ point.NumeroExterior|upper }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        COLONIA: {{ point.Colonia|upper }}
+                    </td>
+                    <td>
+                        LOCALIDAD: {{ point.Localidad|upper }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        MUNICIPIO: {{ point.Municipio|upper }}
+                    </td>
+                    <td>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        ESTADO: {{ point.Estado|upper }}
+                    </td>
+                    <td>
+                        CP: {{ point.CodigoPostal|upper }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        REFERENCIA:
+                    </td>
+                    <td>
+                        PAIS: {{ point.Pais|upper }}
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+        {% endfor %}
+
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th colspan="2" style="text-align: center">
+                    DESTINO
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>
+                    DESTINATARIO: {{ Cartaporte.Destino.NombreRemitente|upper }}
+                </td>
+                <td>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    RFC DESTINATARIO: {{ Cartaporte.Destino.RFCDestinatario|upper }}
+                </td>
+                <td>
+                    FECHA Y HORA DE LLEGADA: {{ Cartaporte.Destino.FechaHoraSalida|upper }}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    CONTROL VEHICULAR: {{ Cartaporte.ControlVehicular|upper }}
+                </td>
+                <td>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    DOMICILIO
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    CALLE: {{ Cartaporte.Destino.Calle|upper }}
+                </td>
+                <td>
+                    NO EXTERIOR: {{ Cartaporte.Destino.NumeroExterior|upper }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    COLONIA: {{ Cartaporte.Destino.Colonia|upper }}
+                </td>
+                <td>
+                    LOCALIDAD: {{ Cartaporte.Destino.Localidad|upper }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    MUNICIPIO: {{ Cartaporte.Destino.Municipio|upper }}
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    ESTADO: {{ Cartaporte.Destino.Estado|upper }}
+                </td>
+                <td>
+                    CP: {{ Cartaporte.Destino.CodigoPostal|upper }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    REFERENCIA:
+                </td>
+                <td>
+                    PAIS: {{ Cartaporte.Destino.Pais|upper }}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        {% if is_asturiano %}
+            <table class="table">
+                <thead>
+                <tr>
+                    <th colspan="2" style="text-align: center">
+                        REPARTOS
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for tienda in asturiano_links %}
+                    <tr>
+                        <td>
+                            DESTINATARIO: {{ tienda.name|upper }}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+        {% if is_3b %}
+            <table class="table">
+                <thead>
+                <tr>
+                    <th colspan="2" style="text-align: center">
+                        REPARTOS
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for tienda in 3b_links %}
+                    <tr>
+                        <td>
+                            DESTINATARIO: {{ tienda.name|upper }}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        <table class="table" style="text-align: center">
+            <thead>
+            <tr>
+                <th style="text-align: center">
+                    INFORMACION GENERAL DE MERCANCIAS
+                </th>
+            </tr>
+            </thead>
+        </table>
+
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th>
+                    CANTIDAD
+                </th>
+                <th>
+                    UNIDAD
+                </th>
+                <th>
+                    CLAVE
+                </th>
+                <th>
+                    DESCRIPCION
+                </th>
+                <th>
+                    PESO EN KILOGRAMOS
+                </th>
+                <th>
+                    DESTINO
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for product in Cartaporte.Products %}
+                <tr>
+                    <td>
+                        {{ product.Cantidad }}
+                    </td>
+                    <td>
+                        {{ product.ClaveUnidad }}
+                    </td>
+                    <td>
+                        {{ product.BienesTransp }}
+                    </td>
+                    <td>
+                        {{ product.Descripcion }}
+                    </td>
+                    <td>
+                        {{ product.PesoEnKg }}
+                    </td>
+                    <td>
+                        {{ product.Destino }}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th style="text-align: center">
+                    INFORMACION DE AUTOTRANSPORTE FEDERAL
+                </th>
+            </tr>
+            </thead>
+        </table>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <td>
+                    TIPO DE PERMISO SCT: {{ Cartaporte.PermSCT }}
+                </td>
+                <td>
+                    NUMERO DE PERMISO SCT: {{ Cartaporte.NumPermisoSCT }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    NOMBRE DE ASEGURADORA: {{ Cartaporte.NombreAseg }}
+                </td>
+                <td>
+                    NUMERO DE POLIZA: {{ Cartaporte.NumPolizaSeguro }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    CLAVE DE AUTOTRANSPORTE: {{ Cartaporte.Unidad }}
+                </td>
+                <td>
+                    PLACA VEHICULO: {{ Cartaporte.PlacaVM }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    AÑO MODELO: {{ Cartaporte.AnioModeloVM }}
+                </td>
+                <td>
+                    PESO BRUTO VEHICULAR: 500
+                </td>
+            </tr>
+            <tr>
+            </tr>
+            {% if Cartaporte.Caja %}
+                <tr>
+                    <td>
+                        DATOS DEL REMOLQUE
+                    </td>
+                    <td>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        CLAVE TIPO DE REMOLQUE: {{ Cartaporte.Caja }}
+                    </td>
+                    <td>
+                        PLACA: {{ Cartaporte.PlacaCaja }}
+                    </td>
+                </tr>
+            {% endif %}
+            </thead>
+        </table>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th style="text-align: center">
+                    INFORMACION DE LA FIGURA DE TRANSPORTE
+                </th>
+            </tr>
+            </thead>
+        </table>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <td>
+                    CLAVE DEL TRANSPORTE:
+                </td>
+                <td>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    OPERADOR: {{ Cartaporte.NombreOperador }}
+                </td>
+                <td>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    RFC OPERADOR: {{ Cartaporte.RFCOperador }}
+                </td>
+                <td>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    RESIDENCIA FISCAL OPERADOR: MEXICO
+                </td>
+                <td>
+                    NUMERO DE LICENCIA: {{ Cartaporte.NumLicencia }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                </td>
+                <td>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    DOMICILIO
+                </td>
+                <td>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    CALLE: {{ Cartaporte.OperadorDirection.Calle|upper }}
+                </td>
+                <td>
+                    NO EXTERIOR: {{ Cartaporte.OperadorDirection.NumeroExterior|upper }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    COLONIA: {{ Cartaporte.OperadorDirection.Colonia|upper }}
+                </td>
+                <td>
+                    LOCALIDAD: {{ Cartaporte.OperadorDirection.Localidad|upper }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    MUNICIPIO: {{ Cartaporte.OperadorDirection.Municipio|upper }}
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    ESTADO: {{ Cartaporte.OperadorDirection.Estado|upper }}
+                </td>
+                <td>
+                    CP: {{ Cartaporte.OperadorDirection.CodigoPostal }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    REFERENCIA:
+                </td>
+                <td>
+                    PAIS: {{ Cartaporte.OperadorDirection.Pais|upper }}
+                </td>
+            </tr>
+            </thead>
+        </table>
+
+
+    </section>
+    <!-- /.content -->
+
+    <section class="sat_signature">
+        <div class="row">
+            <div class="col-3">
+                <img class="img-responsive" src="{{ QR.qr.url }}" width="250" height="250">
+            </div>
+            <div class="col-9" style="font-size: 14px;line-height: 1.2;">
+                <b>Sello digital del CFDI</b><br>
+                <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.stamp.signature }}</span><br>
+                <b>Sello del SAT</b><br>
+                <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.stamp.sat_signature }}</span><br>
+                <b>Cadena original del complemento de certificación digital del SAT</b><br>
+                <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.stamp.complement_string }}</span><br>
+                <b>Número de serie del certificado del SAT</b><br>
+                <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.stamp.sat_cert_number }}</span><br>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block script %}
+    <script>
+        window.addEventListener("load", window.print());
+    </script>
+{% endblock %}

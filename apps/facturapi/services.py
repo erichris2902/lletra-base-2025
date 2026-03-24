@@ -278,7 +278,7 @@ def _set_facturapi_invoice_cfdi_relation(invoice: FacturapiInvoice, data: dict):
     return data
 
 
-def _set_facturapi_invoice_item(invoice_item: FacturapiInvoiceItem):
+def _set_facturapi_invoice_item(invoice_item: FacturapiInvoiceItem, taxes=True):
     item_data = {"quantity": invoice_item.quantity, "discount": str(invoice_item.discount), "product": {}}
     product = FacturapiProduct.objects.get(pk=invoice_item.product.id)
     item_data["product"]['description'] = product.description
@@ -287,18 +287,35 @@ def _set_facturapi_invoice_item(invoice_item: FacturapiInvoiceItem):
     item_data["product"]['sku'] = product.sku
     item_data["product"]['unit_key'] = product.unit_key
     # item_data["product"]['unit_name'] = product.unit_code.split(':')[1]
-    item_data["product"]['tax_included'] = False
-    item_data["product"]['taxes'] = []
-    for tax in product.taxes.all():
-        tax_data = {
-            'type': tax.type,
-            'factor': tax.factor,
-            'withholding': tax.withholding,
-            'rate': float(tax.rate),
-        }
-        item_data["product"]['taxes'].append(tax_data)
+    if taxes:
+        item_data["product"]['tax_included'] = False
+        item_data["product"]['taxes'] = []
+        for tax in product.taxes.all():
+            tax_data = {
+                'type': tax.type,
+                'factor': tax.factor,
+                'withholding': tax.withholding,
+                'rate': float(tax.rate),
+            }
+            item_data["product"]['taxes'].append(tax_data)
     return item_data
 
+
+def _set_facturapi_invoice_transported_product(operation):
+    from core.operations_panel.models import TransportedProduct
+    items = []
+    products = TransportedProduct.objects.filter(operations_transported_products=operation).all()
+    for product in products:
+
+        item_data = {"quantity": product.amount, "discount": str(0), "product": {}}
+        item_data["product"]['description'] = product.description
+        item_data["product"]['product_key'] = product.transported_product_key
+        item_data["product"]['price'] = float(0)
+        item_data["product"]['unit_key'] = product.unit_key.split(':')[0]
+        item_data["product"]['unit_name'] = product.unit_key.split(':')[1]
+        item_data["product"]['tax_included'] = False
+        items.append(item_data)
+    return items
 
 def _set_facturapi_invoice_payment(invoice_payment: FacturapiInvoicePayment):
     related_doc = _serialize_related_document_from_payment(invoice_payment,

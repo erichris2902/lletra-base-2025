@@ -2,13 +2,17 @@ import os
 import re
 import tempfile
 from datetime import datetime, time
+
+from django.conf import settings
 from django.db import models
+from django.template.loader import render_to_string
 from packaging.utils import _
 
 from apps.facturapi.services import download_invoice_pdf, download_invoice_xml
 from apps.google_drive.services import check_folder_exists_with_service_account, create_folder_with_service_account, \
     upload_file_with_service_account
 from core.operations_panel.models.client import Client
+from core.operations_panel.models.shipment_facturapi_invoice import ShipmentFacturapiInvoice
 from core.operations_panel.models.supplier import Supplier
 from core.operations_panel.models.driver import Driver
 from core.operations_panel.models.vehicle import Vehicle
@@ -137,6 +141,7 @@ class Operation(BaseModel):
     def to_operations_general_view(self, keys=None):
         result = self.to_display_dict(keys)
         print(self.folio)
+        result["invoice_id"] = str(self.shipment_invoice.id) if self.shipment_invoice else None
         result["is_invoice_ready"] = str(self.shipment_invoice is not None)
         result["is_ready_to_invoice"] = str(self.is_ready_for_invoicing())
         result["is_packing_ready"] = str(self.is_packing_ready)
@@ -588,6 +593,162 @@ class Operation(BaseModel):
         except Exception as e:
             print(e)
             return False
+
+    def build_cartaporte_context(self):
+        """
+        Construye el contexto para renderizar el template de carta porte.
+        Aquí puedes ir refinando nombres/campos según tus modelos actuales.
+        """
+        factura = ShipmentFacturapiInvoice.objects.get(id=self.shipment_invoice.id)
+
+        route = self.route
+        origin = route.initial_location if route else None
+        destination = route.destination_location if route else None
+        middle_points = route.route_stops.all() if route and route.route_stops.exists() else []
+
+        transported_products = self.transported_products.all()
+
+        context = {
+            "operation": self,
+            "Factura": factura,
+            "Cartaporte": {
+                "folio": self.folio or self.pre_folio or "",
+                "TotalDistRec": getattr(route, "direct_distance", 0) if route else 0,
+                "idccp": factura.ccp_id or "",
+                "PermSCT": getattr(self.vehicle, "perm_sct", "") if self.vehicle else "",
+                "NumPermisoSCT": getattr(self.vehicle, "sct_permit", "") if self.vehicle else "",
+                "NombreAseg": getattr(self.vehicle, "insurance_company", "") if self.vehicle else "",
+                "NumPolizaSeguro": getattr(self.vehicle, "insurance_code", "") if self.vehicle else "",
+                "Unidad": getattr(self.vehicle, "econ_number", "") if self.vehicle else "",
+                "PlacaVM": getattr(self.vehicle, "license_plate", "") if self.vehicle else "",
+                "AnioModeloVM": getattr(self.vehicle, "year", "") if self.vehicle else "",
+                "Caja": getattr(self.vehicle_box, "model", "") if self.vehicle_box else "",
+                "PlacaCaja": getattr(self.vehicle_box, "license_plate", "") if self.vehicle_box else "",
+                "NombreOperador": (
+                    f"{self.driver.name} {self.driver.last_name}".strip()
+                    if self.driver else ""
+                ),
+                "RFCOperador": getattr(self.driver, "rfc", "") if self.driver else "",
+                "NumLicencia": getattr(self.driver, "license_number", "") if self.driver else "",
+                "Client": {
+                    "business_name": getattr(self.client, "business_name", "") if self.client else "",
+                    "rfc": getattr(self.client, "rfc", "") if self.client else "",
+                    "cp": (
+                        getattr(getattr(self.client, "address", None), "zip_code", "")
+                        if self.client else ""
+                    ),
+                    "use": getattr(self.client, "cfdi_use", "") if self.client else "",
+                },
+                "Origen": self.serialize_location(origin, is_origin=True),
+                "Destino": self.serialize_location(destination, is_origin=False),
+                "MiddlePoint": [self.serialize_location(point, is_middle=True) for point in middle_points],
+                "Products": [self.serialize_product(product) for product in transported_products],
+                "OperadorDirection": self.serialize_driver_address(),
+            },
+            "is_asturiano": False,
+            "asturiano_links": [],
+            "is_3b": False,
+            "3b_links": [],
+        }
+
+        return context
+
+    def serialize_location(self, location, is_origin=False, is_middle=False, is_destination=False):
+        """
+        Serializa una ubicación/ruta al formato que espera tu template viejo.
+        Ajusta nombres de campos según el modelo real de Location/RouteStop.
+        """
+        if not location:
+            return {
+                "NombreRemitente": "",
+                "RFCRemitente": "",
+                "RFCDestinatario": "",
+                "FechaHoraSalida": "",
+                "Calle": "",
+                "NumeroExterior": "",
+                "Colonia": "",
+                "Localidad": "",
+                "Municipio": "",
+                "Estado": "",
+                "CodigoPostal": "",
+                "Pais": "MEX",
+                "Products": [],
+            }
+
+        address = getattr(location, "address", None)
+
+        data = {
+            "NombreRemitente": getattr(location, "name", ""),
+            "RFCRemitente": getattr(location, "rfc", ""),
+            "RFCDestinatario": getattr(location, "rfc", ""),
+            "FechaHoraSalida": self.cargo_appointment if is_origin else self.download_appointment,
+            "Calle": getattr(address, "street", "") if address else "",
+            "NumeroExterior": getattr(address, "exterior_number", "") if address else "",
+            "Colonia": getattr(address, "colony", "") if address else "",
+            "Localidad": getattr(address, "city", "") if address else "",
+            "Municipio": getattr(address, "city", "") if address else "",
+            "Estado": getattr(address, "state", "") if address else "",
+            "CodigoPostal": getattr(address, "zip_code", "") if address else "",
+            "Pais": "MEX",
+            "Products": [],
+        }
+
+        if is_middle:
+            data["Products"] = [
+                self.serialize_product(p)
+                for p in self.transported_products.all()
+                if getattr(p, "destination_id", None) == getattr(location, "id", None)
+            ]
+
+        return data
+
+    def serialize_product(self, product):
+        """
+        Serializa un producto transportado al formato esperado por el template viejo.
+        Ajusta nombres según tu modelo real.
+        """
+        return {
+            "Cantidad": getattr(product, "amount", ""),
+            "ClaveUnidad": getattr(product, "unit_key", ""),
+            "BienesTransp": getattr(product, "transported_product_key", ""),
+            "Descripcion": getattr(product, "description", ""),
+            "PesoEnKg": getattr(product, "weight", ""),
+            "Destino": getattr(getattr(product, "destination", None), "name", ""),
+        }
+
+    def serialize_driver_address(self):
+        """
+        Serializa la dirección del operador.
+        Ajusta según tu modelo Driver.
+        """
+        if not self.driver:
+            return {
+                "Calle": "",
+                "NumeroExterior": "",
+                "Colonia": "",
+                "Localidad": "",
+                "Municipio": "",
+                "Estado": "",
+                "CodigoPostal": "",
+                "Pais": "MEX",
+            }
+
+        address = getattr(self.driver, "address", None)
+
+        return {
+            "Calle": getattr(address, "street", "") if address else "",
+            "NumeroExterior": getattr(address, "exterior_number", "") if address else "",
+            "Colonia": getattr(address, "colony", "") if address else "",
+            "Localidad": getattr(address, "city", "") if address else "",
+            "Municipio": getattr(address, "city", "") if address else "",
+            "Estado": getattr(address, "state", "") if address else "",
+            "CodigoPostal": getattr(address, "zip_code", "") if address else "",
+            "Pais": "MEX",
+        }
+
+    def render_cartaporte_html(self, template_name="operations_panel/cartaporte/cartaporte_only.html"):
+        context = self.build_cartaporte_context()
+        return render_to_string(template_name, context)
 
     class Meta:
         verbose_name = "Operación"

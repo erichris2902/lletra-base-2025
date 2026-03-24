@@ -18,6 +18,18 @@ $('#main_datatable tbody').on('click', 'a[rel="update_cargo"]', function () {
     LoadForm(data.id, "get_cargo");
 });
 
+$('#main_datatable tbody').on('click', 'a[rel="update_origin"]', function () {
+    const tr = tblClient.cell($(this).closest('td, li')).index();
+    const data = tblClient.row(tr.row).data();
+    LoadForm(data.id, "get_origin");
+});
+
+$('#main_datatable tbody').on('click', 'a[rel="update_destiny"]', function () {
+    const tr = tblClient.cell($(this).closest('td, li')).index();
+    const data = tblClient.row(tr.row).data();
+    LoadForm(data.id, "get_destiny");
+});
+
 $('#main_datatable tbody').on('click', 'a[rel="update_packing"]', function () {
     const tr = tblClient.cell($(this).closest('td, li')).index();
     const data = tblClient.row(tr.row).data();
