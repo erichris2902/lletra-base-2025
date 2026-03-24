@@ -36,7 +36,7 @@ class Command(BaseCommand):
             "Content-Type": "application/json",
         })
 
-        page = 216
+        page = 1
         limit = 100
         total_processed = 0
         total_created = 0

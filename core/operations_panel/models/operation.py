@@ -750,6 +750,32 @@ class Operation(BaseModel):
         context = self.build_cartaporte_context()
         return render_to_string(template_name, context)
 
+    def attach_invoices_to_operations(self, sql_text: str):
+        invoice_rows = list(self.extract_table_rows(sql_text, "invoice"))
+
+        operation_map = {
+            op.pre_folio: op.pk
+            for op in Operation.objects.exclude(pre_folio__isnull=True)
+        }
+
+        invoice_map = {
+            inv.uuid.lower(): inv.pk
+            for inv in Invoice.objects.exclude(uuid__isnull=True)
+        }
+
+        for row in invoice_rows:
+            uuid = self.clean_str(row.get("uuid"))
+            cartaporte_folio = self.clean_str(row.get("cartaporte_folio"))
+
+            if not uuid or not cartaporte_folio:
+                continue
+
+            invoice_pk = invoice_map.get(uuid.lower())
+            operation_pk = operation_map.get(cartaporte_folio)
+
+            if not invoice_pk or not operation_pk:
+                continue
+
     class Meta:
         verbose_name = "Operación"
         verbose_name_plural = "Operaciones"

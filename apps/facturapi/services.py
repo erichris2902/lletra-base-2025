@@ -281,7 +281,7 @@ def _set_facturapi_invoice_cfdi_relation(invoice: FacturapiInvoice, data: dict):
 def _set_facturapi_invoice_item(invoice_item: FacturapiInvoiceItem, taxes=True):
     item_data = {"quantity": invoice_item.quantity, "discount": str(invoice_item.discount), "product": {}}
     product = FacturapiProduct.objects.get(pk=invoice_item.product.id)
-    item_data["product"]['description'] = product.description
+    item_data["product"]['description'] = invoice_item.description
     item_data["product"]['product_key'] = product.product_key
     item_data["product"]['price'] = float(invoice_item.unit_price)
     item_data["product"]['sku'] = product.sku

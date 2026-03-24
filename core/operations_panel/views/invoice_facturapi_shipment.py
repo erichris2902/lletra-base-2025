@@ -19,6 +19,7 @@ class InvoiceShipmentIFormView(InvoiceFormView):
 
     @transaction.atomic
     def handle_generateinvoice(self, request, data):
+        print(request.POST)
         operation = Operation.objects.get(id=self.kwargs['operation_id'])
         invoice_form = FacturapiInvocieForm(request.POST, request.FILES)
         shipment_form = ShipmentFacturapiInvoiceForm(request.POST, request.FILES)
@@ -70,6 +71,8 @@ class InvoiceShipmentIFormView(InvoiceFormView):
             subtotal = (p['price'] * p['quantity']).quantize(Decimal('0.00'))
             invoice_item.subtotal = subtotal
             invoice_item.save()
+            print(invoice_item.description)
+
 
         shipment_invoice.idempotency_key = operation.id
         shipment_invoice.status = "pending"

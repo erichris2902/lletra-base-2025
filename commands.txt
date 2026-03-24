@@ -32,3 +32,8 @@ supplier
 driver
 unit
 operation
+
+
+pg_restore -f legacy_plain.sql lletra_old3
+
+python manage.py sql_client_address legacy_plain.sql --batch-size 500 --skip-existing
