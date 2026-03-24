@@ -14,7 +14,7 @@ from core.operations_panel.forms.delivery_location import DeliveryLocationForm
 from core.operations_panel.forms.distribution_packing import DistributionPackingForm
 from core.operations_panel.forms.operation import OperationForm, OperationFolioWebsiteForm, OperationApprovalForm, \
     OperationFolioForm, OperationShipmentForm, OperationRouteForm
-from core.operations_panel.forms.route import RouteShipmentForm
+from core.operations_panel.forms.route import RouteShipmentForm, RouteForm
 from core.operations_panel.forms.transported_product import TransportedProductsFormByCSV, \
     OperationTransportedProductForm
 from core.operations_panel.models import Cargo, DeliveryLocation
@@ -390,6 +390,16 @@ class ShipmentOperationListView(AdminListView):
         data['id'] = str(destiny.id)
         data['form'] = self.render_form(request, destiny)
 
+    def handle_get_stops(self, request, data):
+        operation = self.model.objects.get(pk=request.POST.get('id'))
+        route = operation.route
+        self.model = Route
+        self.form = RouteForm
+        self.form_action = "update_stops"
+
+        data['id'] = str(route.id)
+        data['form'] = self.render_form(request, route)
+
     def handle_get_route_select(self, request, data):
         operation = self.model.objects.get(pk=request.POST.get('id'))
         self.model = Operation
@@ -402,6 +412,14 @@ class ShipmentOperationListView(AdminListView):
     def handle_update_route(self, request, data):
         route = Route.objects.get(pk=request.POST.get('id'))
         form = RouteShipmentForm(request.POST, instance=route)
+        if form.is_valid():
+            instance = form.save()
+            data['success'] = True
+            data['message'] = f"Ruta actualizada exitosamente"
+
+    def handle_update_stops(self, request, data):
+        route = Route.objects.get(pk=request.POST.get('id'))
+        form = RouteForm(request.POST, instance=route)
         if form.is_valid():
             instance = form.save()
             data['success'] = True
