@@ -8,6 +8,7 @@ from django.db import models
 from django.template.loader import render_to_string
 from packaging.utils import _
 
+from apps.facturapi.models import FacturapiInvoice
 from apps.facturapi.services import download_invoice_pdf, download_invoice_xml
 from apps.google_drive.services import check_folder_exists_with_service_account, create_folder_with_service_account, \
     upload_file_with_service_account
@@ -599,7 +600,9 @@ class Operation(BaseModel):
         Construye el contexto para renderizar el template de carta porte.
         Aquí puedes ir refinando nombres/campos según tus modelos actuales.
         """
-        factura = ShipmentFacturapiInvoice.objects.get(id=self.shipment_invoice.id)
+        factura = None
+        if self.shipment_invoice:
+            factura = ShipmentFacturapiInvoice.objects.get(id=self.shipment_invoice.id)
 
         route = self.route
         origin = route.initial_location if route else None
@@ -610,11 +613,11 @@ class Operation(BaseModel):
 
         context = {
             "operation": self,
-            "Factura": factura,
+            "Factura": factura if factura else {},
             "Cartaporte": {
                 "folio": self.folio or self.pre_folio or "",
                 "TotalDistRec": getattr(route, "direct_distance", 0) if route else 0,
-                "idccp": factura.ccp_id or "",
+                "idccp": factura.ccp_id if factura else "",
                 "PermSCT": getattr(self.vehicle, "perm_sct", "") if self.vehicle else "",
                 "NumPermisoSCT": getattr(self.vehicle, "sct_permit", "") if self.vehicle else "",
                 "NombreAseg": getattr(self.vehicle, "insurance_company", "") if self.vehicle else "",
@@ -650,6 +653,7 @@ class Operation(BaseModel):
             "is_3b": False,
             "3b_links": [],
         }
+        print(context)
 
         return context
 
@@ -760,7 +764,7 @@ class Operation(BaseModel):
 
         invoice_map = {
             inv.uuid.lower(): inv.pk
-            for inv in Invoice.objects.exclude(uuid__isnull=True)
+            for inv in FacturapiInvoice.objects.exclude(uuid__isnull=True)
         }
 
         for row in invoice_rows:

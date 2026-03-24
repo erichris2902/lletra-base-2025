@@ -84,8 +84,8 @@
                                 <b>USO DE CFDI</b><br>
                             </div>
                             <div class="col-8 ">
-                                {{ Factura.customer.business_name }}<br>
-                                {{ Factura.customer.rfc }}<br>
+                                {{ Cartaporte.Client.business_name }}<br>
+                                {{ Cartaporte.Client.rfc }}<br>
                                 {{ Factura.customer.address }}<br>
                                 {{ Factura.use }}<br>
                             </div>
@@ -111,7 +111,7 @@
             <thead>
             <tr>
                 <td>
-                    VERSION: 4.0
+                    VERSION: 3.0
                 </td>
                 <td>
                     TRANSPORTE INTERNACIONAL: No
@@ -657,6 +657,8 @@
     </section>
     <!-- /.content -->
 
+    {% if Factura.stamp %}
+
     <section class="sat_signature">
         <div class="row">
             <div class="col-3">
@@ -674,6 +676,7 @@
             </div>
         </div>
     </section>
+    {% endif %}
 {% endblock %}
 
 {% block script %}
