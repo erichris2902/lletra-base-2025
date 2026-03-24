@@ -202,3 +202,16 @@ class OperationFolioForm(BaseModelForm):
         if instance and instance.pre_folio and not instance.folio:
             self.fields['folio'].initial = instance.pre_folio
             self.fields['folio'].help_text = f"Pre-folio: {instance.pre_folio}"
+
+
+class OperationRouteForm(BaseModelForm):
+    """
+    Form for assigning a folio to an operation.
+    """
+
+    class Meta:
+        model = Operation
+        fields = [
+            "route",
+        ]
+

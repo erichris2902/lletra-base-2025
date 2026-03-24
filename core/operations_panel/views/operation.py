@@ -13,7 +13,7 @@ from core.operations_panel.forms.cargo import AssignCargoToOperationForm
 from core.operations_panel.forms.delivery_location import DeliveryLocationForm
 from core.operations_panel.forms.distribution_packing import DistributionPackingForm
 from core.operations_panel.forms.operation import OperationForm, OperationFolioWebsiteForm, OperationApprovalForm, \
-    OperationFolioForm, OperationShipmentForm
+    OperationFolioForm, OperationShipmentForm, OperationRouteForm
 from core.operations_panel.forms.route import RouteShipmentForm
 from core.operations_panel.forms.transported_product import TransportedProductsFormByCSV, \
     OperationTransportedProductForm
@@ -254,6 +254,7 @@ class ShipmentOperationListView(AdminListView):
     template_name = 'base/elements/views/datatable_list.html'
     datatable_headers = [
         "Control vehicular",
+        "Cliente",
         "Origen",
         "Repartos",
         "Destino",
@@ -264,6 +265,7 @@ class ShipmentOperationListView(AdminListView):
     ]
     datatable_keys = [
         "folio",
+        "client",
         "origin",
         "deliveries",
         "destination",
@@ -388,6 +390,15 @@ class ShipmentOperationListView(AdminListView):
         data['id'] = str(destiny.id)
         data['form'] = self.render_form(request, destiny)
 
+    def handle_get_route_select(self, request, data):
+        operation = self.model.objects.get(pk=request.POST.get('id'))
+        self.model = Operation
+        self.form = OperationRouteForm
+        self.form_action = "update_route_select"
+
+        data['id'] = str(operation.id)
+        data['form'] = self.render_form(request, operation)
+
     def handle_update_route(self, request, data):
         route = Route.objects.get(pk=request.POST.get('id'))
         form = RouteShipmentForm(request.POST, instance=route)
@@ -411,6 +422,14 @@ class ShipmentOperationListView(AdminListView):
             instance = form.save()
             data['success'] = True
             data['message'] = f"Direccion de destino actualizada exitosamente"
+
+    def handle_update_route_select(self, request, data):
+        operation = self.model.objects.get(pk=request.POST.get('id'))
+        form = OperationRouteForm(request.POST, instance=operation)
+        if form.is_valid():
+            instance = form.save()
+            data['success'] = True
+            data['message'] = f"Ruta actualizada exitosamente"
 
     def handle_get_cargo(self, request, data):
         context = {}

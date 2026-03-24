@@ -8,6 +8,7 @@ function dropdown(data, type, row) {
     dropdown += '<a rel="update" class="dropdown-item" type="button">Editar viaje</a>';
     dropdown += '<hr class="dropdown-divider">';
     dropdown += '<a rel="update_route" class="dropdown-item" type="button">Verificar ruta</a>';
+    dropdown += '<a rel="update_route_select" class="dropdown-item" type="button">Cambiar ruta</a>';
     dropdown += '<a rel="update_origin" class="dropdown-item" type="button">Editar origen</a>';
     dropdown += '<a rel="update_destiny" class="dropdown-item" type="button">Editar destino</a>';
     dropdown += '<hr class="dropdown-divider">';
