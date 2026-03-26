@@ -156,7 +156,7 @@ def download_invoice_acuse(request, invoice_id):
 def download_invoice_xml(request, invoice_id):
     invoice = get_object_or_404(FacturapiInvoice, id=invoice_id)
     try:
-        xml_content = services.download_invoice_xml(invoice.facturapi_id)
+        xml_content, filename = services.download_invoice_xml(invoice.facturapi_id)
         response = HttpResponse(xml_content, content_type='application/xml')
         response['Content-Disposition'] = f'attachment; filename="{invoice.series}-{invoice.folio_number}.xml"'
         return response

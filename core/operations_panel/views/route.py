@@ -46,9 +46,12 @@ class RouteMapView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        route = get_object_or_404(Route, pk=self.kwargs['route_id'])
+        print(self.kwargs)
+        route = Route.objects.get(pk=self.kwargs['route_id'])
+        print(route)
         data = route.optimized_route
         coords = []
+        print(data)
         overview_polyline = data.get("overview_polyline", {}).get("points", "")
         coords = [{"lat": lat, "lng": lng} for lat, lng in decode(overview_polyline)]
 
