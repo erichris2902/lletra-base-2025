@@ -242,4 +242,3 @@ from core.rh_panel.models import Employee, Embedding
 admin.site.register(Employee)
 admin.site.register(Embedding)
 admin.site.register(ShipmentFacturapiInvoice)
-admin.site.register(OperationTransportedProduct)

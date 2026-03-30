@@ -18,7 +18,7 @@ uuid_validator = RegexValidator(
 
 class FacturapiInvoicePaymentForm(BaseModelForm):
     payment_invoice = forms.ModelChoiceField(
-        queryset=FacturapiInvoice.objects.filter(payment_form="PPD").filter(payment_method="99").filter(type="I").all()[:3000],
+        queryset=FacturapiInvoice.objects.filter(payment_form="PPD").filter(payment_method="99").filter(type="I").all()[:4],
         label="Factura a pagar",
         widget=forms.Select(attrs={"class": "form-select"})
     )

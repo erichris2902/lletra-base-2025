@@ -681,23 +681,21 @@ class ShipmentOperationListView(AdminListView):
 
     def handle_assignproducts(self, request, data):
         operation_id = request.POST["id"]
-        product_ids = request.POST["transported_product"].split(",")
-        weight = request.POST["weight"].split(",")
-        amount = request.POST["amount"].split(",")
-
+        product_id = request.POST["transported_product"]
+        weight = request.POST["weight"]
+        amount = request.POST["amount"]
         operation = get_object_or_404(Operation, pk=operation_id)
-        products = TransportedProduct.objects.filter(id__in=product_ids)
+        product = TransportedProduct.objects.get(id=product_id)
 
-        for index in range(0, products.count()):
-            products[index].id = None
-            products[index].weight = weight
-            products[index].amount = amount
-            products[index].save()
-            operation.transported_products.add(products[index])
-            operation.save()
+        product.id = None
+        product.weight = weight
+        product.amount = amount
+        product.save()
+        operation.transported_products.add(product)
+        operation.save()
 
         data["success"] = True
-        data["message"] = f"{products.count()} productos asignados a {operation.folio}"
+        data["message"] = f"Un productos asignados a {operation.folio}, "
         return data
 
     def handle_get_assign_cargo_form(self, request, data):

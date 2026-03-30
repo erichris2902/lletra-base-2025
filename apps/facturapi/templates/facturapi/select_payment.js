@@ -74,6 +74,7 @@ function addPaymentFromApi(payload) {
     populateTaxSelect(taxSelect);
     paymentIndex += 1;
     reindexPayments();
+    recalcPaymentsTotal();
 }
 
 // --- Listeners ---
@@ -166,6 +167,7 @@ window.addPayment = function () {
     container.insertAdjacentHTML('beforeend', renderPaymentGroup(paymentIndex));
     paymentIndex += 1;
     reindexPayments(); // asegura secuencia visible y nombres coherentes
+    recalcPaymentsTotal();
 };
 
 // Delegación para eliminar
@@ -176,6 +178,7 @@ document.getElementById('payments').addEventListener('click', function (ev) {
     if (group) {
         group.remove();
         reindexPayments();
+        recalcPaymentsTotal();
     }
 });
 
@@ -187,6 +190,7 @@ window.addPayment = function () {
     populateTaxSelect(taxSelect);
     paymentIndex += 1;
     reindexPayments();
+    recalcPaymentsTotal();
 };
 
 function reindexPayments() {

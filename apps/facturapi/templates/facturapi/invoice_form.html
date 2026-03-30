@@ -65,10 +65,10 @@
 {% block scripts %}
     <script id="taxes-json" type="application/json">{{ taxes_json|safe }}</script>
     <script>
-    {% include "facturapi/select_product.js" %}
+        {% include "facturapi/select_product.js" %}
     </script>
     <script>
-    {% include "facturapi/select_payment.js" %}
+        {% include "facturapi/select_payment.js" %}
     </script>
 
     <script>
@@ -161,6 +161,7 @@
                 container.insertAdjacentHTML('beforeend', renderPaymentGroup(paymentIndex));
                 paymentIndex += 1;
                 reindexPayments(); // asegura secuencia visible y nombres coherentes
+                recalcPaymentsTotal();
             };
 
             // Delegación para eliminar
@@ -171,6 +172,8 @@
                 if (group) {
                     group.remove();
                     reindexPayments();
+                    recalcPaymentsTotal(); // 👈 agregar
+
                 }
             });
 
@@ -274,6 +277,8 @@
                 populateTaxSelect(taxSelect);
                 paymentIndex += 1;
                 reindexPayments();
+                recalcPaymentsTotal(); // 👈 agregar
+
             };
 
 // Asegúrate que tu reindexPayments renombre también <select> y no sólo <input>
@@ -294,6 +299,24 @@
                 paymentIndex = groups.length;
             }
 
+        });
+
+        function recalcPaymentsTotal() {
+            const inputs = document.querySelectorAll('#payments input[name$="[amount]"]');
+            let sum = 0;
+
+            inputs.forEach(input => {
+                sum += parseFloat(input.value) || 0;
+            });
+
+            const totalEl = document.getElementById('payments-total');
+            if (totalEl) totalEl.textContent = sum.toFixed(2);
+        }
+
+        document.getElementById('payments').addEventListener('input', function (ev) {
+            if (ev.target.name.includes('[amount]')) {
+                recalcPaymentsTotal();
+            }
         });
 
 
