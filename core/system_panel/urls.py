@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import ActionEngineView, ReportEngineView
+from .views import ActionEngineView, ReportEngineView, ReportEngineByFolioView
 from ..system.catalog_view import CatalogView
 
 app_name = 'system_panel'
@@ -14,6 +14,7 @@ urlpatterns = [
     path('catalog', CatalogView.as_view(), name='catalog'),
     path('actions', ActionEngineView.as_view(), name='actions'),
     path('reports', ReportEngineView.as_view(), name='reports'),
+    path('reports_by_folio', ReportEngineByFolioView.as_view(), name='reports'),
 
     path('facturapi/', include("apps.facturapi.urls")),
 ]

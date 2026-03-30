@@ -21,9 +21,14 @@ def _agregar_encabezados(ws, blueFill):
 
 
 def _agregar_fila(op, ws, redFill, greenFill):
-    supplier = getattr(op.supplier, "name", "")
+    print(op.supplier)
+    print(op.supplier.business_name)
+    supplier = getattr(op.supplier, "business_name", "")
     invoiced = "Sí" if op.shipment_invoice else "No"
     packing = "Sí" if op.transported_products.count() > 0 else "No"
+    stops = ""
+    for stop in op.route.route_stops.all():
+        stops += f"{stop.location} {stop.location}, "
     row = [
         op.operation_date.strftime("%d/%m/%Y"),
         str(op.folio or ""),
@@ -31,8 +36,8 @@ def _agregar_fila(op, ws, redFill, greenFill):
         str(op.client or ""),
         str(op.route.initial_location if op.route else ""),
         str(op.route.destination_location if op.route else ""),
-        str(op.route.route_stops.count() if op.route else ""),
-        str(op.vehicle or ""),
+        str(stops),
+        str(op.vehicle.unit_type or ""),
         str(op.shipment_invoice.total if op.shipment_invoice else "0.00"),
         str(op.driver or ""),
         supplier,

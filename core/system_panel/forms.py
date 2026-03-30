@@ -121,3 +121,33 @@ class ReportEngineForm(BaseForm):
         label="Fecha final",
         widget=forms.DateInput(attrs={"type": "date"}),
     )
+
+
+class ReportEngineByFolioForm(BaseForm):
+
+    REPORT_CHOICES = [
+        ("packing_asturiano", "Packing de Asturiano"),
+    ]
+    layout = [
+        {
+            "type": "row",
+            "fields": [
+                {"name": "report_type", "size": 6},
+                {"name": "folio_serie", "size": 2},
+                {"name": "folio_number", "size": 4},
+            ],
+        },
+    ]
+
+    report_type = forms.ChoiceField(
+        label="Tipo de reporte",
+        choices=REPORT_CHOICES,
+    )
+
+    folio_serie = forms.CharField(
+        label="Serie",
+    )
+
+    folio_number = forms.CharField(
+        label="Folio",
+    )
