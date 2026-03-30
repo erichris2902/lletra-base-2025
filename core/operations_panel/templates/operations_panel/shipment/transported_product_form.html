@@ -53,6 +53,7 @@
             <th class="text-center">CANTIDAD</th>
             <th class="text-center">PESO</th>
             <th class="text-center">ES PELIGROSO</th>
+            <th class="text-center">ACCIONES</th>
 
         </tr>
         </thead>
@@ -76,6 +77,13 @@
                     </td>
                     <td class="text-center">
                         {% if product.is_danger %}SI{% endif %}
+                    </td>
+                    <td class="text-center">
+                        <button type="button"
+                                class="btn btn-danger btn-sm btn-delete-product"
+                                data-product-id="{{ product.id }}">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
                     </td>
 
                 </tr>
