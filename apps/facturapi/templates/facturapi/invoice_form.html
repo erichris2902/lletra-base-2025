@@ -63,10 +63,13 @@
 
 
 {% block scripts %}
-    <script>
-        {% include "facturapi/select_product.js" %}
-    </script>
     <script id="taxes-json" type="application/json">{{ taxes_json|safe }}</script>
+    <script>
+    {% include "facturapi/select_product.js" %}
+    </script>
+    <script>
+    {% include "facturapi/select_payment.js" %}
+    </script>
 
     <script>
         $(document).ready(function () {
@@ -292,6 +295,8 @@
             }
 
         });
+
+
     </script>
 
 {% endblock %}

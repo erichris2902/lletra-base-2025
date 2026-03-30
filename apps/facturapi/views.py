@@ -191,6 +191,14 @@ class InvoiceFormView(AdminTemplateView):
     section = "Facturacion MX"
     category = "Facturacion MX"
 
+    catalogs = [
+        {
+            'id': 'id_product_key',
+            'service': 'ProductAndServiceCatalog',
+            'placeholder': '',
+        },
+    ]
+
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         data = {}

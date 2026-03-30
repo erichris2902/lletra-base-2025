@@ -689,16 +689,9 @@ class ShipmentOperationListView(AdminListView):
         products = TransportedProduct.objects.filter(id__in=product_ids)
 
         for index in range(0, products.count()):
-            OperationTransportedProduct.objects.create(
-                operation=operation,
-                transported_product=products[index],
-                weight=products[index].weight,
-                amount=products[index].amount
-            )
-
             products[index].id = None
-            products[index].weight = weight[index]
-            products[index].amount = amount[index]
+            products[index].weight = weight
+            products[index].amount = amount
             products[index].save()
             operation.transported_products.add(products[index])
             operation.save()

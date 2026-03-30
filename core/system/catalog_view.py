@@ -4,7 +4,7 @@ import requests
 from django.http import JsonResponse
 from django.views.generic import FormView
 
-from apps.facturapi.models import FacturapiProduct
+from apps.facturapi.models import FacturapiProduct, FacturapiInvoice, FacturapiInvoicePayment
 from apps.facturapi.services import get_headers
 from core.operations_panel.models import TransportedProduct
 
@@ -74,6 +74,20 @@ class CatalogView(FormView):
                     else:
                         i += tax.rate
                 data["tax"] = str(i)
+            elif action == 'SelectPayment':
+                invoice = FacturapiInvoice.objects.get(pk=request.POST['selected'])
+                payments = FacturapiInvoicePayment.objects.filter(uuid=invoice.uuid)
+                debt = invoice.total
+                total_payments = 0
+                payment_number = 1
+                for payment in payments:
+                    payment_number += 1
+                    total_payments += payment.amount
+                    debt -= payment.amount
+                data["uuid"] = str(invoice.uuid)
+                data["payment_number"] = str(payment_number)
+                data["payment_amount"] = str(total_payments)
+                data["debt_before"] = str(debt)
             else:
                 data['error'] = "No se ingreso ninguna accion."
         except Exception as e:

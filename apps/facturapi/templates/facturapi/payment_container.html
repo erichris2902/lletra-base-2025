@@ -8,6 +8,9 @@
                 <div class="col-6">
                     {% include "base/elements/inputs/date.html" with field=payment_form.payment_day %}
                 </div>
+                <div class="col-6">
+                    {% include "base/elements/inputs/select.html" with field=payment_form.payment_invoice %}
+                </div>
             </div>
         </div>
         <div id="payments">
