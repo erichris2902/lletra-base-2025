@@ -716,4 +716,9 @@ class ShipmentOperationListView(AdminListView):
                                                data=data)
         return data
 
+    def handle_delete_product(self, request, data):
+        transported_product = TransportedProduct.objects.get(pk=request.POST.get('product_id'))
+        transported_product.delete()
+        return data
+
 

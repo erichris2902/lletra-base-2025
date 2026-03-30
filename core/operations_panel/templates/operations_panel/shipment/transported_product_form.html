@@ -62,7 +62,7 @@
         {% for product in data.products %}
             <form method="POST" action=".">
                 {% csrf_token %}
-                <tr>
+                <tr id="product-row-{{ product.id }}">
                     <td class="text-center">
                         {{ product.transported_product_key }}
                     </td>
@@ -82,7 +82,7 @@
                         <button type="button"
                                 class="btn btn-danger btn-sm btn-delete-product"
                                 data-product-id="{{ product.id }}">
-                            <i class="bi bi-trash"></i> Eliminar
+                            Eliminar
                         </button>
                     </td>
 
@@ -94,3 +94,50 @@
         </tbody>
     </table>
 </div>
+<script>
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+
+    $(document).on('click', '.btn-delete-product', function () {
+        const productId = $(this).data('product-id');
+        const row = $('#product-row-' + productId);
+
+        Swal.fire({
+            title: '¿Eliminar producto?',
+            text: 'Esta acción no se puede deshacer',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+            $.ajax({
+                url: window.location.pathname,
+                type: 'POST',
+                data: {
+                    action: 'delete_product',
+                    product_id: productId,
+                    csrfmiddlewaretoken: getCSRFToken()
+                },
+                success: function (response) {
+                    row.remove();
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Eliminado',
+                        text: response.message || 'Producto eliminado correctamente'
+                    });
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Error en la petición'
+                    });
+                }
+            });
+        });
+    });
+</script>
