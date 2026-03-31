@@ -255,6 +255,7 @@ class ShipmentOperationListView(AdminListView):
     datatable_headers = [
         "Control vehicular",
         "Cliente",
+        "Unidad",
         "Origen",
         "Repartos",
         "Destino",
@@ -266,6 +267,7 @@ class ShipmentOperationListView(AdminListView):
     datatable_keys = [
         "folio",
         "client",
+        "vehicle",
         "origin",
         "deliveries",
         "destination",
