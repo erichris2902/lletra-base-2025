@@ -355,22 +355,29 @@ class ShipmentOperationListView(AdminListView):
 
         # 4) paginación
         qs_page = qs[start:start + length]
-
+        print(qs_page)
+        for obj in qs_page:
+            print(obj)
+            if obj.notes == '' or obj.notes is None:
+                if obj.raw_payload:
+                    print(obj.raw_payload)
+                    obj.notes = ''
+                    obj.notes += 'FECHA: ' + obj.raw_payload.get('fecha', '') + '\n'
+                    obj.notes += 'CLIENTE: ' + obj.raw_payload.get('cliente', '') + '\n'
+                    obj.notes += 'ORIGEN: ' + obj.raw_payload.get('origen', '') + '\n'
+                    obj.notes += 'DESTINO: ' + obj.raw_payload.get('destino', '') + '\n'
+                    obj.notes += 'REPARTOS: ' + str(obj.raw_payload.get('repartos', '')) + '\n'
+                    obj.notes += 'PLACAS: ' + obj.raw_payload.get('placas', '') + '\n'
+                    obj.notes += 'UNIDAD: ' + obj.raw_payload.get('unidad', '') + '\n'
+                    obj.notes += 'OPERADOR: ' + obj.raw_payload.get('operador', '') + '\n'
+                    obj.notes += 'PROVEEDOR: ' + obj.raw_payload.get('proveedor', '') + '\n'
+                    print("save")
+                    obj.save()
         # for obj in qs_page:
         #     print(obj)
         #     if obj.notes == '' or obj.notes is None:
         #         obj.notes = ''
         #         if obj.raw_payload:
-        #             obj.notes += 'FECHA: ' + self.raw_payload.get('fecha', '') + '\n'
-        #             obj.notes += 'CLIENTE: ' + self.raw_payload.get('cliente', '') + '\n'
-        #             obj.notes += 'ORIGEN: ' + self.raw_payload.get('origen', '') + '\n'
-        #             obj.notes += 'DESTINO: ' + self.raw_payload.get('destino', '') + '\n'
-        #             obj.notes += 'REPARTOS: ' + self.raw_payload.get('repartos', '') + '\n'
-        #             obj.notes += 'PLACAS: ' + self.raw_payload.get('placas', '') + '\n'
-        #             obj.notes += 'UNIDAD: ' + self.raw_payload.get('unidad', '') + '\n'
-        #             obj.notes += 'OPERADOR: ' + self.raw_payload.get('operador', '') + '\n'
-        #             obj.notes += 'PROVEEDOR: ' + self.raw_payload.get('proveedor', '') + '\n'
-        #             obj.save()
         # 5) data
         data = [obj.to_operations_view(keys=self.datatable_keys) for obj in qs_page]
 
