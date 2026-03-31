@@ -125,6 +125,8 @@ class FolioOperationListView(AdminListView):
     section = 'Folios'
     category = 'Operaciones'
 
+    search_fields = ['folio', 'client', 'route', 'operation_date', 'vehicle', 'driver', 'status']
+
     def handle_approve(self):
         data = {}
         instance = self.model.objects.get(pk=self.request.POST.get('id'))
