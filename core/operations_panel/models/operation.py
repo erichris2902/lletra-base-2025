@@ -124,6 +124,12 @@ class Operation(BaseModel):
         result = self.to_display_dict(keys)
         result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route and self.route.route_stops else "[]"
         result["folio"] = "SIN FOLIO" if not self.folio else self.folio
+        if self.raw_payload:
+            result["origin"] = self.raw_payload.get("origen", "")
+            result["destination"] = self.raw_payload.get("destino", "")
+            result["deliveries"] = self.raw_payload.get("repartos", "")
+            result["vehicle"] = self.raw_payload.get("unidad", "")
+            result["driver"] = self.raw_payload.get("proveedor", "")
         return result
 
     def to_operations_view(self, keys=None):
@@ -137,6 +143,12 @@ class Operation(BaseModel):
         result["origin"] = str(self.route.initial_location.address) if self.route else "SIN ORIGEN"
         result["destination"] = str(self.route.destination_location.address) if self.route else "SIN DESTINO"
         result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route and self.route.route_stops else "[]"
+        if self.raw_payload:
+            result["origin"] = self.raw_payload.get("origen", "")
+            result["destination"] = self.raw_payload.get("destino", "")
+            result["deliveries"] = self.raw_payload.get("repartos", "")
+            result["vehicle"] = self.raw_payload.get("unidad", "")
+            result["driver"] = self.raw_payload.get("proveedor", "")
         return result
 
     def to_operations_general_view(self, keys=None):
