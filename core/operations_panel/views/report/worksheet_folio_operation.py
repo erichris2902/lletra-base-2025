@@ -22,24 +22,28 @@ def _agregar_encabezados(ws, blueFill):
 
 def _agregar_fila(op, ws, redFill, greenFill):
     print(op.supplier)
-    supplier = getattr(op.supplier, "business_name", "")
+    date = op.raw_payload.get('fecha', '') if op.raw_payload else ''
+    client = op.raw_payload.get('cliente', '') if op.raw_payload else ''
+    origin = op.raw_payload.get('origen', '') if op.raw_payload else ''
+    destiny = op.raw_payload.get('destino', '') if op.raw_payload else ''
+    stops = op.raw_payload.get('repartos', '') if op.raw_payload else ''
+    unit = op.raw_payload.get('unidad', '') if op.raw_payload else ''
+    driver = op.raw_payload.get('operador', '') if op.raw_payload else ''
+    supplier = op.raw_payload.get('proveedor', '') if op.raw_payload else ''
+
     invoiced = "Sí" if op.shipment_invoice else "No"
     packing = "Sí" if op.transported_products.count() > 0 else "No"
-    stops = ""
-    if op.route:
-        for stop in op.route.route_stops.all():
-            stops += f"{stop.name}, "
     row = [
-        op.operation_date.strftime("%d/%m/%Y"),
+        date,
         str(op.folio or ""),
         "TRASLADO",
-        str(op.client or ""),
-        str(op.route.initial_location if op.route else ""),
-        str(op.route.destination_location if op.route else ""),
+        client,
+        origin,
+        destiny,
         str(stops),
-        str(op.vehicle.unit_type or "" if op.vehicle else ""),
+        unit,
         str(op.shipment_invoice.total if op.shipment_invoice else "0.00"),
-        str(op.driver or ""),
+        driver,
         supplier,
         f"{op.folio} Ruta: {op.route.destination_location}, {op.operation_date}" if op.route else "",
         packing,
