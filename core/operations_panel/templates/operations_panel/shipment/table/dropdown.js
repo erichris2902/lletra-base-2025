@@ -4,6 +4,11 @@ function dropdown(data, type, row) {
     dropdown += '<div class="dropdown-menu">';
     if (row.is_ready_to_invoice === 'True') {
         dropdown += '<a rel="confirm" class="dropdown-item" type="button">Confirmar packing</a>';
+        dropdown += '<hr class="dropdown-divider">';
+    }
+    else if (row.is_packing_ready === 'True') {
+        dropdown += `<a href="/operations/generate_invoice/t/${row.id}/" target="_blank" class="dropdown-item">Translado</a>`;
+        dropdown += '<hr class="dropdown-divider">';
     }
     dropdown += '<a rel="update" class="dropdown-item" type="button">Editar viaje</a>';
     dropdown += '<hr class="dropdown-divider">';
@@ -15,6 +20,7 @@ function dropdown(data, type, row) {
     dropdown += '<hr class="dropdown-divider">';
     if (row.shipment_type === 'ASTURIANO') {
         dropdown += '<a rel="update_packing" class="dropdown-item" type="button">Distribuir packing</a>';
+        dropdown += '<a rel="get_assign_products_form" class="dropdown-item" type="button">Asignar producto</a>';
     }else{
         dropdown += '<a rel="update_cargo" class="dropdown-item" type="button">Asignar carga por archivo</a>';
         dropdown += '<a rel="get_assign_cargo_form" class="dropdown-item" type="button">Asignar carga precargada</a>';

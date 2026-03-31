@@ -4,9 +4,6 @@ from core.system.views import AdminListView
 
 
 class TransportedProductListView(AdminListView):
-    """
-    List view for transported products.
-    """
     model = TransportedProduct
     form = TransportedProductForm
     template_name = 'base/elements/views/datatable_list.html'
@@ -29,16 +26,5 @@ class TransportedProductListView(AdminListView):
             'placeholder': '',
         },
     ]
-
-    def handle_searchdata(self, request, data):
-        """
-        Retorna todos los registros como lista de dicts.
-        """
-        # Obtén los objetos de la tabla (o filtra según tus necesidades)
-        queryset = self.get_queryset()
-        datatable_keys = self.datatable_keys
-        data = [obj.to_display_dict(keys=datatable_keys) for obj in self.get_queryset()]
-        print(data)
-        return data
 
 

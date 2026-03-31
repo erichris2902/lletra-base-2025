@@ -124,6 +124,7 @@ class FolioOperationListView(AdminListView):
     form_path = 'base/elements/forms/form.html'
     section = 'Folios'
     category = 'Operaciones'
+    ordering = 'desc'
 
     search_fields = ['folio', 'client', 'route', 'operation_date', 'vehicle', 'driver', 'status']
 
@@ -241,7 +242,6 @@ class FolioOperationListView(AdminListView):
             "data": data
         }
 
-
     def get_queryset(self):
         return self.model.objects.prefetch_related("client", "driver",
                                                    "vehicle", "route",
@@ -251,6 +251,7 @@ class FolioOperationListView(AdminListView):
 
 
 class ShipmentOperationListView(AdminListView):
+    search_fields = ['folio', 'client', 'route', 'operation_date', 'vehicle', 'driver', 'status', 'raw_payload']
     model = Operation
     form = OperationShipmentForm
     template_name = 'base/elements/views/datatable_list.html'
@@ -355,6 +356,21 @@ class ShipmentOperationListView(AdminListView):
         # 4) paginación
         qs_page = qs[start:start + length]
 
+        # for obj in qs_page:
+        #     print(obj)
+        #     if obj.notes == '' or obj.notes is None:
+        #         obj.notes = ''
+        #         if obj.raw_payload:
+        #             obj.notes += 'FECHA: ' + self.raw_payload.get('fecha', '') + '\n'
+        #             obj.notes += 'CLIENTE: ' + self.raw_payload.get('cliente', '') + '\n'
+        #             obj.notes += 'ORIGEN: ' + self.raw_payload.get('origen', '') + '\n'
+        #             obj.notes += 'DESTINO: ' + self.raw_payload.get('destino', '') + '\n'
+        #             obj.notes += 'REPARTOS: ' + self.raw_payload.get('repartos', '') + '\n'
+        #             obj.notes += 'PLACAS: ' + self.raw_payload.get('placas', '') + '\n'
+        #             obj.notes += 'UNIDAD: ' + self.raw_payload.get('unidad', '') + '\n'
+        #             obj.notes += 'OPERADOR: ' + self.raw_payload.get('operador', '') + '\n'
+        #             obj.notes += 'PROVEEDOR: ' + self.raw_payload.get('proveedor', '') + '\n'
+        #             obj.save()
         # 5) data
         data = [obj.to_operations_view(keys=self.datatable_keys) for obj in qs_page]
 

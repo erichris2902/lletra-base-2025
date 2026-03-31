@@ -140,6 +140,7 @@ class AdminListView(AdminView, ListView):
             'action_headers': self.action_headers,
             'callback_js': self.callback_js,
             'add_form_layout': getattr(self.form() if self.form else None, 'layout', []),
+            'ordering': self.ordering,
         })
         return context
 
