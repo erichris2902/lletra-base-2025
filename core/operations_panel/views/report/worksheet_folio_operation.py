@@ -190,3 +190,10 @@ def generar_reporte_hoja_trabajo(fecha_inicio, fecha_fin):
         ])
 
     return headers, rows
+
+
+
+
+
+
+

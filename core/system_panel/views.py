@@ -1,8 +1,14 @@
 import dateutil
 from dateutil.utils import today
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill, Border, Side, Alignment
+from openpyxl.styles.borders import BORDER_THIN
 
+from core.operations_panel.choices import AsturianoPacking
+from core.operations_panel.models import Operation, TransportedProduct, Client
+from core.operations_panel.models.distribution_packing import DistributionPacking
 from core.operations_panel.views.report.attendance import report_attendance
 from core.operations_panel.views.report.invoice import report_xml_invoices
 from core.operations_panel.views.report.worksheet_folio_operation import report_xml_worksheet_folios_by_date
@@ -102,11 +108,13 @@ class ReportEngineView(AdminTemplateView):
 
         if not report_type or not start_date or not end_date:
             return HttpResponseBadRequest("Faltan parámetros: tipo, fecha de inicio o fecha de fin")
-
+        print(request.POST)
         if report_type == "folios":
             return report_xml_worksheet_folios_by_date(request)
         elif report_type == "facturacion":
             return report_xml_invoices(request)
+        elif report_type == "packing_asturiano":
+            return report_asturiano(request)
         elif report_type == "asistencia":
             return report_attendance(request)
 
@@ -172,3 +180,127 @@ class ReportEngineByFolioView(ReportEngineView):
             'section': self.section,
         })
         return context
+
+
+def report_asturiano(request):
+    fecha_inicio = request.POST.get("fecha_inicial")
+    fecha_fin = request.POST.get("fecha_final")
+    operations = Operation.objects.filter(
+        operation_date__range=[fecha_inicio, fecha_fin],
+
+    ).order_by("operation_date")
+    wb = Workbook()
+    ws = None
+    date_title = ""
+    base_col = 0
+    clients = [
+        Client.objects.get(name__icontains="Asturiano"),
+        Client.objects.get(name__icontains="Asturito"),
+    ]
+    for operation in Operation.objects.filter(client__in=clients).filter(operation_date__range=[fecha_inicio, fecha_fin]).order_by("operation_date").all():
+
+        if date_title != str(operation.operation_date):
+            date_title = str(operation.operation_date)
+            ws = wb.create_sheet(operation.folio)
+            ws.title = date_title
+            base_col = 0
+        else:
+            base_col += 8
+
+        ws['A' + str(base_col + 1)] = operation.folio
+        ws['A' + str(base_col + 2)] = 'CLIENTE'
+        ws['A' + str(base_col + 3)] = 'OPERADOR'
+        ws['A' + str(base_col + 4)] = 'PLACAS'
+        ws['A' + str(base_col + 5)] = 'RUTA'
+        ws['C' + str(base_col + 4)] = 'ECONOMICO'
+        ws['C' + str(base_col + 5)] = 'ENTREGAS'
+        ws['E' + str(base_col + 4)] = 'PROVEEDOR'
+
+        ws['A' + str(base_col + 6)] = 'CANTIDAD'
+        ws['B' + str(base_col + 6)] = 'DESCRIPCION'
+        ws['C' + str(base_col + 6)] = 'PESO'
+        ws['D' + str(base_col + 6)] = 'CLAVE'
+        ws['E' + str(base_col + 6)] = 'TIENDA'
+        ws['F' + str(base_col + 6)] = 'CLASIF'
+
+        ws['B' + str(base_col + 2)] = str(operation.client)
+        ws['B' + str(base_col + 3)] = str(operation.driver)
+        if operation.vehicle:
+            ws['B' + str(base_col + 4)] = str(operation.vehicle.license_plate)
+            ws['B' + str(base_col + 5)] = str("")
+            ws['D' + str(base_col + 4)] = str(operation.vehicle)
+        ws['D' + str(base_col + 5)] = ""
+        ws['E' + str(base_col + 5)] = str(operation.driver)
+
+        ws.merge_cells(start_row=base_col + 1, start_column=1, end_row=base_col + 1, end_column=6)
+        ws.merge_cells(start_row=base_col + 2, start_column=2, end_row=base_col + 2, end_column=6)
+        ws.merge_cells(start_row=base_col + 3, start_column=2, end_row=base_col + 3, end_column=6)
+        ws.merge_cells(start_row=base_col + 4, start_column=5, end_row=base_col + 4, end_column=6)
+        ws.merge_cells(start_row=base_col + 5, start_column=5, end_row=base_col + 5, end_column=6)
+
+        titleFill = PatternFill(start_color='EBA67D',
+                                end_color='EBA67D',
+                                fill_type='solid',
+                                )
+        thin_border = Border(
+            left=Side(border_style=BORDER_THIN, color='00000000'),
+            right=Side(border_style=BORDER_THIN, color='00000000'),
+            top=Side(border_style=BORDER_THIN, color='00000000'),
+            bottom=Side(border_style=BORDER_THIN, color='00000000')
+        )
+
+        ws['A' + str(base_col + 1)].fill = titleFill
+        ws['A' + str(base_col + 2)].fill = titleFill
+        ws['A' + str(base_col + 3)].fill = titleFill
+        ws['A' + str(base_col + 4)].fill = titleFill
+        ws['A' + str(base_col + 5)].fill = titleFill
+        ws['C' + str(base_col + 4)].fill = titleFill
+        ws['C' + str(base_col + 5)].fill = titleFill
+        ws['E' + str(base_col + 4)].fill = titleFill
+
+        ws['A' + str(base_col + 6)].fill = titleFill
+        ws['B' + str(base_col + 6)].fill = titleFill
+        ws['C' + str(base_col + 6)].fill = titleFill
+        ws['D' + str(base_col + 6)].fill = titleFill
+        ws['E' + str(base_col + 6)].fill = titleFill
+        ws['F' + str(base_col + 6)].fill = titleFill
+
+        controlador = base_col + 7
+
+        for transportedProduct in operation.transported_products.all():
+            # Cantidad
+            ws.cell(row=controlador, column=1).value = str(transportedProduct.amount)
+            # Descripcion
+            ws.cell(row=controlador, column=2).value = str(transportedProduct.description)
+            # Peso
+            ws.cell(row=controlador, column=3).value = str(transportedProduct.weight)
+            # Clave
+            ws.cell(row=controlador, column=4).value = str(transportedProduct.transported_product_key)
+            # Destino
+            if operation.route:
+                ws.cell(row=controlador, column=5).value = str(operation.route.destination_location)
+            # Clasif
+            controlador += 1
+            base_col += 1
+        dims = {}
+        i = 1
+        for row in ws.rows:
+            j = 1
+            for cell in row:
+                ws.cell(row=i, column=j).border = thin_border
+                ws.cell(row=i, column=j).alignment = Alignment(horizontal='center')
+                if cell.value:
+                    dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value)) + 10))
+                j += 1
+            i += 1
+        for col, value in dims.items():
+            ws.column_dimensions[col].width = 20
+
+    # Establecer el nombre de mi archivo
+    nombre_archivo = "Packing" + str(operation.folio) + ".xlsx"
+    # Definir el tipo de respuesta que se va a dar
+    response = HttpResponse(content_type="application/ms-excel")
+    contenido = "attachment; filename = {0}".format(nombre_archivo)
+    response["Content-Disposition"] = contenido
+    wb.save(response)
+    return response
