@@ -11,7 +11,8 @@ from core.operations_panel.models import Operation, TransportedProduct, Client
 from core.operations_panel.models.distribution_packing import DistributionPacking
 from core.operations_panel.views.report.attendance import report_attendance
 from core.operations_panel.views.report.invoice import report_xml_invoices
-from core.operations_panel.views.report.worksheet_folio_operation import report_xml_worksheet_folios_by_date
+from core.operations_panel.views.report.worksheet_folio_operation import report_xml_worksheet_folios_by_date, \
+    report_xml_worksheet_folios_by_folio
 from core.system.models import Category, Section
 from core.system.views import AdminTemplateView, AdminListView
 from core.system_panel.forms import CategoryForm, SectionForm, AssistantForm, ActionEngineForm, ReportEngineForm, \
@@ -149,15 +150,13 @@ class ReportEngineByFolioView(ReportEngineView):
 
     def post(self, request, *args, **kwargs):
         from django.utils.dateparse import parse_date
+        print(request.POST)
         report_type = request.POST.get("report_type")
-        start_date = parse_date(request.POST.get("fecha_inicial"))
-        end_date = parse_date(request.POST.get("fecha_final"))
-
-        if not report_type or not start_date or not end_date:
-            return HttpResponseBadRequest("Faltan parámetros: tipo, fecha de inicio o fecha de fin")
+        folio_serie = parse_date(request.POST.get("folio_serie"))
+        folio_number = parse_date(request.POST.get("folio_number"))
 
         if report_type == "folios":
-            return report_xml_worksheet_folios_by_date(request)
+            return report_xml_worksheet_folios_by_folio(request)
         elif report_type == "facturacion":
             return report_xml_invoices(request)
         elif report_type == "asistencia":

@@ -191,7 +191,61 @@ def generar_reporte_hoja_trabajo(fecha_inicio, fecha_fin):
 
     return headers, rows
 
+def report_xml_worksheet_folios_by_folio(request):
+    folio_serie = request.POST.get("folio_serie")
+    folio_number = request.POST.get("folio_number")
 
+    operations = Operation.objects.filter(
+        vehicle__operation__folio__gte=str(folio_serie) + str(folio_number),
+    ).order_by("operation_date")
+
+    if not operations.exists():
+        return HttpResponse("No hay operaciones en el rango seleccionado.", status=404)
+
+    # Crear libro de Excel
+    wb = Workbook()
+
+    # Estilos
+    blueFill = PatternFill(start_color='00B0F0', end_color='00B0F0', fill_type='solid')
+    greenFill = PatternFill(start_color='00EF23', end_color='00EF23', fill_type='solid')
+    redFill = PatternFill(start_color='ED000B', end_color='ED000B', fill_type='solid')
+
+    # Agrupar operaciones por fecha
+    grouped = {}
+    for op in operations:
+        grouped.setdefault(op.operation_date, []).append(op)
+
+    # Eliminar hoja por defecto si hay más de una fecha
+    if len(grouped) > 1 and wb.active.title == "Sheet":
+        wb.remove(wb.active)
+
+    for fecha, ops in grouped.items():
+        ws = wb.create_sheet(title=str(fecha))
+        _agregar_encabezados(ws, blueFill)
+
+        for op in ops:
+            _agregar_fila(op, ws, redFill, greenFill)
+
+        # Ajustar anchos automáticamente
+        _ajustar_columnas(ws)
+
+    # Si solo hay una hoja, renombrarla
+    if len(grouped) == 1:
+        ws = wb.active
+        ws.title = str(list(grouped.keys())[0])
+
+    # Guardar Excel en memoria
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    filename = f"hoja_trabajo_{fecha_inicio}_a_{fecha_fin}.xlsx"
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 
