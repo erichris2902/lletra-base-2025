@@ -116,7 +116,7 @@ def report_xml_invoices(request):
     wb.save(buffer)
     buffer.seek(0)
 
-    filename = f"facturas_{fecha_inicio}_a_{fecha_fin}.xlsx"
+    filename = f"facturas_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"
     response = HttpResponse(
         buffer.getvalue(),
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
