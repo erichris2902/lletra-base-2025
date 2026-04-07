@@ -136,7 +136,7 @@ def report_xml_worksheet_folios_by_date(request):
     wb.save(buffer)
     buffer.seek(0)
 
-    filename = f"hoja_trabajo_{fecha_inicio}_a_{fecha_fin}.xlsx"
+    filename = f"hoja_trabajo_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"
     response = HttpResponse(
         buffer.getvalue(),
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -239,7 +239,7 @@ def report_xml_worksheet_folios_by_folio(request):
     wb.save(buffer)
     buffer.seek(0)
 
-    filename = f"hoja_trabajo_{fecha_inicio}_a_{fecha_fin}.xlsx"
+    filename = f"reporte.xlsx"
     response = HttpResponse(
         buffer.getvalue(),
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
