@@ -213,6 +213,7 @@ def report_asturiano(request):
         ws['A' + str(base_col + 5)] = 'RUTA'
         ws['C' + str(base_col + 4)] = 'ECONOMICO'
         ws['C' + str(base_col + 5)] = 'ENTREGAS'
+        ws['D' + str(base_col + 5)] = 'FOLIO INTERNO DE CARGA'
         ws['E' + str(base_col + 4)] = 'PROVEEDOR'
 
         ws['A' + str(base_col + 6)] = 'CANTIDAD'
@@ -285,11 +286,9 @@ def report_asturiano(request):
             ws.cell(row=controlador, column=1).value = str(packing.amount)
             ws.cell(row=controlador, column=2).value = str(packing.distribution)
             ws.cell(row=controlador, column=3).value = str(packing.weight)
-            if packing.distribution == AsturianoPacking.CVZ:
-                ws.cell(row=controlador, column=4).value = str(50202201)
-            else:
-                ws.cell(row=controlador, column=4).value = str(24121804)
-            ws.cell(row=controlador, column=5).value = str(packing.delivery_shop.name)
+            if packing.delivery_shop:
+                ws.cell(row=controlador, column=4).value = str(packing.delivery_shop.name.split(' ')[0])
+                ws.cell(row=controlador, column=5).value = str(packing.delivery_shop.name)
             controlador += 1
             base_col += 1
 
