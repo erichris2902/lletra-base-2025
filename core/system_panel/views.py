@@ -266,21 +266,33 @@ def report_asturiano(request):
 
         controlador = base_col + 7
 
-        for transportedProduct in operation.transported_products.all():
-            # Cantidad
-            ws.cell(row=controlador, column=1).value = str(transportedProduct.amount)
-            # Descripcion
-            ws.cell(row=controlador, column=2).value = str(transportedProduct.description)
-            # Peso
-            ws.cell(row=controlador, column=3).value = str(transportedProduct.weight)
-            # Clave
-            ws.cell(row=controlador, column=4).value = str(transportedProduct.transported_product_key)
-            # Destino
-            if operation.route:
-                ws.cell(row=controlador, column=5).value = str(operation.route.destination_location)
-            # Clasif
+        # for transportedProduct in operation.transported_products.all():
+        #     # Cantidad
+        #     ws.cell(row=controlador, column=1).value = str(transportedProduct.amount)
+        #     # Descripcion
+        #     ws.cell(row=controlador, column=2).value = str(transportedProduct.description)
+        #     # Peso
+        #     ws.cell(row=controlador, column=3).value = str(transportedProduct.weight)
+        #     # Clave
+        #     ws.cell(row=controlador, column=4).value = str(transportedProduct.transported_product_key)
+        #     # Destino
+        #     if operation.route:
+        #         ws.cell(row=controlador, column=5).value = str(operation.route.destination_location)
+        #     # Clasif
+
+
+        for packing in DistributionPacking.objects.filter(operation=operation).all():
+            ws.cell(row=controlador, column=1).value = str(packing.amount)
+            ws.cell(row=controlador, column=2).value = str(packing.distribution)
+            ws.cell(row=controlador, column=3).value = str(packing.weight)
+            if packing.distribution == AsturianoPacking.CVZ:
+                ws.cell(row=controlador, column=4).value = str(50202201)
+            else:
+                ws.cell(row=controlador, column=4).value = str(24121804)
+            ws.cell(row=controlador, column=5).value = str(packing.delivery_shop.name)
             controlador += 1
             base_col += 1
+
         dims = {}
         i = 1
         for row in ws.rows:

@@ -196,8 +196,8 @@ def report_xml_worksheet_folios_by_folio(request):
     folio_number = request.POST.get("folio_number")
 
     operations = Operation.objects.filter(
-        vehicle__operation__folio__gte=str(folio_serie) + str(folio_number),
-    ).order_by("operation_date")
+        vehicle__operation__folio__startswith=str(folio_serie),
+    ).order_by("-folio")
 
     if not operations.exists():
         return HttpResponse("No hay operaciones en el rango seleccionado.", status=404)
@@ -213,6 +213,7 @@ def report_xml_worksheet_folios_by_folio(request):
     # Agrupar operaciones por fecha
     grouped = {}
     for op in operations:
+        print(op.folio)
         grouped.setdefault(op.operation_date, []).append(op)
 
     # Eliminar hoja por defecto si hay más de una fecha
