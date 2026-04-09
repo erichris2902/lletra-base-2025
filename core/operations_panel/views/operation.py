@@ -126,7 +126,7 @@ class FolioOperationListView(AdminListView):
     category = 'Operaciones'
     ordering = 'desc'
 
-    search_fields = ['folio', 'client', 'route', 'operation_date', 'vehicle', 'driver', 'status']
+    search_fields = ['folio', 'client', 'route', 'operation_date', 'vehicle', 'driver', 'status', 'raw_payload']
 
     def handle_approve(self):
         data = {}

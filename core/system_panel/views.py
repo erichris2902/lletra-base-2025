@@ -212,8 +212,7 @@ def report_asturiano(request):
         ws['A' + str(base_col + 4)] = 'PLACAS'
         ws['A' + str(base_col + 5)] = 'RUTA'
         ws['C' + str(base_col + 4)] = 'ECONOMICO'
-        ws['C' + str(base_col + 5)] = 'ENTREGAS'
-        ws['D' + str(base_col + 5)] = 'FOLIO INTERNO DE CARGA'
+        ws['C' + str(base_col + 5)] = 'FOLIO INTERNO DE CARGA'
         ws['E' + str(base_col + 4)] = 'PROVEEDOR'
 
         ws['A' + str(base_col + 6)] = 'CANTIDAD'
