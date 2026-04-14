@@ -1,13 +1,30 @@
 function dropdown(data, type, row) {
     let dropdown = '<div class="dropdown">' ;
+
+    if (row.invoice_id) {
+        const invId = row.invoice_id;
+        const isDisabled = !invId;
+
+        // Ajusta estas rutas a tus endpoints reales
+        const base = '/system/facturapi/invoices'; // p.ej: '/system/invoices' o '/facturapi/invoices'
+        const hrefPDF = `${base}/${invId}/download/pdf/`;
+        dropdown += `
+        <a class="btn btn-outline-primary ${isDisabled ? 'disabled' : ''}" 
+            ${isDisabled ? 'href="#"' : `href="${hrefPDF}"`} title="Descargar PDF" target="_blank" rel="noopener">
+            <i class="bi bi-filetype-pdf"></i> PDF
+        </a>
+        `;
+    }
+
+
     dropdown += '<button class="btn btn-primary dropdown-toggle btn-sm rounded-pill" type="button" data-bs-toggle="dropdown">Acciones</button>';
     dropdown += '<div class="dropdown-menu">';
-    if (row.is_ready_to_invoice === 'True') {
+    if (row.is_ready_to_invoice === 'True' && row.is_packing_ready === 'False') {
         dropdown += '<a rel="confirm" class="dropdown-item" type="button">Confirmar packing</a>';
         dropdown += '<hr class="dropdown-divider">';
     }
-    else if (row.is_packing_ready === 'True') {
-        dropdown += `<a href="/operations/generate_invoice/t/${row.id}/" target="_blank" class="dropdown-item">Translado</a>`;
+    else if (row.is_packing_ready === 'True' && !row.invoice_id) {
+        dropdown += `<a href="/operations/generate_invoice/t/${row.id}/" target="_blank" class="dropdown-item">Timbrar translado</a>`;
         dropdown += '<hr class="dropdown-divider">';
     }
     dropdown += '<a rel="update" class="dropdown-item" type="button">Editar viaje</a>';

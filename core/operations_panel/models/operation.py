@@ -149,6 +149,8 @@ class Operation(BaseModel):
             result["deliveries"] = self.raw_payload.get("repartos", "")
             result["vehicle"] = self.raw_payload.get("unidad", "")
             result["driver"] = self.raw_payload.get("proveedor", "")
+
+        result["invoice_id"] = str(self.shipment_invoice.id) if self.shipment_invoice else None
         return result
 
     def to_operations_general_view(self, keys=None):

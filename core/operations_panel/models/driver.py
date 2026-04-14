@@ -1,6 +1,9 @@
 from datetime import datetime
 
+from django.contrib.postgres.search import TrigramSimilarity
 from django.db import models
+from django.db.models import Value
+from django.db.models.functions import Concat
 
 from core.system.functions import extract_best_coincidence_from_field_in_model
 from core.system.models import BaseModel
@@ -43,18 +46,29 @@ class Driver(BaseModel):
         except Driver.DoesNotExist:
             pass
 
-        # Try fuzzy matching
-        best_coincidence = extract_best_coincidence_from_field_in_model(Driver, 'name', name, 80)
-        if best_coincidence:
-            return best_coincidence
+        qs = Driver.objects.annotate(
+            full_name=Concat('name', Value(' '), 'last_name', Value(' '), 'mother_last_name'),
+            similarity=TrigramSimilarity('full_name', name)
+        ).filter(similarity__gte=0.3).order_by('-similarity')
 
-        best_coincidence = extract_best_coincidence_from_field_in_model(Driver, 'last_name', name, 80)
-        if best_coincidence:
-            return best_coincidence
+        driver = qs.first()
+        if driver:
+            return driver
 
-        best_coincidence = extract_best_coincidence_from_field_in_model(Driver, 'mother_last_name', name, 80)
-        if best_coincidence:
-            return best_coincidence
+        return None
+
+        # # Try fuzzy matching
+        # best_coincidence = extract_best_coincidence_from_field_in_model(Driver, 'name', name, 80)
+        # if best_coincidence:
+        #     return best_coincidence
+        #
+        # best_coincidence = extract_best_coincidence_from_field_in_model(Driver, 'last_name', name, 80)
+        # if best_coincidence:
+        #     return best_coincidence
+        #
+        # best_coincidence = extract_best_coincidence_from_field_in_model(Driver, 'mother_last_name', name, 80)
+        # if best_coincidence:
+        #     return best_coincidence
 
         # Create new driver if no match found
         return Driver.objects.create(

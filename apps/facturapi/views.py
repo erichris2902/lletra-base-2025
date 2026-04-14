@@ -12,7 +12,7 @@ from django.http import HttpResponse, JsonResponse
 
 from django.utils.safestring import mark_safe
 
-from core.operations_panel.models import Client
+from core.operations_panel.models import Client, Operation
 from core.system.views import AdminListView, AdminTemplateView, PopupView
 from . import services
 from .choices import PAYMENT_METHOD_CHOICES
@@ -129,7 +129,14 @@ def download_invoice_pdf(request, invoice_id):
     try:
         pdf_content = services.download_invoice_pdf(invoice.facturapi_id)
         response = HttpResponse(pdf_content, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{invoice.series}-{invoice.folio_number}.pdf"'
+
+        operations = Operation.objects.filter(shipment_invoice=invoice)
+        if operations.exists():
+            file_name = f"{operations.first().folio}-{invoice.series}{invoice.folio_number}.pdf"
+        else:
+            file_name = f"{invoice.series}-{invoice.folio_number}.pdf"
+
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
     except Exception as e:
         print(f"Error downloading invoice PDF: {str(e)}")

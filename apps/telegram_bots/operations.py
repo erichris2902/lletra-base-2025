@@ -56,15 +56,6 @@ def register_operations(tool_input):
 
 
 def create_operation_from_data(data):
-    """
-    Create an Operation record from the data provided by the Assistant.
-
-    Args:
-        data (dict): Operation data from Assistant
-
-    Returns:
-        Operation: The created Operation instance
-    """
     # Find or create related entities
     client = Client.get_or_create_by_str(data.get('cliente'))
     route = look_for_route(data.get('destino'))

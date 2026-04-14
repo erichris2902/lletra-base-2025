@@ -12,6 +12,7 @@ class DeliveryLocationListView(AdminListView):
     template_name = 'base/elements/views/datatable_list.html'
     datatable_headers = ["Nombre", "Razón Social", "RFC", "Dirección", "Notas"]
     datatable_keys = ["name", "business_name", "rfc", "address", "notes"]
+    search_fields = ['name', 'business_name', 'rfc', "notes", "address__zip_code"]
     datatable_actions = True
     title = model._meta.verbose_name_plural.title()
     form_path = 'base/elements/forms/form.html'
