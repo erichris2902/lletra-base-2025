@@ -165,7 +165,14 @@ def download_invoice_xml(request, invoice_id):
     try:
         xml_content, filename = services.download_invoice_xml(invoice.facturapi_id)
         response = HttpResponse(xml_content, content_type='application/xml')
-        response['Content-Disposition'] = f'attachment; filename="{invoice.series}-{invoice.folio_number}.xml"'
+
+        operations = Operation.objects.filter(shipment_invoice=invoice)
+        if operations.exists():
+            file_name = f"{operations.first().folio}-{invoice.series}{invoice.folio_number}.xml"
+        else:
+            file_name = f"{invoice.series}-{invoice.folio_number}.xml"
+
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
     except Exception as e:
         print(f"Error downloading invoice XML: {str(e)}")
@@ -180,7 +187,14 @@ def download_invoice_zip(request, invoice_id):
     try:
         zip_content = services.download_invoice_zip(invoice.facturapi_id)
         response = HttpResponse(zip_content, content_type='application/zip')
-        response['Content-Disposition'] = f'attachment; filename="{invoice.series}-{invoice.folio_number}.zip"'
+
+        operations = Operation.objects.filter(shipment_invoice=invoice)
+        if operations.exists():
+            file_name = f"{operations.first().folio}-{invoice.series}{invoice.folio_number}.zip"
+        else:
+            file_name = f"{invoice.series}-{invoice.folio_number}.zip"
+
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
     except Exception as e:
         print(f"Error downloading invoice ZIP: {str(e)}")

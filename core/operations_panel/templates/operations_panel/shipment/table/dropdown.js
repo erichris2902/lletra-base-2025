@@ -39,6 +39,7 @@ function dropdown(data, type, row) {
         dropdown += '<a rel="update_packing" class="dropdown-item" type="button">Distribuir packing</a>';
         dropdown += '<a rel="get_assign_products_form" class="dropdown-item" type="button">Asignar producto</a>';
     }else{
+        //dropdown += '<a rel="get_assign_products_form_old" class="dropdown-item" type="button">Asignar producto (OLD)</a>';
         dropdown += '<a rel="update_cargo" class="dropdown-item" type="button">Asignar carga por archivo</a>';
         dropdown += '<a rel="get_assign_cargo_form" class="dropdown-item" type="button">Asignar carga precargada</a>';
         dropdown += '<a rel="get_assign_products_form" class="dropdown-item" type="button">Asignar producto</a>';

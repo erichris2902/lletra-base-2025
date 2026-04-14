@@ -5,7 +5,7 @@ from collections import defaultdict
 
 from django.db import transaction
 from django.db.models import Q
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 
 from core.operations_panel.choices import AsturianoPacking
 from core.operations_panel.forms.address import AddressForm
@@ -16,7 +16,7 @@ from core.operations_panel.forms.operation import OperationForm, OperationFolioW
     OperationFolioForm, OperationShipmentForm, OperationRouteForm
 from core.operations_panel.forms.route import RouteShipmentForm, RouteForm
 from core.operations_panel.forms.transported_product import TransportedProductsFormByCSV, \
-    OperationTransportedProductForm
+    OperationTransportedProductForm, TransportedProductForm
 from core.operations_panel.models import Cargo, DeliveryLocation
 from core.operations_panel.models.address import Address
 from core.operations_panel.models.distribution_packing import DistributionPacking
@@ -742,6 +742,32 @@ class ShipmentOperationListView(AdminListView):
         data["form"] = self.render_others_form(request, operation, OperationTransportedProductForm(), "AssignProducts",
                                                data=data)
         return data
+
+    def handle_get_assign_products_form_old(self, request, data):
+        operation = Operation.objects.get(pk=request.POST.get('id'))
+        self.form_action = "AssignProductOld"
+        data['id'] = str(operation.id)
+        self.form = TransportedProductForm
+        data["form"] = self.render_old_form(request, operation, TransportedProductForm)
+        return data
+
+    def handle_assignproductold(self, request, data):
+        print(request.POST)
+        raise Exception("No se puede asignar productos")
+        return data
+
+    def render_old_form(self, request, instance, form=None):
+        form_instance = self.form()
+        context = {
+            'form': form_instance,
+            'form_action': self.form_action,
+            'form_type': self.form_type,
+            'id': instance.id if instance else None,
+            'add_form_layout': getattr(form_instance, 'layout', []),
+            'add_form_fields': {name: form_instance[name] for name in form_instance.fields},
+        }
+        html = render(request, self.form_path, context)
+        return html.content.decode("utf-8")
 
     def handle_delete_product(self, request, data):
         transported_product = TransportedProduct.objects.get(pk=request.POST.get('product_id'))
