@@ -126,7 +126,7 @@ class ReportEngineForm(BaseForm):
 class ReportEngineByFolioForm(BaseForm):
 
     REPORT_CHOICES = [
-        ("packing_asturiano", "Packing de Asturiano"),
+        #("packing_asturiano", "Packing de Asturiano"),
         ("folios", "Folios"),
     ]
     layout = [

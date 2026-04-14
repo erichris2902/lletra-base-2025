@@ -159,8 +159,6 @@ class ReportEngineByFolioView(ReportEngineView):
             return report_xml_worksheet_folios_by_folio(request)
         elif report_type == "facturacion":
             return report_xml_invoices(request)
-        elif report_type == "asistencia":
-            return report_attendance(request)
 
         return HttpResponseBadRequest("Tipo de reporte no reconocido.")
 

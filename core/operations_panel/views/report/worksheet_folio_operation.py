@@ -1,5 +1,7 @@
 from io import BytesIO
 
+from django.db.models import IntegerField, Func
+from django.db.models.functions import Cast, Substr
 from django.http import HttpResponse
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
@@ -192,12 +194,22 @@ def generar_reporte_hoja_trabajo(fecha_inicio, fecha_fin):
     return headers, rows
 
 def report_xml_worksheet_folios_by_folio(request):
+    class RegexReplace(Func):
+        function = 'REGEXP_REPLACE'
+        template = "%(function)s(%(expressions)s, '[^0-9]', '', 'g')"
+
     folio_serie = request.POST.get("folio_serie")
     folio_number = request.POST.get("folio_number")
 
-    operations = Operation.objects.filter(
-        vehicle__operation__folio__startswith=str(folio_serie),
-    ).order_by("-folio")
+    operations = Operation.objects.annotate(
+        folio_num=Cast(
+            RegexReplace('folio'),
+            IntegerField()
+        )
+    ).filter(
+        folio__startswith=folio_serie,
+        folio_num__gt=folio_number
+    ).order_by("-folio_num")
 
     if not operations.exists():
         return HttpResponse("No hay operaciones en el rango seleccionado.", status=404)
