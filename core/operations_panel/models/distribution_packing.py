@@ -33,3 +33,6 @@ class DistributionPacking(BaseModel):
     weight = models.FloatField(verbose_name="Peso en Kg")
     amount = models.IntegerField(verbose_name="Cantidad")
 
+    def __str__(self):
+        return f"{self.operation or 'Sin operación'} - {self.delivery_shop or 'Sin tienda'}"
+
