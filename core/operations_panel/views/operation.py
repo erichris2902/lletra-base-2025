@@ -116,9 +116,9 @@ class FolioOperationListView(AdminListView):
     form = OperationFolioWebsiteForm
     template_name = 'base/elements/views/datatable_list.html'
     datatable_headers = ["Control vehicular", "Fecha", "Cliente", "Ruta", "Repartos",
-                         "Unidad", "Operador", "Status"]
+                         "Unidad", "Proveedor", "Status"]
     datatable_keys = ["folio", "operation_date", "client", "route", "deliveries",
-                      "vehicle", "driver", "status"]
+                      "vehicle", "supplier", "status"]
     datatable_actions = True
     title = model._meta.verbose_name_plural.title()
     form_path = 'base/elements/forms/form.html'

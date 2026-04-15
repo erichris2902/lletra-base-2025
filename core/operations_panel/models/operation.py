@@ -128,8 +128,8 @@ class Operation(BaseModel):
             result["origin"] = self.raw_payload.get("origen", "")
             result["destination"] = self.raw_payload.get("destino", "")
             result["deliveries"] = self.raw_payload.get("repartos", "")
-            result["vehicle"] = self.raw_payload.get("unidad", "")
-            result["driver"] = self.raw_payload.get("proveedor", "")
+            result["vehicle"] = str(self.vehicle_type) if self.vehicle_type else self.raw_payload.get("unidad", "")
+            result["supplier"] = str(self.supplier) if self.supplier else self.raw_payload.get("proveedor", "")
         return result
 
     def to_operations_view(self, keys=None):
