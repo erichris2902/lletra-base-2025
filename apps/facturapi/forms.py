@@ -39,21 +39,18 @@ class FacturapiInvoicePaymentForm(BaseModelForm):
         El usuario los introduce separados por coma en un campo de texto.
         """
         raw_value = self.cleaned_data.get("related_uuids", "")
-
         if not raw_value:
             return []
-
-        uuid_list = [u.strip() for u in raw_value.split(",") if u.strip()]
-
+        # uuid_list = [u.strip() for u in raw_value.split(",") if u.strip()]
+        uuid_list = raw_value
         valid_uuids = []
         for u in uuid_list:
             try:
-                valid_uuids.append(str(uuid.UUID(u)))
+                valid_uuids.append(str(u))
             except ValueError:
                 raise forms.ValidationError(
                     f"El valor '{u}' no es un UUID válido."
                 )
-
         return valid_uuids
 
 
@@ -111,21 +108,18 @@ class FacturapiInvocieForm(BaseModelForm):
         El usuario los introduce separados por coma en un campo de texto.
         """
         raw_value = self.cleaned_data.get("related_uuids", "")
-
         if not raw_value:
             return []
-
-        uuid_list = [u.strip() for u in raw_value.split(",") if u.strip()]
-
+        # uuid_list = [u.strip() for u in raw_value.split(",") if u.strip()]
+        uuid_list = raw_value
         valid_uuids = []
         for u in uuid_list:
             try:
-                valid_uuids.append(str(uuid.UUID(u)))
+                valid_uuids.append(str(u))
             except ValueError:
                 raise forms.ValidationError(
                     f"El valor '{u}' no es un UUID válido."
                 )
-
         return valid_uuids
 
 
