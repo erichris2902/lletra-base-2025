@@ -254,7 +254,11 @@ class InvoiceFormView(AdminTemplateView):
         invoice.pdf_custom_section = request.POST['pdf_custom_section']
         invoice.relation_type = request.POST['relation_type']
         raw_value = request.POST.get("related_uuids", "")
-        related_uuids = [u.strip() for u in raw_value.split(",") if u.strip()]
+        #related_uuids = [u.strip() for u in raw_value.split(",") if u.strip()]
+        if raw_value:
+            related_uuids = [uuid.strip() for uuid in raw_value.split(",") if uuid.strip()]
+        else:
+            related_uuids = None
         invoice.related_uuids = related_uuids or None
         invoice.save()
 

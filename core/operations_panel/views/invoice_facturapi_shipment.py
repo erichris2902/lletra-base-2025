@@ -37,8 +37,13 @@ class InvoiceShipmentIFormView(InvoiceFormView):
         shipment_invoice.pdf_custom_section = request.POST['pdf_custom_section']
         shipment_invoice.relation_type = request.POST['relation_type']
         raw_value = request.POST.get("related_uuids", "")
-        related_uuids = [u.strip() for u in raw_value.split(",") if u.strip()]
+        #related_uuids = [u.strip() for u in raw_value.split(",") if u.strip()]
+        if raw_value:
+            related_uuids = [uuid.strip() for uuid in raw_value.split(",") if uuid.strip()]
+        else:
+            related_uuids = None
         shipment_invoice.related_uuids = related_uuids or None
+
 
         shipment_invoice.operation = operation
         shipment_invoice.total_distance_km = request.POST['total_distance_km']
