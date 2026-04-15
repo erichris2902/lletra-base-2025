@@ -136,6 +136,18 @@ class BaseModelForm(ModelForm):
                     classes += ' flatpickr'
                 if 'flatpickr-date' not in classes:
                     classes += ' flatpickr-date'
+                # 🟨 Formato: d/m/Y
+                initial_value = self.initial.get(form.name)
+                if initial_value:
+                    if isinstance(initial_value, (date)):
+                        field.initial = initial_value.strftime('%d/%m/%Y')
+                    else:
+                        try:
+                            parsed = datetime.strptime(initial_value, "%d/%m/%Y")
+                            if parsed:
+                                field.initial = parsed.strftime('%d/%m/%Y')
+                        except Exception as e:
+                            pass
             field.widget.attrs['class'] = classes.strip()
             field.widget.attrs['autocomplete'] = 'off'
             field.widget.attrs['placeholder'] = form.field.label

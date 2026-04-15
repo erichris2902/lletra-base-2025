@@ -154,6 +154,12 @@ class AdminListView(AdminView, ListView):
             'add_form_layout': getattr(form_instance, 'layout', []),
             'add_form_fields': {name: form_instance[name] for name in form_instance.fields},
         }
+        print("---")
+        print(instance.operation_date)
+        print(context['form'].fields['operation_date'].initial)
+        print("field.initial:", context['form'].fields['operation_date'].initial)
+        print("form.initial:", context['form'].initial.get('operation_date'))
+        print("bound field value:", context['form']['operation_date'].value())
         html = render(request, self.form_path, context)
         return html.content.decode("utf-8")
 
