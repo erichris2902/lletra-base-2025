@@ -26,9 +26,9 @@ def _agregar_fila(op, ws, redFill, greenFill):
     print(op.supplier)
     date = op.operation_date if op.operation_date else op.raw_payload.get('fecha', '')
     client = op.raw_payload.get('cliente', '') if op.raw_payload else ''
-    origin = op.raw_payload.get('origen', '')
-    destiny = op.raw_payload.get('destino', '')
-    stops = op.raw_payload.get('repartos', '')
+    origin = op.raw_payload.get('origen', '') if op.raw_payload else ''
+    destiny = op.raw_payload.get('destino', '') if op.raw_payload else ''
+    stops = op.raw_payload.get('repartos', '') if op.raw_payload else ''
     unit = str(op.vehicle_type) if op.vehicle_type else op.raw_payload.get("unidad", "") #op.raw_payload.get('unidad', '') if op.raw_payload else ''
     driver = op.raw_payload.get('operador', '') if op.raw_payload else ''
     supplier = str(op.supplier) if op.supplier else op.raw_payload.get("proveedor", "") #op.raw_payload.get('proveedor', '') if op.raw_payload else ''
