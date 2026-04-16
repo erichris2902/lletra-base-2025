@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import dateutil
 from dateutil.utils import today
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -104,12 +106,18 @@ class ReportEngineView(AdminTemplateView):
     def post(self, request, *args, **kwargs):
         from django.utils.dateparse import parse_date
         report_type = request.POST.get("report_type")
-        start_date = parse_date(request.POST.get("fecha_inicial"))
-        end_date = parse_date(request.POST.get("fecha_final"))
+        #start_date = parse_date(request.POST.get("fecha_inicial"))
+        #end_date = parse_date(request.POST.get("fecha_final"))
+
+        start_date = request.POST.get("fecha_inicial")
+        end_date = request.POST.get("fecha_final")
+
+        start_date = datetime.strptime(start_date, "%d/%m/%Y").date()
+        end_date = datetime.strptime(end_date, "%d/%m/%Y").date()
 
         if not report_type or not start_date or not end_date:
             return HttpResponseBadRequest("Faltan parámetros: tipo, fecha de inicio o fecha de fin")
-        print(request.POST)
+
         if report_type == "folios":
             return report_xml_worksheet_folios_by_date(request)
         elif report_type == "facturacion":
