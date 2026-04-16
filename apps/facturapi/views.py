@@ -241,7 +241,6 @@ class InvoiceFormView(AdminTemplateView):
     @transaction.atomic
     def handle_generateinvoice(self, request, data):
         form = FacturapiInvocieForm(request.POST, request.FILES)
-        print("paso")
         if not form.is_valid():
             print(form.errors)
             raise Exception("Los datos ingresados no son validos")
@@ -255,15 +254,12 @@ class InvoiceFormView(AdminTemplateView):
         invoice.pdf_custom_section = request.POST['pdf_custom_section']
         invoice.relation_type = request.POST['relation_type']
         raw_value = request.POST.get("related_uuids", "")
-        print(8)
         #related_uuids = [u.strip() for u in raw_value.split(",") if u.strip()]
         if raw_value:
             related_uuids = [uuid.strip() for uuid in raw_value.split(",") if uuid.strip()]
         else:
             related_uuids = None
-        print(9)
         invoice.related_uuids = related_uuids or None
-        print(10)
         invoice.save()
 
         products = extract_products_from_post(request.POST)

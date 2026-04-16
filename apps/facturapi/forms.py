@@ -107,7 +107,6 @@ class FacturapiInvocieForm(BaseModelForm):
         Valida que los UUIDs ingresados sean correctos.
         El usuario los introduce separados por coma en un campo de texto.
         """
-        print(1)
         raw_value = self.cleaned_data.get("related_uuids", "")
         if not raw_value:
             return []
@@ -121,7 +120,6 @@ class FacturapiInvocieForm(BaseModelForm):
                 raise forms.ValidationError(
                     f"El valor '{u}' no es un UUID válido."
                 )
-        print(2)
         return valid_uuids
 
 

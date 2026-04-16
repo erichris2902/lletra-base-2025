@@ -270,7 +270,7 @@ def _set_facturapi_invoice_cfdi_relation(invoice: FacturapiInvoice, data: dict):
             "documents": [],
             "relationship": ""
         }
-        for i in invoice.related_uuids.split(','):
+        for i in invoice.related_uuids:
             if i != "":
                 rel_doc["documents"].append(i)
         rel_doc["relationship"] = invoice.relation_type
