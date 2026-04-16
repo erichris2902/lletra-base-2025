@@ -29,9 +29,9 @@ def _agregar_fila(op, ws, redFill, greenFill):
     origin = op.raw_payload.get('origen', '') if op.raw_payload else ''
     destiny = op.raw_payload.get('destino', '') if op.raw_payload else ''
     stops = op.raw_payload.get('repartos', '') if op.raw_payload else ''
-    unit = str(op.vehicle_type) if op.vehicle_type else op.raw_payload.get("unidad", "") #op.raw_payload.get('unidad', '') if op.raw_payload else ''
+    unit = str(op.vehicle_type) if op.vehicle_type else (op.raw_payload.get("unidad", "") if op.raw_payload else "") #op.raw_payload.get('unidad', '') if op.raw_payload else ''
     driver = op.raw_payload.get('operador', '') if op.raw_payload else ''
-    supplier = str(op.supplier) if op.supplier else op.raw_payload.get("proveedor", "") #op.raw_payload.get('proveedor', '') if op.raw_payload else ''
+    supplier = str(op.supplier) if op.supplier else (op.raw_payload.get("proveedor", "") if op.raw_payload else "")#op.raw_payload.get('proveedor', '') if op.raw_payload else ''
 
     invoiced = "Sí" if op.shipment_invoice else "No"
     packing = "Sí" if op.transported_products.count() > 0 else "No"
