@@ -188,8 +188,10 @@ class ReportEngineByFolioView(ReportEngineView):
 
 
 def report_asturiano(request):
-    fecha_inicio = request.POST.get("fecha_inicial")
-    fecha_fin = request.POST.get("fecha_final")
+    start_date = request.POST.get("fecha_inicial")
+    end_date = request.POST.get("fecha_final")
+    fecha_inicio = datetime.strptime(start_date, "%d/%m/%Y").date()
+    fecha_fin = datetime.strptime(end_date, "%d/%m/%Y").date()
     operations = Operation.objects.filter(
         operation_date__range=[fecha_inicio, fecha_fin],
 
@@ -202,8 +204,21 @@ def report_asturiano(request):
         Client.objects.get(name__icontains="Asturiano"),
         Client.objects.get(name__icontains="Asturito"),
     ]
-    for operation in Operation.objects.filter(client__in=clients).filter(operation_date__range=[fecha_inicio, fecha_fin]).order_by("operation_date").all():
+    print(clients)
+    print(fecha_inicio)
+    print(fecha_fin)
+    print(Operation.objects.filter(operation_date=fecha_inicio))
+    operations = Operation.objects.filter(
+        operation_date__range=[fecha_inicio, fecha_fin],
+    ).order_by("operation_date")
 
+    print("fecha_inicio:", fecha_inicio)
+    print("fecha_fin:", fecha_fin)
+    print("en fecha_inicio:", Operation.objects.filter(operation_date=fecha_inicio).count())
+    print("en rango:", operations.count())
+    print(list(operations.values("id", "operation_date")))
+    for operation in Operation.objects.filter(client__in=clients).filter(operation_date__range=[fecha_inicio, fecha_fin]).order_by("operation_date").all():
+        print(operation)
         if date_title != str(operation.operation_date):
             date_title = str(operation.operation_date)
             ws = wb.create_sheet(operation.folio)
@@ -312,7 +327,7 @@ def report_asturiano(request):
             ws.column_dimensions[col].width = 20
 
     # Establecer el nombre de mi archivo
-    nombre_archivo = "Packing" + str(operation.folio) + ".xlsx"
+    nombre_archivo = "Packing Asturiano " + str(fecha_inicio) + " - " + str(fecha_fin) +".xlsx"
     # Definir el tipo de respuesta que se va a dar
     response = HttpResponse(content_type="application/ms-excel")
     contenido = "attachment; filename = {0}".format(nombre_archivo)

@@ -303,10 +303,9 @@ class InvoiceFormView(AdminTemplateView):
         invoice.bill()
 
     def get_context_data(self, **kwargs):
-        print(4)
         context = super().get_context_data(**kwargs)
+        print("b")
         context['pages'] = []
-        print(1)
 
         context["form_action"] = self.form_action
         context["form_invoice"] = FacturapiInvocieForm()
@@ -314,15 +313,12 @@ class InvoiceFormView(AdminTemplateView):
         context["payment_form"] = FacturapiInvoicePaymentForm()
         context["tax_form"] = FacturapiProductForm()
         context['add_form_layout'] = getattr(FacturapiInvocieForm, 'layout', []),
-        print(2)
 
         taxes = list(FacturapiTax.objects.values('id', 'name', 'type', 'rate', 'factor', 'withholding'))
         context['taxes_json'] = mark_safe(json.dumps(taxes, cls=DjangoJSONEncoder))
-        print(2.1)
 
         #ppds = list(FacturapiInvoice.objects.filter(payment_form="PPD"))
         #context['ppds_json'] = mark_safe(json.dumps(ppds, cls=DjangoJSONEncoder))
-        print(2.2)
 
         context.update({
             'title': self.title,
@@ -332,7 +328,6 @@ class InvoiceFormView(AdminTemplateView):
             'add_form_layout': getattr(context["form_invoice"], 'layout', []),
             'add_form_fields': {name: context["form_invoice"][name] for name in context["form_invoice"].fields},
         })
-        print(3)
 
         return context
 
@@ -561,3 +556,39 @@ class TranslateInvoiceListView(InvoiceListView):
 
 class Report(PopupView):
     section = 'Facturas de Egreso'
+
+
+class Conglomerados3BView(InvoiceFormView):
+    def get_context_data(self, **kwargs):
+        print(4)
+        context = super().get_context_data(**kwargs)
+        context['pages'] = []
+        print(1)
+
+        context["form_action"] = self.form_action
+        context["form_invoice"] = FacturapiInvocieForm()
+        context["form_product"] = SelectItemForm()
+        #context["payment_form"] = FacturapiInvoicePaymentForm()
+        context["tax_form"] = FacturapiProductForm()
+        context['add_form_layout'] = getattr(FacturapiInvocieForm, 'layout', []),
+        print(2)
+
+        taxes = list(FacturapiTax.objects.values('id', 'name', 'type', 'rate', 'factor', 'withholding'))
+        context['taxes_json'] = mark_safe(json.dumps(taxes, cls=DjangoJSONEncoder))
+        print(2.1)
+
+        # ppds = list(FacturapiInvoice.objects.filter(payment_form="PPD"))
+        # context['ppds_json'] = mark_safe(json.dumps(ppds, cls=DjangoJSONEncoder))
+        print(2.2)
+
+        context.update({
+            'title': self.title,
+            'category': self.category,
+            'section': self.section,
+            'form_type': self.form_type,
+            'add_form_layout': getattr(context["form_invoice"], 'layout', []),
+            'add_form_fields': {name: context["form_invoice"][name] for name in context["form_invoice"].fields},
+        })
+        print(3)
+
+        return context

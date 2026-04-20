@@ -14,6 +14,7 @@ urlpatterns = [
 
     path("taxes/", TaxListView.as_view(), name="facturapi_taxes"),                          # CHECK
     path("invoice/", InvoiceFormView.as_view(), name="facturapi_taxes"),                    # CHECK
+    path("invoice/conglomerado/3b", Conglomerados3BView.as_view(), name="facturapi_conglomerado_3b"),                    # CHECK
     path("invoice/cancels/", CanceledInvoiceListView.as_view(), name="facturapi_taxes"),    # CHECK
     path("invoice/general/", InvoiceListView.as_view(), name="facturapi_taxes"),            # CHECK
     path("invoice/incomes/", IncomeInvoiceListView.as_view(), name="facturapi_taxes"),      # CHECK

@@ -90,6 +90,10 @@ class Command(BaseCommand):
                     seen = set()
                     for loc in found_locations:
                         if loc.id not in seen:
+                            if loc.address.zip_code == "00000" or not loc.address.zip_code:
+                                print(loc)
+                                print("ZIP CODE")
+                                continue
                             unique_locations.append(loc)
                             seen.add(loc.id)
 
