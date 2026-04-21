@@ -6,7 +6,7 @@ from django.views.generic import FormView
 
 from apps.facturapi.models import FacturapiProduct, FacturapiInvoice, FacturapiInvoicePayment
 from apps.facturapi.services import get_headers
-from core.operations_panel.models import TransportedProduct
+from core.operations_panel.models import TransportedProduct, Operation
 
 
 def getCatalogProductsURL():
@@ -18,6 +18,7 @@ def getCatalogUnitsURL():
 class CatalogView(FormView):
     def post(self, request, *args, **kwargs):
         data = {}
+        print(request.POST)
         try:
             action = request.POST['action']
             if action == 'Search':
@@ -74,6 +75,33 @@ class CatalogView(FormView):
                     else:
                         i += tax.rate
                 data["tax"] = str(i)
+            elif action == 'SelectConglomerado':
+                invoice = FacturapiInvoice.objects.get(pk=request.POST['selected'])
+                print(invoice)
+                print(invoice.shipment_invoice)
+                print(invoice.shipment_invoice.get())
+                operation = invoice.shipment_invoice.get()
+
+                description = operation.folio
+                description += " RUTA"
+                description += ", ".join(
+                    [delivery.name for delivery in operation.route.route_stops.all()])
+                description += " " + operation.route.destination_location.name
+                description += " " + operation.cargo_appointment.strftime('%d/%m/%Y')
+
+                product = FacturapiProduct.objects.get(name="Traslado")
+                data["price"] = str(product.price)
+                data["product"] = str(product.name)
+                data["description"] = str(description)
+                data["id"] = str(product.id)
+                i = 0
+                for tax in product.taxes.all():
+                    if tax.withholding:
+                        i -= tax.rate
+                    else:
+                        i += tax.rate
+                data["tax"] = str(i)
+                data["related_uuid"] = str(invoice.uuid)
             elif action == 'SelectPayment':
                 invoice = FacturapiInvoice.objects.get(pk=request.POST['selected'])
                 payments = FacturapiInvoicePayment.objects.filter(uuid=invoice.uuid)
@@ -93,4 +121,5 @@ class CatalogView(FormView):
         except Exception as e:
             print(e)
             data['error'] = str(e)
+        print(data)
         return JsonResponse(data)

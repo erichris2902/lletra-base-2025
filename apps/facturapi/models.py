@@ -79,6 +79,9 @@ class FacturapiInvoice(BaseModel):
     canceled_at = models.DateTimeField(_('Cancelado el'), blank=True, null=True)
 
     def __str__(self):
+        shipment_invoice = self.shipment_invoice.first()
+        if shipment_invoice:
+            return f"{shipment_invoice.folio} - for {shipment_invoice.client}"
         return f"Invoice {self.series}-{self.folio_number} for {self.customer.business_name}"
 
     class Meta:

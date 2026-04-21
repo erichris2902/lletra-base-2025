@@ -15,9 +15,9 @@ from django.utils.safestring import mark_safe
 from core.operations_panel.models import Client, Operation
 from core.system.views import AdminListView, AdminTemplateView, PopupView
 from . import services
-from .choices import PAYMENT_METHOD_CHOICES
+from .choices import PAYMENT_METHOD_CHOICES, CFDIRelationType
 from .forms import FacturapiTaxForm, FacturapiInvocieForm, SelectItemForm, FacturapiProductForm, \
-    FacturapiInvoicePaymentForm, FacturapiCancelInvoiceForm
+    FacturapiInvoicePaymentForm, FacturapiCancelInvoiceForm, FacturapiInvoiceConglomerado3BPaymentForm
 from .models import FacturapiInvoice, FacturapiTax, FacturapiInvoicePayment
 from .models import FacturapiProduct, FacturapiInvoiceItem
 
@@ -559,27 +559,30 @@ class Report(PopupView):
 
 
 class Conglomerados3BView(InvoiceFormView):
+    template_name = 'facturapi/invoice_form_conglomerado.html'
+
     def get_context_data(self, **kwargs):
-        print(4)
-        context = super().get_context_data(**kwargs)
+        context = super(InvoiceFormView, self).get_context_data(**kwargs)
         context['pages'] = []
-        print(1)
 
         context["form_action"] = self.form_action
-        context["form_invoice"] = FacturapiInvocieForm()
+
+        client = Client.objects.get(rfc="TTB040915CY9")
+        invoice = FacturapiInvoice()
+        invoice.customer = client
+        invoice.relation_type = CFDIRelationType.FACTURA_TRASLADO
+
+        context["form_invoice"] = FacturapiInvocieForm(instance=invoice)
         context["form_product"] = SelectItemForm()
-        #context["payment_form"] = FacturapiInvoicePaymentForm()
+        context["payment_form"] = FacturapiInvoiceConglomerado3BPaymentForm()
         context["tax_form"] = FacturapiProductForm()
         context['add_form_layout'] = getattr(FacturapiInvocieForm, 'layout', []),
-        print(2)
 
         taxes = list(FacturapiTax.objects.values('id', 'name', 'type', 'rate', 'factor', 'withholding'))
         context['taxes_json'] = mark_safe(json.dumps(taxes, cls=DjangoJSONEncoder))
-        print(2.1)
 
         # ppds = list(FacturapiInvoice.objects.filter(payment_form="PPD"))
         # context['ppds_json'] = mark_safe(json.dumps(ppds, cls=DjangoJSONEncoder))
-        print(2.2)
 
         context.update({
             'title': self.title,
@@ -589,6 +592,39 @@ class Conglomerados3BView(InvoiceFormView):
             'add_form_layout': getattr(context["form_invoice"], 'layout', []),
             'add_form_fields': {name: context["form_invoice"][name] for name in context["form_invoice"].fields},
         })
-        print(3)
+
+        return context
+
+class ConglomeradosE2EView(InvoiceFormView):
+    template_name = 'facturapi/invoice_form_conglomerado_e2e.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(InvoiceFormView, self).get_context_data(**kwargs)
+        context['pages'] = []
+
+        context["form_action"] = self.form_action
+
+        client = Client.objects.get(name="E2E")
+        invoice = FacturapiInvoice()
+        invoice.customer = client
+        invoice.relation_type = CFDIRelationType.FACTURA_TRASLADO
+
+        context["form_invoice"] = FacturapiInvocieForm(instance=invoice)
+        context["form_product"] = SelectItemForm()
+        context["payment_form"] = FacturapiInvoiceConglomerado3BPaymentForm()
+        context["tax_form"] = FacturapiProductForm()
+        context['add_form_layout'] = getattr(FacturapiInvocieForm, 'layout', []),
+
+        taxes = list(FacturapiTax.objects.values('id', 'name', 'type', 'rate', 'factor', 'withholding'))
+        context['taxes_json'] = mark_safe(json.dumps(taxes, cls=DjangoJSONEncoder))
+
+        context.update({
+            'title': self.title,
+            'category': self.category,
+            'section': self.section,
+            'form_type': self.form_type,
+            'add_form_layout': getattr(context["form_invoice"], 'layout', []),
+            'add_form_fields': {name: context["form_invoice"][name] for name in context["form_invoice"].fields},
+        })
 
         return context

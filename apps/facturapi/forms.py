@@ -1,4 +1,7 @@
 import uuid
+
+from django.utils import timezone
+from datetime import timedelta
 from decimal import Decimal
 
 from django.core.validators import RegexValidator
@@ -294,3 +297,44 @@ class FacturapiCancelInvoiceForm(forms.Form):
         return payload
 
 InvoiceItemFormSet = formset_factory(InvoiceItemForm, extra=1, can_delete=True)
+
+
+class FacturapiInvoiceConglomerado3BPaymentForm(BaseModelForm):
+    payment_invoice = forms.ModelChoiceField(
+        queryset=FacturapiInvoice.objects.filter(
+            type="T",
+            stamp_date__gte=timezone.now() - timedelta(days=60)
+        ).order_by('-stamp_date'),
+        label="Factura a reemplazar",
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+    class Meta:
+        model = FacturapiInvoicePayment
+        fields = [
+            "uuid",
+            "amount",
+            "installment",
+            "last_balance",
+            "payment_day",
+            "taxes",
+        ]
+
+    def clean_related_uuids(self):
+        """
+        Valida que los UUIDs ingresados sean correctos.
+        El usuario los introduce separados por coma en un campo de texto.
+        """
+        raw_value = self.cleaned_data.get("related_uuids", "")
+        if not raw_value:
+            return []
+        # uuid_list = [u.strip() for u in raw_value.split(",") if u.strip()]
+        uuid_list = raw_value
+        valid_uuids = []
+        for u in uuid_list:
+            try:
+                valid_uuids.append(str(u))
+            except ValueError:
+                raise forms.ValidationError(
+                    f"El valor '{u}' no es un UUID válido."
+                )
+        return valid_uuids
