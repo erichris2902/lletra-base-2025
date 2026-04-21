@@ -569,7 +569,7 @@ class ShipmentOperationListView(AdminListView):
     def handle_get_packing(self, request, data):
         context = {}
         operation = Operation.objects.get(pk=request.POST.get('id'))
-        if not Operation.objects.filter(folio=operation.folio + "B").exists():
+        if not Operation.objects.filter(folio=operation.folio + "B").exists() or operation.folio.endswith("B"):
             for delivery in operation.route.route_stops.all():
                 packing, _ = DistributionPacking.objects.get_or_create(
                     operation=operation,
