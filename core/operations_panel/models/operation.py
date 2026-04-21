@@ -124,6 +124,7 @@ class Operation(BaseModel):
         result = self.to_display_dict(keys)
         result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route and self.route.route_stops else "[]"
         result["folio"] = "SIN FOLIO" if not self.folio else self.folio
+        print(self.raw_payload)
         if self.raw_payload:
             result["origin"] = self.raw_payload.get("origen", "")
             result["destination"] = self.raw_payload.get("destino", "")

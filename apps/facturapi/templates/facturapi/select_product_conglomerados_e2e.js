@@ -225,16 +225,22 @@ $('#id_payment_invoice').on('select2:select', function () {
         selected: selected
     }, function (data) {
         addProductFromApi(data); // {id, product, description, price, tax}
-        let currentVal = $("#id_related_uuids").val();
-        print(currentVal)
+        $("#id_related_uuids").val(data.related_uuid);
+        $.post('/system/catalog', {
+            action: "SelectProduct",
+            csrfmiddlewaretoken: csrfToken,
+            selected: "62952504-48bc-491e-9b1b-debb56872a5b"
+        }, function (data) {
+            addProductFromApi(data); // {id, product, description, price, tax}
+        });
+        $.post('/system/catalog', {
+            action: "SelectProduct",
+            csrfmiddlewaretoken: csrfToken,
+            selected: "2e00259e-3ac7-4300-a737-10703eaa767e"
+        }, function (data) {
+            addProductFromApi(data); // {id, product, description, price, tax}
+        });
 
-        if (!currentVal) {
-            // Si está vacío
-            $("#id_related_uuids").val(data.related_uuid);
-        } else {
-            // Si ya tiene valor, agregar coma + nuevo UUID
-            $("#id_related_uuids").val(currentVal + "," + data.related_uuid);
-        }
     });
 });
 
