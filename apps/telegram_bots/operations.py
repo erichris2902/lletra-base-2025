@@ -124,9 +124,7 @@ def create_operation_from_data(data):
                 initial_location=origin,
                 destination_location=destination,
             )
-        print(route)
         deliveries = data.get('repartos', [])
-        print(deliveries)
         if deliveries:
             for delivery in deliveries:
                 delivery_location = DeliveryLocation.get_or_create_by_str(delivery)
@@ -135,6 +133,27 @@ def create_operation_from_data(data):
                     route.save()
         operation.route = route
         operation.save()
+    else:
+        print("Ruta en proceso de duplicacion")
+        # 2. Guardar temporalmente los stops
+        original_stops = list(route.route_stops.all())
+
+        # 3. Duplicar la ruta
+        route.pk = None
+        route.id = None  # opcional, pero explícito
+        route.name = f"{route.name} - copia"
+        route.published = False  # opcional
+        route.save()
+        route.name = f"OPERATION-{operation.id}"
+        route.save()
+
+        # 4. Copiar los ManyToMany
+        route.route_stops.set(original_stops)
+
+        operation.route = route
+        operation.save()
+        print("Ruta duplicada")
+
 
     return operation
 
