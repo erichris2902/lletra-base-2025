@@ -50,6 +50,7 @@ class Supplier(BaseModel):
         if best_coincidence:
             return best_coincidence
 
+        return None
         # Create new supplier if no match found
         # First create a default address
         address = Address.objects.create(

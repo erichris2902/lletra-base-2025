@@ -40,6 +40,8 @@ class Client(BaseModel):
         if best_coincidence:
             return best_coincidence
 
+        return None
+
         # Create new client if no match found
         # First create a default address
         address = Address.objects.create(

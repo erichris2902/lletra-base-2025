@@ -65,6 +65,8 @@ class Vehicle(BaseModel):
         if best_coincidence:
             return best_coincidence
 
+        return None
+
         # Determine unit type
         vehicle_type = get_vehicle_type(unit_type)
 
