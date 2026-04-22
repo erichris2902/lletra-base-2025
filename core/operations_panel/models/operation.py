@@ -141,10 +141,11 @@ class Operation(BaseModel):
         result["products_amount"] = str(self.transported_products.count())
         result["distance"] = str(self.route.direct_distance) if self.route else "0"
         result["shipment_type"] = self.shipment_type
-        result["origin"] = str(self.route.initial_location.address) if self.route and self.route.initial_location else "SIN ORIGEN"
-        result["destination"] = str(self.route.destination_location.address) if self.route and self.route.destination_location else "SIN DESTINO"
+        result["origin"] = str(self.route.initial_location.name) if self.route and self.route.initial_location else "SIN ORIGEN"
+        result["destination"] = str(self.route.destination_location.name) if self.route and self.route.destination_location else "SIN DESTINO"
         result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route and self.route.route_stops else "[]"
         if self.raw_payload:
+            result["assigned_route"] = " ".join(["Origen: ", result["origin"], "\nDestino: ", result["destination"], "\nRepartos: ", result["deliveries"]])
             result["origin"] = self.raw_payload.get("origen", "")
             result["destination"] = self.raw_payload.get("destino", "")
             result["deliveries"] = self.raw_payload.get("repartos", "")
