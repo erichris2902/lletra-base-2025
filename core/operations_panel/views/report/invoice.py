@@ -14,17 +14,10 @@ from core.operations_panel.models import Operation
 
 
 def report_xml_invoices(request):
-    fecha_inicio_str = request.POST.get("fecha_inicial")
-    fecha_fin_str = request.POST.get("fecha_final")
-
-    if not fecha_inicio_str or not fecha_fin_str:
-        return HttpResponse("Faltan parámetros: fecha_inicio y fecha_fin", status=400)
-
-    try:
-        fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
-        fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
-    except ValueError:
-        return HttpResponse("Formato de fecha inválido. Usa YYYY-MM-DD.", status=400)
+    start_date = request.POST.get("fecha_inicial")
+    end_date = request.POST.get("fecha_final")
+    fecha_inicio = datetime.strptime(start_date, "%d/%m/%Y").date()
+    fecha_fin = datetime.strptime(end_date, "%d/%m/%Y").date()
 
     facturas = (
         FacturapiInvoice.objects.filter(stamp_date__range=[fecha_inicio, fecha_fin])
@@ -116,7 +109,7 @@ def report_xml_invoices(request):
     wb.save(buffer)
     buffer.seek(0)
 
-    filename = f"facturas_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"
+    filename = f"facturas_{fecha_inicio}_a_{fecha_fin}.xlsx"
     response = HttpResponse(
         buffer.getvalue(),
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

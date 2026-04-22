@@ -27,6 +27,10 @@ function dropdown(data, type, row) {
         dropdown += `<a href="/operations/generate_invoice/t/${row.id}/" target="_blank" class="dropdown-item">Timbrar translado</a>`;
         dropdown += '<hr class="dropdown-divider">';
     }
+    if (row.is_ready_to_invoice === 'True') {
+        dropdown += `<a href="/operations/download/shipment-invoice/${row.id}/no-signed" target="_blank" class="dropdown-item">Cartaporte (Sin timbre)</a>`;
+        dropdown += '<hr class="dropdown-divider">';
+    }
     dropdown += '<a rel="update" class="dropdown-item" type="button">Editar viaje</a>';
     dropdown += '<hr class="dropdown-divider">';
     dropdown += '<a rel="update_route" class="dropdown-item" type="button">Verificar ruta</a>';
@@ -39,7 +43,7 @@ function dropdown(data, type, row) {
         dropdown += '<a rel="update_packing" class="dropdown-item" type="button">Distribuir packing</a>';
         dropdown += '<a rel="get_assign_products_form" class="dropdown-item" type="button">Asignar producto</a>';
     }else{
-        //dropdown += '<a rel="get_assign_products_form_old" class="dropdown-item" type="button">Asignar producto (OLD)</a>';
+        dropdown += '<a rel="get_assign_products_form_old" class="dropdown-item" type="button">Asignar producto (OLD)</a>';
         dropdown += '<a rel="update_cargo" class="dropdown-item" type="button">Asignar carga por archivo</a>';
         dropdown += '<a rel="get_assign_cargo_form" class="dropdown-item" type="button">Asignar carga precargada</a>';
         dropdown += '<a rel="get_assign_products_form" class="dropdown-item" type="button">Asignar producto</a>';

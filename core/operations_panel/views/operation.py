@@ -288,8 +288,13 @@ class ShipmentOperationListView(AdminListView):
     static_path = 'operations_panel/shipment/table/base.html'
     catalogs = [
         {
-            'id': 'id_transported_product',
-            'service': 'TransportedProducts',
+            'id': 'id_transported_product_key',
+            'service': 'ProductAndServiceCatalog',
+            'placeholder': '',
+        },
+        {
+            'id': 'id_unit_key',
+            'service': 'UnitSat',
             'placeholder': '',
         },
     ]
@@ -754,7 +759,19 @@ class ShipmentOperationListView(AdminListView):
         return data
 
     def handle_assignproductold(self, request, data):
-        print(request.POST)
+        operation = Operation.objects.get(pk=request.POST.get('id'))
+        print(operation)
+        self.form = TransportedProductForm
+        instance, errors = self.save_form(request)
+        if instance:
+            operation.transported_products.add(instance)
+            operation.save()
+            data['success'] = True
+            data['id'] = str(instance.id)
+        else:
+            data['error'] = str(errors)
+        return data
+
         raise Exception("No se puede asignar productos")
         return data
 
