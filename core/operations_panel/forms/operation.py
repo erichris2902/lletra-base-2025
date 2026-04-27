@@ -69,8 +69,9 @@ class OperationFolioWebsiteForm(BaseModelForm):
             {"type": "row", "fields": [
                 {"name": "status", "size": 3},
                 {"name": "folio", "size": 3},
-                {"name": "total", "size": 3},
-                {"name": "handling_amount", "size": 3},
+                {"name": "total", "size": 2},
+                {"name": "handling_amount", "size": 2},
+                {"name": "deliveries_amount", "size": 2},
             ]},
             {"type": "row", "fields": [
 
@@ -97,6 +98,7 @@ class OperationFolioWebsiteForm(BaseModelForm):
             "status",
             ## Row
             "handling_amount",
+            "deliveries_amount",
             "need_cartaporte",
             "is_rent",
             # EndCallout

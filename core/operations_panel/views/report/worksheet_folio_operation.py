@@ -7,7 +7,7 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 from openpyxl.utils import get_column_letter
 from datetime import timedelta, datetime
-from core.operations_panel.choices import OperationStatus
+from core.operations_panel.choices import OperationStatus, ShipmentType
 from core.operations_panel.models import Operation
 
 
@@ -23,12 +23,25 @@ def _agregar_encabezados(ws, blueFill):
 
 
 def _agregar_fila(op, ws, redFill, greenFill):
-    print(op.supplier)
+    if op.shipment_type == ShipmentType.GENERAL:
+        deliveries = 0
+
+        if op.raw_payload.get("repartos") is not None:
+            print(op.raw_payload)
+            deliveries = op.raw_payload.get("repartos")
+
+        if op.deliveries_amount != 0 or deliveries == 0:
+            deliveries = op.deliveries_amount
+
+        stops = deliveries if deliveries != 0 else op.raw_payload.get('repartos', '') if op.raw_payload else ''
+    else:
+        stops = op.raw_payload.get('repartos', '') if op.raw_payload else ''
+
     date = op.operation_date if op.operation_date else op.raw_payload.get('fecha', '')
     client = op.raw_payload.get('cliente', '') if op.raw_payload else ''
     origin = op.raw_payload.get('origen', '') if op.raw_payload else ''
     destiny = op.raw_payload.get('destino', '') if op.raw_payload else ''
-    stops = op.raw_payload.get('repartos', '') if op.raw_payload else ''
+
     unit = str(op.vehicle_type) if op.vehicle_type else (op.raw_payload.get("unidad", "") if op.raw_payload else "") #op.raw_payload.get('unidad', '') if op.raw_payload else ''
     driver = op.raw_payload.get('operador', '') if op.raw_payload else ''
     supplier = str(op.supplier) if op.supplier else (op.raw_payload.get("proveedor", "") if op.raw_payload else "")#op.raw_payload.get('proveedor', '') if op.raw_payload else ''

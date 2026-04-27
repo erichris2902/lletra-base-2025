@@ -1,0 +1,649 @@
+[
+  {
+    "destino": "Lerma",
+    "fecha": "24/03/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "3.5 tn",
+    "proveedor": "agt"
+  },
+  {
+    "destino": "León",
+    "fecha": "25/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "DANIEL AGUADO"
+  },
+  {
+    "destino": "SILAO",
+    "fecha": "27/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "LLETRA"
+  },
+  {
+    "destino": "SILAO",
+    "fecha": "30/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "el salto",
+    "fecha": "24/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "Torton",
+    "proveedor": "LLETRA 11BK7M"
+  },
+  {
+    "destino": "Chem Trend",
+    "fecha": "26/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "TORTHON",
+    "proveedor": "SVA trans"
+  },
+  {
+    "destino": "SLP",
+    "fecha": "27/03/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "1tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Chem Trend",
+    "fecha": "30/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "ACCEL",
+    "fecha": "30/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "TRACTO",
+    "proveedor": "NAZARIO"
+  },
+  {
+    "destino": "Monterrey",
+    "fecha": "08/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": null
+  },
+  {
+    "destino": "IRAPUATO",
+    "fecha": "27/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "torton",
+    "proveedor": "LLETRA"
+  },
+  {
+    "destino": "Silao",
+    "fecha": "26/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "LLETRA"
+  },
+  {
+    "destino": "Nuevo Leon",
+    "fecha": "01/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "5 tn",
+    "proveedor": "Agt"
+  },
+  {
+    "destino": "SLP",
+    "fecha": "25/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5 tn Ton",
+    "proveedor": "SAUL"
+  },
+  {
+    "destino": "León",
+    "fecha": "25/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "DANIEL AGUADO"
+  },
+  {
+    "destino": "Silao",
+    "fecha": "26/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "LLETRA"
+  },
+  {
+    "destino": "IRAPUATO",
+    "fecha": "30/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "LLETRA"
+  },
+  {
+    "destino": "SLP",
+    "fecha": "10/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "5tn",
+    "proveedor": "SVA TRANS"
+  },
+  {
+    "destino": "Silao",
+    "fecha": "26/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "LLETRA"
+  },
+  {
+    "destino": "Silao",
+    "fecha": "26/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "LLETRA"
+  },
+  {
+    "destino": "local",
+    "fecha": "01/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "1.5 tn",
+    "proveedor": "Daniel aguado"
+  },
+  {
+    "destino": "celaya",
+    "fecha": "01/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5 tn",
+    "proveedor": "Daniel aguado"
+  },
+  {
+    "destino": "Silao",
+    "fecha": "26/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "LLETRA"
+  },
+  {
+    "destino": "SLP",
+    "fecha": "25/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5 tn Ton",
+    "proveedor": "SAUL"
+  },
+
+  {
+    "destino": "Silao",
+    "fecha": "26/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "LLETRA"
+  },
+
+  {
+    "destino": "Silao",
+    "fecha": "26/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "LLETRA"
+  },
+  {
+    "destino": "Silao",
+    "fecha": "26/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "LLETRA"
+  },
+  {
+    "destino": "SLP",
+    "fecha": "25/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5 tn Ton",
+    "proveedor": "SAUL"
+  },
+  {
+    "destino": "León",
+    "fecha": "25/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "DANIEL AGUADO"
+  },
+  {
+    "destino": "SLP",
+    "fecha": "25/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5 tn Ton",
+    "proveedor": "SAUL"
+  },
+  {
+    "destino": "SLP",
+    "fecha": "01/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "5 tn",
+    "proveedor": "Nazario"
+  },
+
+  {
+    "destino": "LOCAL",
+    "fecha": "26/03/2026",
+    "cantidad_de_repartos": 2,
+    "tipo_de_unidad": "1 tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Irapuato",
+    "fecha": "30/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "8tn",
+    "proveedor": "LLETRA"
+  },
+  {
+    "destino": "Monterrey",
+    "fecha": "31/03/2026",
+    "cantidad_de_repartos": 2,
+    "tipo_de_unidad": "5tn",
+    "proveedor": "AGT"
+  },
+  {
+    "destino": "Apaseo",
+    "fecha": "25/03/2026",
+    "cantidad_de_repartos": 2,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "DANIEL AGUADO"
+  },
+  {
+    "destino": "Chem Trend",
+    "fecha": "10/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "5tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "silao",
+    "fecha": "24/03/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "3.5 tn",
+    "proveedor": "Saúl Gutierrez"
+  },
+  {
+    "destino": "León",
+    "fecha": "25/03/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "Trailer",
+    "proveedor": "SVA trans"
+  },
+  {
+    "destino": "Aguascalientes",
+    "fecha": "06/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Silao",
+    "fecha": "06/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "Saúl Arenas"
+  },
+  {
+    "destino": "León",
+    "fecha": "06/04/2026",
+    "cantidad_de_repartos": 2,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Rolando Bautista"
+  },
+  {
+    "destino": "Monterrey",
+    "fecha": "06/04/2026",
+    "cantidad_de_repartos": 3,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Monterrey",
+    "fecha": "06/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "Zacatecas",
+    "fecha": "13/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "5tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "local",
+    "fecha": "14/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5 tn",
+    "proveedor": "Saul"
+  },
+  {
+    "destino": "Jilotepec",
+    "fecha": "07/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Local",
+    "fecha": "07/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "Tracto",
+    "proveedor": "Nazario"
+  },
+  {
+    "destino": "SLP",
+    "fecha": "07/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "LERMA",
+    "fecha": "07/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "Apaseo el Gde.",
+    "fecha": "08/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "5tn",
+    "proveedor": "AGT"
+  },
+  {
+    "destino": "Local",
+    "fecha": "10/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "Saul Arenas"
+  },
+  {
+    "destino": "San José Iturbide",
+    "fecha": "13/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "Zacatecas",
+    "fecha": "14/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5 tn",
+    "proveedor": "LLETRA 48AU4Z"
+  },
+  {
+    "destino": "Toluca",
+    "fecha": "10/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "AGT"
+  },
+  {
+    "destino": "Santa Catarina",
+    "fecha": "13/04/2026",
+    "cantidad_de_repartos": 2,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Iztapalapa",
+    "fecha": "09/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Local",
+    "fecha": "09/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Cuautitlán",
+    "fecha": "09/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "Chem Trend",
+    "fecha": "09/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "5tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "San José Iturbide",
+    "fecha": "09/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "5tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "Local",
+    "fecha": "09/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "El Salto",
+    "fecha": "09/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Tula Hgo",
+    "fecha": "10/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "Tultitlán",
+    "fecha": "13/04/2026",
+    "cantidad_de_repartos": 2,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Chem trend",
+    "fecha": "13/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "torthon",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "irapuato",
+    "fecha": "14/04/2026",
+    "cantidad_de_repartos": 2,
+    "tipo_de_unidad": "1.5 tn",
+    "proveedor": "Daniel aguado"
+  },
+  {
+    "destino": "Cuernavaca",
+    "fecha": "20/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "Jilotepec",
+    "fecha": "20/04/2026",
+    "cantidad_de_repartos": 2,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": null
+  },
+  {
+    "destino": "Silao",
+    "fecha": "15/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "Cuautitlán",
+    "fecha": "15/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Reynosa",
+    "fecha": "15/04/2026",
+    "cantidad_de_repartos": 3,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Cortázar",
+    "fecha": "14/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Irapuato",
+    "fecha": "16/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "5tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "Monterrey",
+    "fecha": "16/04/2026",
+    "cantidad_de_repartos": 4,
+    "tipo_de_unidad": "5tn",
+    "proveedor": "Sva"
+  },
+  {
+    "destino": "Puebla",
+    "fecha": "16/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "SLP",
+    "fecha": "17/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "Saúl Arenas"
+  },
+  {
+    "destino": "Toluca",
+    "fecha": "17/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Accel",
+    "fecha": "17/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "8tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "Silao",
+    "fecha": "26/03/2026",
+    "cantidad_de_repartos": 4,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "LLETRA"
+  },
+  {
+    "destino": "Silao",
+    "fecha": "27/03/2026",
+    "cantidad_de_repartos": 3,
+    "tipo_de_unidad": "3.5tn",
+    "proveedor": "LLETRA"
+  },
+  {
+    "destino": "slp",
+    "fecha": "21/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5 tn",
+    "proveedor": "Daniel aguado"
+  },
+  {
+    "destino": "lerma",
+    "fecha": "21/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5 tn",
+    "proveedor": "Daniel aguado"
+  },
+  {
+    "destino": "tula",
+    "fecha": "21/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "3.5 tn",
+    "proveedor": "Saúl"
+  },
+  {
+    "destino": "León",
+    "fecha": "22/04/2026",
+    "cantidad_de_repartos": 2,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Tepotzotlán",
+    "fecha": "22/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Tultitlan",
+    "fecha": "23/04/2026",
+    "cantidad_de_repartos": 1,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "Irapuato",
+    "fecha": "23/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "8 tn",
+    "proveedor": "Lletra"
+  },
+  {
+    "destino": "León",
+    "fecha": "23/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "Trailer",
+    "proveedor": "Nazario"
+  },
+  {
+    "destino": "Tepotzotlán",
+    "fecha": "24/04/2026",
+    "cantidad_de_repartos": 2,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "SLP",
+    "fecha": "24/04/2026",
+    "cantidad_de_repartos": 2,
+    "tipo_de_unidad": "1.5tn",
+    "proveedor": "Daniel Aguado"
+  },
+  {
+    "destino": "ACCEL",
+    "fecha": "24/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "TRAILER",
+    "proveedor": "SVA trans"
+  },
+  {
+    "destino": "cuernavaca",
+    "fecha": "24/04/2026",
+    "cantidad_de_repartos": 0,
+    "tipo_de_unidad": "1.5 tn",
+    "proveedor": "rolando"
+  }
+]

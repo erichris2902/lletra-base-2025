@@ -31,8 +31,8 @@ class OperationListView(AdminListView):
     model = Operation
     form = OperationForm
     template_name = 'base/elements/views/datatable_list.html'
-    datatable_headers = ["Control vehicular", "Cliente", "Packing", "Lista para fac", "Facturado"]
-    datatable_keys = ["folio", "client", "is_packing_ready", "is_ready_to_invoice", "is_invoice_ready"]
+    datatable_headers = ["Fecha", "Control vehicular",  "Cliente", "Packing", "Lista para fac", "Facturado"]
+    datatable_keys = ["operation_date", "folio", "client", "is_packing_ready", "is_ready_to_invoice", "is_invoice_ready"]
     datatable_actions = True
     title = model._meta.verbose_name_plural.title()
     form_path = 'base/elements/forms/form.html'
@@ -40,7 +40,7 @@ class OperationListView(AdminListView):
     category = 'Operaciones'
     dropdown_action_path = 'operations_panel/operation/table/actions.js'
     static_path = 'operations_panel/operation/table/base.html'
-    search_fields = ['folio']
+    search_fields = ['folio', 'client', 'operation_date']
 
 
     def handle_searchdata(self, request, data):

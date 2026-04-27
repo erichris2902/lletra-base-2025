@@ -95,6 +95,7 @@ class Operation(BaseModel):
 
     total = models.DecimalField(_("Total antes de impuestos"), default=0, max_digits=12, decimal_places=2)
     handling_amount = models.IntegerField(_("Cantidad de maniobras"), default=0, blank=True, null=True)
+    deliveries_amount = models.IntegerField(_("Cantidad de repartos"), default=0, blank=True, null=True)
 
     transported_products = models.ManyToManyField(
         TransportedProduct, verbose_name=_("Productos transportados"),
@@ -124,11 +125,24 @@ class Operation(BaseModel):
         result = self.to_display_dict(keys)
         result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route and self.route.route_stops else "[]"
         result["folio"] = "SIN FOLIO" if not self.folio else self.folio
-        print(self.raw_payload)
         if self.raw_payload:
+
+            if self.shipment_type == ShipmentType.GENERAL:
+                deliveries = 0
+
+
+
+                if self.raw_payload.get("repartos") is not None:
+                    print(self.raw_payload)
+                    deliveries = self.raw_payload.get("repartos")
+
+                if self.deliveries_amount != 0 or deliveries == 0:
+                    deliveries = self.deliveries_amount
+
+                result["deliveries"] = result["deliveries"] if result["deliveries"] else deliveries
+
             result["origin"] = self.raw_payload.get("origen", "")
             result["destination"] = self.raw_payload.get("destino", "")
-            result["deliveries"] = self.raw_payload.get("repartos", "")
             result["vehicle"] = str(self.vehicle_type) if self.vehicle_type else self.raw_payload.get("unidad", "")
             result["supplier"] = str(self.supplier) if self.supplier else self.raw_payload.get("proveedor", "")
         return result
