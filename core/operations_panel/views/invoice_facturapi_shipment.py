@@ -149,7 +149,7 @@ class InvoiceShipmentIFormView(InvoiceFormView):
 
     def set_shipment_form(self, operation):
         form = ShipmentFacturapiInvoiceForm()
-        form.fields['total_distance_km'].initial = operation.route.optimized_distance
+        form.fields['total_distance_km'].initial = operation.route.direct_distance
         form.fields['departure_at'].initial = operation.cargo_appointment
         form.fields['scheduled_arrival_at'].initial = operation.download_appointment
         form.fields['sender_name'].initial = operation.client.business_name
