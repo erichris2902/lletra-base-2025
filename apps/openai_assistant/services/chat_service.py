@@ -50,9 +50,11 @@ class ChatService(BaseOpenAIService):
 
         # Esperar resultado
         run = self.client.wait_for_run_completion(chat.openai_thread_id, run.id)
-
+        print(run.status)
+        print(run)
         # Procesar tools si es necesario
         if run.status == "requires_action":
+            print("REQUIRES_ACTION")
             run, new_messages = self._handle_tool_calls(chat, run, user)
             print(1)
             print(new_messages)

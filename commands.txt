@@ -5,7 +5,7 @@ python manage.py setup_webhook Lexa_lletra_bot --base-url https://lletrabase-eab
 python manage.py setup_webhook Lyna_lletra_bot --base-url https://lletrabase-eab0df519ae0.herokuapp.com
 
 python manage.py setup_webhook prueba_lletra_bot --base-url https://f73f-189-141-40-128.ngrok-free.app
-python manage.py setup_webhook Lisa_lletra_bot --base-url https://99d6-189-141-40-128.ngrok-free.app
+python manage.py setup_webhook Lisa_lletra_bot --base-url https://4a1e-187-145-81-250.ngrok-free.app
 python manage.py setup_webhook Lexa_lletra_bot --base-url https://99d6-189-141-40-128.ngrok-free.app
 python manage.py setup_webhook Lyna_lletra_bot --base-url https://99d6-189-141-40-128.ngrok-free.app
 
