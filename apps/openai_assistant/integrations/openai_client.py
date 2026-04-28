@@ -41,7 +41,7 @@ class OpenAIClient:
     # ======================
     def create_run(self, thread_id, assistant_id):
         print("--ASSISTANT_ID--", assistant_id, " --THREAD_ID--", thread_id, " --RUN_ID--")
-        if assistant_id == "asst_8LzYqBPrCXIwohweFRCJ5HN0":
+        if assistant_id == "!asst_8LzYqBPrCXIwohweFRCJ5HN0":
             return self.client.beta.threads.runs.create(
                 thread_id=thread_id,
                 assistant_id=assistant_id,
