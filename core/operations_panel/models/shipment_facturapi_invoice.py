@@ -98,9 +98,13 @@ class ShipmentFacturapiInvoice(FacturapiInvoice):
     def bill_type_t_shipment(self):
         from apps.facturapi.services import _set_facturapi_invoice_base_data, _set_facturapi_invoice_cfdi_relation, \
             _set_facturapi_invoice_item, _send_invoice_to_facturapi
+        print(1)
         data = _set_facturapi_invoice_base_data(self)
+        print(2)
         data = _set_facturapi_invoice_cfdi_relation(self, data)
+        print(3)
         items = _set_facturapi_invoice_transported_product(self.operation)
+        print(4)
         data["items"] = items
         data["pdf_custom_section"] = self.pdf_custom_section
 

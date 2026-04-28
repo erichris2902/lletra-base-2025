@@ -306,13 +306,14 @@ def _set_facturapi_invoice_transported_product(operation):
     items = []
     products = TransportedProduct.objects.filter(operations_transported_products=operation).all()
     for product in products:
-
+        print(product)
+        print(product.unit_key)
         item_data = {"quantity": product.amount, "discount": str(0), "product": {}}
         item_data["product"]['description'] = product.description
         item_data["product"]['product_key'] = product.transported_product_key
         item_data["product"]['price'] = float(0)
         item_data["product"]['unit_key'] = product.unit_key.split(':')[0]
-        item_data["product"]['unit_name'] = product.unit_key.split(':')[1]
+        #item_data["product"]['unit_name'] = product.unit_key.split(':')[1] if len(product.unit_key.split(':')) > 2 else ""
         item_data["product"]['tax_included'] = False
         items.append(item_data)
     return items

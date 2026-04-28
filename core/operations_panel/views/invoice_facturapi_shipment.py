@@ -55,9 +55,9 @@ class InvoiceShipmentIFormView(InvoiceFormView):
         shipment_invoice.insurer_name = request.POST['insurer_name']
         shipment_invoice.insurance_policy_number = request.POST['insurance_policy_number']
         shipment_invoice.sct_permit_type = request.POST['sct_permit_type']
-
+        print("a")
         shipment_invoice.save()
-
+        print("b")
         products = extract_products_from_post(request.POST)
         for p in products:
             try:
@@ -83,9 +83,9 @@ class InvoiceShipmentIFormView(InvoiceFormView):
         shipment_invoice.status = "pending"
         shipment_invoice.is_ready_to_stamp = True
         shipment_invoice.save()
-
+        print("c")
         shipment_invoice.bill()
-
+        print("d")
         data['redirect_url'] = "/operations/"
 
     def handle_predictproduct(self, request, context):
