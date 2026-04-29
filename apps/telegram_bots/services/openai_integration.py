@@ -19,8 +19,9 @@ class TelegramOpenAIIntegration:
         if not assistant:
             return "No assistants available. Please contact the administrator."
 
-        if chat.active_assistant_id != assistant.id or not chat.openai_chat:
-            chat.set_active_assistant(assistant)
+        #if chat.active_assistant_id != assistant.id or not chat.openai_chat:
+        if True:
+            chat.set_active_assistant2(assistant)
 
         openai_chat = chat.openai_chat
         new_messages = self.chat_service.send_message(openai_chat, message.text, user)

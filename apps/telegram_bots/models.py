@@ -188,6 +188,37 @@ class TelegramChat(models.Model):
 
         return self.openai_chat
 
+    def set_active_assistant2(self, assistant):
+        """
+        Set the active assistant for this chat and create a new OpenAI Chat if needed.
+        If there's already an OpenAI Chat for this assistant and chat, use that instead.
+
+        Args:
+            assistant (Assistant): The assistant to set as active
+        """
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        # Get or create a system user for OpenAI chats
+        system_user, _ = User.objects.get_or_create(
+            username='telegram_system',
+            defaults={'email': 'telegram_system@example.com', 'is_active': True}
+        )
+
+        # Set the active assistant
+        previous_assistant = self.active_assistant
+        self.active_assistant = assistant
+
+        new_chat = OpenAIChat.objects.create(
+            user=system_user,
+            assistant=assistant,
+            title=f"Telegram Chat {self.telegram_id} {uuid.uuid4()}"
+        )
+        self.openai_chat = new_chat
+
+        self.save()
+
+        return self.openai_chat
+
     def get_or_set_default_assistant(self):
         """
         Get the active assistant or set a default one if none is active.
