@@ -395,23 +395,7 @@ def process_message_reaction(bot, reaction_data):
 
                         # Check if the message is linked to an operation
                         if message.operation:
-                            if emoji_value == '🙏':
-                                from core.operations_panel.models import Operation
-                                operation = message.operation
-                                if operation.shipment_invoice:
-                                    send_telegram_message(
-                                        bot,
-                                        chat.telegram_id,
-                                        "https://sistema.lletra.lat/operations/download/shipment-invoice/" + str(operation.id) + "/no-signed",
-                                        reply_to_message_id=message.telegram_id,
-                                    )
-                                else:
-                                    send_telegram_message(
-                                        bot,
-                                        chat.telegram_id,
-                                        str("Este folio aun no cuenta con cartaporte timbrada"),
-                                        reply_to_message_id=message.telegram_id,
-                                    )
+                            # Handle thumbs up reaction (🤔)
                             if emoji_value == '🤔':
                                 from apps.telegram_bots.operations import send_operation_missing_items
                                 from core.operations_panel.models import Operation

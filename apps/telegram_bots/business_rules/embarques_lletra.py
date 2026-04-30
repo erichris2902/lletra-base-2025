@@ -86,6 +86,22 @@ class EmbarquesLletraRule:
                 print("[EmbarquesLletra] No hay operaciones para faltantes")
                 return {"status": "no_operations_found"}
 
+            if emoji_value == '🙏':
+                from core.operations_panel.models import Operation
+                operation = message.operation
+                if operation.shipment_invoice:
+                    api.send_message(
+                        chat.telegram_id,
+                        "https://sistema.lletra.lat/operations/download/shipment-invoice/" + str(operation.id) + "/no-signed",
+                        reply_to=message.telegram_id,
+                    )
+                else:
+                    api.send_message(
+                        chat.telegram_id,
+                        "ℹ️ Este folio aun no cuenta con cartaporte timbrada",
+                        reply_to=message.telegram_id,
+                    )
+
         # Eliminar reacciones antiguas
         for emoji in old_reactions:
             TelegramReaction.objects.filter(
