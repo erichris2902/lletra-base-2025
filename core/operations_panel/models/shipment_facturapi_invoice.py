@@ -1,9 +1,11 @@
 import json
 import uuid
+from urllib.parse import urlencode
 
 from django.db import models
 from django.db.models import Sum
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.timezone import localtime
 from packaging.utils import _
 
@@ -52,6 +54,24 @@ class ShipmentFacturapiInvoice(FacturapiInvoice):
     ccp_id = models.CharField(
         _("ID de Carta Porte (ccp_id)"), max_length=100, null=True, blank=True
     )
+
+    def get_ccp_verification_url(self):
+        SAT_CCP_VERIFY_URL = (
+            "https://verificacfdi.facturaelectronica.sat.gob.mx/"
+            "verificaccp/default.aspx"
+        )
+
+        if not self.ccp_id or not self.departure_at or not self.stamp_date:
+            return None
+
+        from datetime import timedelta
+        params = {
+            "IdCCP": str(self.ccp_id).upper(),
+            "FechaOrig": timezone.localtime(self.operation.scheduled_departure_time).strftime("%Y-%m-%dT%H:%M:%S"),
+            "FechaTimb": timezone.localtime(self.stamp_date).strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+
+        return f"{SAT_CCP_VERIFY_URL}?{urlencode(params)}"
 
     def save(self, *args, **kwargs):
         if self.ccp_id == None:

@@ -631,10 +631,6 @@ class Operation(BaseModel):
             return False
 
     def build_cartaporte_context(self):
-        """
-        Construye el contexto para renderizar el template de carta porte.
-        Aquí puedes ir refinando nombres/campos según tus modelos actuales.
-        """
         factura = None
         if self.shipment_invoice:
             factura = ShipmentFacturapiInvoice.objects.get(id=self.shipment_invoice.id)
@@ -648,8 +644,7 @@ class Operation(BaseModel):
 
         if factura:
             qrcode_obj = QRCode()
-            print(factura.verification_url)
-            qrcode_obj.validation_url = factura.verification_url.replace("undefined", "ACA131126DY1")
+            qrcode_obj.validation_url = factura.get_ccp_verification_url()
             qrcode_obj.save()
 
         context = {
