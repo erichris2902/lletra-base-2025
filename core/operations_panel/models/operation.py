@@ -3,6 +3,7 @@ import re
 import tempfile
 from datetime import datetime, time
 
+import qrcode
 from django.conf import settings
 from django.db import models
 from django.template.loader import render_to_string
@@ -24,6 +25,10 @@ from core.operations_panel.models.route import Route
 from core.operations_panel.models.cargo import Cargo
 from core.operations_panel.models.transported_product import TransportedProduct
 from core.system.models import BaseModel
+from io import BytesIO
+from PIL import Image
+from django.core.files import File
+from django.db import models
 
 
 class Operation(BaseModel):
@@ -641,6 +646,12 @@ class Operation(BaseModel):
 
         transported_products = self.transported_products.all()
 
+        if factura:
+            qrcode_obj = QRCode()
+            print(factura.verification_url)
+            qrcode_obj.validation_url = factura.verification_url.replace("undefined", "ACA131126DY1")
+            qrcode_obj.save()
+
         context = {
             "operation": self,
             "Factura": factura if factura else {},
@@ -682,6 +693,7 @@ class Operation(BaseModel):
             "asturiano_links": [],
             "is_3b": False,
             "3b_links": [],
+            "QR": qrcode_obj
         }
         print(context)
 
@@ -814,3 +826,32 @@ class Operation(BaseModel):
         verbose_name = "Operación"
         verbose_name_plural = "Operaciones"
         ordering = ['-operation_date', '-created_at']
+
+class QRCode(models.Model):
+    qr = models.FileField(upload_to='qrcode', verbose_name='QR', null=True, blank=True)
+    digital_cfdi = models.CharField(max_length=1000, verbose_name="Sello digital del CFDI", null=True, blank=True)
+    sat_stamp = models.CharField(max_length=1000, verbose_name="Sello del SAT", null=True, blank=True)
+    complement_sat = models.CharField(max_length=1000, verbose_name="Cadena original del complemento de certificación digital del SAT", null=True, blank=True)
+    sat_certified = models.CharField(max_length=1000, verbose_name="Número de serie del certificado del SAT", null=True, blank=True)
+    validation_url = models.CharField(max_length=1000, verbose_name="URL de validacion")
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if not self.qr:
+            qrcode_img = qrcode.make(self.validation_url).convert("RGB")
+            qrcode_img = qrcode_img.resize((570, 570))
+
+            canvas = Image.new("RGB", (570, 570), "white")
+            canvas.paste(qrcode_img, (0, 0))
+
+            fname = f"qr_code-{self.id}.png"
+            buffer = BytesIO()
+            canvas.save(buffer, "PNG")
+            buffer.seek(0)
+
+            self.qr.save(fname, File(buffer), save=False)
+
+            super().save(update_fields=["qr"])
+
+            canvas.close()

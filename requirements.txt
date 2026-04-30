@@ -63,3 +63,4 @@ django-redis-cache
 gunicorn
 python-Levenshtein
 openpyxl
+qrcode==7.4.2

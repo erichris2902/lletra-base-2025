@@ -657,25 +657,22 @@
     </section>
     <!-- /.content -->
 
-    {% if Factura.stamp %}
-
-    <section class="sat_signature">
-        <div class="row">
-            <div class="col-3">
-                <img class="img-responsive" src="{{ QR.qr.url }}" width="250" height="250">
+    {% if Factura %}
+        <section class="sat_signature">
+            <div class="row">
+                <div class="col-3">
+                    <img class="img-responsive" src="{{ QR.qr.url }}" width="250" height="250">
+                </div>
+                <div class="col-9" style="font-size: 14px;line-height: 1.2;">
+                    <b>Sello digital del CFDI</b><br>
+                    <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.signature }}</span><br>
+                    <b>Sello del SAT</b><br>
+                    <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.sat_signature }}</span><br>
+                    <b>Número de serie del certificado del SAT</b><br>
+                    <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.sat_cert_number }}</span><br>
+                </div>
             </div>
-            <div class="col-9" style="font-size: 14px;line-height: 1.2;">
-                <b>Sello digital del CFDI</b><br>
-                <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.stamp.signature }}</span><br>
-                <b>Sello del SAT</b><br>
-                <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.stamp.sat_signature }}</span><br>
-                <b>Cadena original del complemento de certificación digital del SAT</b><br>
-                <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.stamp.complement_string }}</span><br>
-                <b>Número de serie del certificado del SAT</b><br>
-                <span style="word-break:break-all;text-align: justify;text-justify: inter-word;">{{ Factura.stamp.sat_cert_number }}</span><br>
-            </div>
-        </div>
-    </section>
+        </section>
     {% endif %}
 {% endblock %}
 
