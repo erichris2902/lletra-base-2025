@@ -4,10 +4,10 @@ python manage.py setup_webhook Lisa_lletra_bot --base-url https://lletrabase-eab
 python manage.py setup_webhook Lexa_lletra_bot --base-url https://lletrabase-eab0df519ae0.herokuapp.com
 python manage.py setup_webhook Lyna_lletra_bot --base-url https://lletrabase-eab0df519ae0.herokuapp.com
 
-python manage.py setup_webhook prueba_lletra_bot --base-url https://f73f-189-141-40-128.ngrok-free.app
-python manage.py setup_webhook Lisa_lletra_bot --base-url  https://f179-187-145-81-250.ngrok-free.app
-python manage.py setup_webhook Lexa_lletra_bot --base-url https://99d6-189-141-40-128.ngrok-free.app
-python manage.py setup_webhook Lyna_lletra_bot --base-url https://99d6-189-141-40-128.ngrok-free.app
+python manage.py setup_webhook prueba_lletra_bot --base-url https://e1fb-187-154-214-11.ngrok-free.app
+python manage.py setup_webhook Lisa_lletra_bot --base-url  https://e1fb-187-154-214-11.ngrok-free.app
+python manage.py setup_webhook Lexa_lletra_bot --base-url https://e1fb-187-154-214-11.ngrok-free.app
+python manage.py setup_webhook Lyna_lletra_bot --base-url https://e1fb-187-154-214-11.ngrok-free.app
 
 
 #Crear respaldo local (Correr en CMD)
@@ -18,7 +18,7 @@ pg_restore --verbose --clean --no-acl --no-owner -h casrkuuedp6an1.cluster-czrs8
 
 REDIS
 celery -A ikigai2025 worker -l info --pool=solo --concurrency=1
-celery -A ikigai2025 worker -l info --pool=solo --concurrency=1 --broker=redis://localhost:6379/0 --result-backend=redis://localhost:6379/0
+celery -A ikigai2025 worker -l info  --pool=solo --concurrency=1 --broker=redis://localhost:6379/0 --result-backend=redis://localhost:6379/0
 
 celery -A ikigai2025 worker -l info --pool=solo --concurrency=1 --broker=redis://localhost:6379/0 --result-backend=redis://localhost:6379/0
 

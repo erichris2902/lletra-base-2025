@@ -168,7 +168,7 @@ class Operation(BaseModel):
             result["origin"] = self.raw_payload.get("origen", "")
             result["destination"] = self.raw_payload.get("destino", "")
             result["deliveries"] = self.raw_payload.get("repartos", "")
-            result["vehicle"] = self.raw_payload.get("unidad", "")
+            result["vehicle"] = str(self.vehicle_type) if self.vehicle_type else self.raw_payload.get("unidad", "")
             result["driver"] = self.raw_payload.get("proveedor", "")
 
         result["invoice_id"] = str(self.shipment_invoice.id) if self.shipment_invoice else None
