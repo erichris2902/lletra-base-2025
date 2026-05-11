@@ -1,6 +1,7 @@
 import os
 import re
 import tempfile
+from copy import copy
 from datetime import datetime, time
 
 import qrcode
@@ -161,16 +162,22 @@ class Operation(BaseModel):
         if existing_route:
             print("Ruta existente encontrada, reutilizando")
 
-            # Limpiar stops anteriores
-            existing_route.route_stops.clear()
-
             route_copy = existing_route
+
+            route_copy.initial_location = original_route.initial_location
+            route_copy.destination_location = original_route.destination_location
+            route_copy.notes = original_route.notes
+            route_copy.direct_distance = original_route.direct_distance
+            route_copy.optimized_distance = original_route.optimized_distance
+            route_copy.optimized_route = original_route.optimized_route
+
+            route_copy.route_stops.clear()
 
         else:
             print("Creando nueva copia de ruta")
 
             # Duplicar ruta
-            route_copy = original_route
+            route_copy = copy(original_route)
             route_copy.pk = None
             route_copy.id = None
 
