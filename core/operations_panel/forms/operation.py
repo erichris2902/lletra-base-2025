@@ -31,6 +31,9 @@ class OperationForm(BaseModelForm):
         {"type": "row", "fields": [
             {"name": "notes", "size": 12},
         ]},
+        {"type": "row", "fields": [
+            {"name": "accessories", "size": 12},
+        ]},
     ]
 
     class Meta:
@@ -48,6 +51,7 @@ class OperationForm(BaseModelForm):
             "scheduled_departure_time",
             "need_cartaporte",
             "notes",
+            "accessories"
         ]
 
         widgets = {
