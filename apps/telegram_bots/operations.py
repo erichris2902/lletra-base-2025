@@ -63,6 +63,7 @@ def create_operation_from_data(data):
     supplier = Supplier.get_or_create_by_str(data.get('proveedor'))
     driver = Driver.get_or_create_by_str(data.get('operador'))
     vehicle = Vehicle.get_or_create_by_plate(data.get('placas'), data.get('unidad'))
+    accessories = True if data.get('accesorios', "").strip().lower() == "maniobra" else False
 
     # Parse date
     operation_date = parse_date(data.get('fecha'))
@@ -96,7 +97,8 @@ def create_operation_from_data(data):
         shipment_type=shipment_type,  # Default to 3B as per the issue description
         status=OperationStatus.PENDING,
         vehicle_type=vehicle.unit_type if vehicle else None,
-        raw_payload=data  # Store the original data for auditing
+        raw_payload=data,  # Store the original data for auditing
+        accessories=accessories,  # Store the original data for auditing
     )
 
     print(operation)
@@ -112,7 +114,7 @@ def create_operation_from_data(data):
         print(3)
         print(origin)
         print(destination)
-        if shipment_type.ASTURIANO:
+        if shipment_type.lower() == shipment_type.ASTURIANO:
             route = Route.objects.create(
                 name="OPERATION-" + str(operation.id),
                 initial_location=origin,

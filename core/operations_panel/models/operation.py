@@ -5,7 +5,7 @@ from datetime import datetime, time
 
 import qrcode
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.template.loader import render_to_string
 from packaging.utils import _
 
@@ -101,6 +101,7 @@ class Operation(BaseModel):
     total = models.DecimalField(_("Total antes de impuestos"), default=0, max_digits=12, decimal_places=2)
     handling_amount = models.IntegerField(_("Cantidad de maniobras"), default=0, blank=True, null=True)
     deliveries_amount = models.IntegerField(_("Cantidad de repartos"), default=0, blank=True, null=True)
+    accessories = models.BooleanField(_("Maniobras"), default=False, blank=True, null=True)
 
     transported_products = models.ManyToManyField(
         TransportedProduct, verbose_name=_("Productos transportados"),
@@ -121,7 +122,73 @@ class Operation(BaseModel):
         self.route.route_stops.add(location)
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)  # Primero guarda la operación
+        old_route_id = None
+
+        if self.pk:
+            old_operation = Operation.objects.filter(pk=self.pk).only("route_id").first()
+
+            if old_operation:
+                old_route_id = old_operation.route_id
+
+        route_changed = (
+            self.pk and
+            old_route_id != self.route_id and
+            self.route_id
+        )
+
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+
+            if route_changed:
+                self.duplicate_route_for_operation()
+
+    def duplicate_route_for_operation(self):
+        print("Ruta en proceso de duplicacion")
+
+        original_route = self.route
+
+        if not original_route:
+            return
+
+        # Guardar stops originales
+        original_stops = list(original_route.route_stops.all())
+
+        route_name = f"OPERATION-{self.id}"
+
+        # Buscar si ya existe una ruta con ese nombre
+        existing_route = Route.objects.filter(name=route_name).first()
+
+        if existing_route:
+            print("Ruta existente encontrada, reutilizando")
+
+            # Limpiar stops anteriores
+            existing_route.route_stops.clear()
+
+            route_copy = existing_route
+
+        else:
+            print("Creando nueva copia de ruta")
+
+            # Duplicar ruta
+            route_copy = original_route
+            route_copy.pk = None
+            route_copy.id = None
+
+        # Configuración final
+        route_copy.name = route_name
+        route_copy.published = False
+        route_copy.save()
+
+        # Restaurar stops
+        route_copy.route_stops.set(original_stops)
+
+        # Actualizar operación SIN ejecutar save()
+        Operation.objects.filter(pk=self.pk).update(route=route_copy)
+
+        # Actualizar instancia en memoria
+        self.route = route_copy
+
+        print("Ruta duplicada correctamente")
 
     def __str__(self):
         return f"Operación {self.folio or self.pre_folio or self.id}"
