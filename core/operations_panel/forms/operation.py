@@ -86,6 +86,9 @@ class OperationFolioWebsiteForm(BaseModelForm):
         {"type": "row", "fields": [
             {"name": "notes", "size": 12},
         ]},
+        {"type": "row", "fields": [
+            {"name": "accessories", "size": 12},
+        ]},
     ]
 
     class Meta:
@@ -111,6 +114,7 @@ class OperationFolioWebsiteForm(BaseModelForm):
             "client",
             ## Row
             "notes",
+            "accessories",
         ]
 
         widgets = {
