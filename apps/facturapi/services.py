@@ -296,6 +296,7 @@ def _set_facturapi_invoice_item(invoice_item: FacturapiInvoiceItem, taxes=True):
                 'factor': tax.factor,
                 'withholding': tax.withholding,
                 'rate': float(tax.rate),
+                'base': float(10000),
             }
             item_data["product"]['taxes'].append(tax_data)
     return item_data

@@ -579,6 +579,9 @@ class ShipmentOperationListView(AdminListView):
         if operation.folio.endswith("B"):
             raise Exception("No se puede distribuir el packing de un viaje derivado, solo el viaje original.")
         if not Operation.objects.filter(folio=operation.folio + "B").exists() or operation.folio.endswith("B"):
+            distribution_packings = DistributionPacking.objects.filter(operation=operation)
+            for distribution_packing in distribution_packings:
+                distribution_packing.delete()
             for delivery in operation.route.route_stops.all():
                 packing, _ = DistributionPacking.objects.get_or_create(
                     operation=operation,
