@@ -9,7 +9,7 @@ from core.operations_panel.views.driver import DriverListView
 from core.operations_panel.views.invoice_facturapi_shipment import InvoiceShipmentIFormView, InvoiceShipmentTFormView, \
     InvoiceShipmentLocalFormView
 from core.operations_panel.views.operation import FolioOperationListView, OperationListView, ShipmentOperationListView
-from core.operations_panel.views.route import RouteListView, RouteMapView
+from core.operations_panel.views.route import RouteListView, RouteMapView, RouteAsturianoListView
 from core.operations_panel.views.supplier import SupplierListView
 from core.operations_panel.views.transported_product import TransportedProductListView
 from core.operations_panel.views.vehicle import VehicleListView
@@ -38,6 +38,7 @@ urlpatterns = [
     
     # Route URLs
     path('routes/', RouteListView.as_view(), name='routes'),
+    path('routes/asturiano/', RouteAsturianoListView.as_view(), name='routes_asturiano'),
     path('routes/<uuid:route_id>/map/', RouteMapView.as_view(), name='route_map'),
 
     # Route URLs

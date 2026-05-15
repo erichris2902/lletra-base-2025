@@ -40,6 +40,25 @@ class RouteListView(AdminListView):
             qs = qs.filter(q)
         return qs
 
+class RouteAsturianoListView(RouteListView):
+    model = Route
+    form = RouteForm
+    template_name = 'base/elements/views/datatable_list.html'
+    datatable_headers = ["Nombre", "Ubicación Inicial", "Ubicacion Final", "Repartos", "Notas"]
+    datatable_keys = ["name", "initial_location", "destination_location", "route_stops", "notes"]
+    datatable_actions = True
+    title = model._meta.verbose_name_plural.title()
+    form_path = 'base/elements/forms/form.html'
+    section = 'Rutas'
+    category = 'Operaciones'
+    dropdown_action_path = 'operations_panel/route/table/actions.js'
+    static_path = 'operations_panel/route/table/base.html'
+
+    def handle_searchdata(self, request, data):
+        queryset = self.get_queryset().exclude(name__contains="OPERATION").filter(name__contains="REGION").filter(name__contains="ZONA")
+        data = [obj.to_display_dict(keys=self.datatable_keys) for obj in queryset]
+        return data
+
 
 class RouteMapView(LoginRequiredMixin, TemplateView):
     template_name = 'operations_panel/route_map.html'
