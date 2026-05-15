@@ -9,6 +9,7 @@ class VehicleListView(AdminListView):
     template_name = 'base/elements/views/datatable_list.html'
     datatable_headers = ["Número Económico", "Modelo", "Marca", "Placa", "Año", "Tipo de Unidad", "Estado"]
     datatable_keys = ["econ_number", "model", "brand", "license_plate", "year", "unit_type", "status"]
+    search_fields = ['econ_number', 'model', 'brand', "license_plate", "year", "unit_type", "status"]
     datatable_actions = True
     title = model._meta.verbose_name_plural.title()
     form_path = 'base/elements/forms/form.html'
