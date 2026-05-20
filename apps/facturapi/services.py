@@ -405,6 +405,17 @@ def _serialize_related_document_from_payment(pay, currency: str) -> dict:
             "rate": float(q4(getattr(t, "rate", 0))),  # número con 4 dp
         })
 
+    taxes = get_taxes(FacturapiInvoice.objects.get(uuid=pay.uuid).facturapi_id)
+
+    for _tax in taxes:
+        tax = {}
+        tax['type'] = _tax['type']
+        tax['factor'] = _tax['factor']
+        tax['base'] = _tax['base']
+        tax['withholding'] = _tax['withholding']
+        tax['rate'] = _tax["rate"]
+        taxes_payload.append(tax)
+
     # 'installment' (parcialidad) suele ser entero; si lo guardas decimal, casteamos seguro.
     try:
         installment_int = int(Decimal(pay.installment))
@@ -420,6 +431,34 @@ def _serialize_related_document_from_payment(pay, currency: str) -> dict:
         "taxability": "02",  # objeto de impuesto en pagos
         "taxes": taxes_payload,  # puede ser []
     }
+
+def get_taxes(facturapi_id):
+    url = FACTURAPI_BASE_URL + "/invoices/" + str(facturapi_id)
+    print(url)
+    headers = get_headers()
+
+    resp = requests.get(url, headers=headers)
+    if (resp.status_code != 200):
+        raise Exception(resp.content)
+    s = json.loads(resp.content)
+    # taxes = s["items"][0]["product"]["taxes"]
+
+    taxes = []
+    for product in s["items"]:
+        _product = product["product"]
+        for invoice_tax in _product["taxes"]:
+            found = False
+            for tax in taxes:
+                if tax["rate"] == invoice_tax["rate"] and tax["withholding"] == invoice_tax["withholding"]:
+                    found = True
+            if not found:
+                invoice_tax["base"] = _product["price"]
+                taxes.append(invoice_tax)
+            else:
+                for tax in taxes:
+                    if tax["rate"] == invoice_tax["rate"] and tax["withholding"] == invoice_tax["withholding"]:
+                        tax["base"] += _product["price"]
+    return taxes
 
 
 def upload_invoice_to_drive(invoice, user=None):
