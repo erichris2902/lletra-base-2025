@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Orden de Compra {{ order.folio }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            font-size: 12px;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .company-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .order-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        .client-info, .order-details {
+            width: 45%;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .totals {
+            float: right;
+            width: 300px;
+            margin-top: 20px;
+        }
+        
+        .totals table {
+            margin-bottom: 0;
+        }
+        
+        .footer {
+            clear: both;
+            margin-top: 50px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: white;
+            background-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-info">
+            <h1>ORDEN DE COMPRA</h1>
+            <p><strong>Tu Empresa S.A. de C.V.</strong></p>
+            <p>RFC: TUE123456789</p>
+            <p>Dirección de tu empresa</p>
+            <p>Tel: (442) 123-4567 | Email: info@tuempresa.com</p>
+        </div>
+    </div>
+
+    <div class="order-info">
+        <div class="client-info">
+            <h3>INFORMACIÓN DEL CLIENTE</h3>
+            <p><strong>Razón Social:</strong> {{ order.client.business_name }}</p>
+            <p><strong>RFC:</strong> {{ order.client.rfc|default:"No especificado" }}</p>
+            <p><strong>Dirección:</strong> {{ order.client.address|default:"No especificada" }}</p>
+            <p><strong>Teléfono:</strong> {{ order.client.phone|default:"No especificado" }}</p>
+            <p><strong>Email:</strong> {{ order.client.email|default:"No especificado" }}</p>
+        </div>
+        
+        <div class="order-details">
+            <h3>DETALLES DE LA ORDEN</h3>
+            <p><strong>Folio:</strong> {{ order.folio }}</p>
+            <p><strong>Fecha:</strong> {{ order.created_at|date:"d/m/Y" }}</p>
+            <p><strong>Estado:</strong> <span class="status-badge">{{ order.get_status_display }}</span></p>
+            <p><strong>Operador:</strong> {{ order.operator.username|default:"N/A" }}</p>
+        </div>
+    </div>
+
+    <h3>OPERACIONES INCLUIDAS</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Folio</th>
+                <th>Origen</th>
+                <th>Destino</th>
+                <th>Fecha</th>
+                <th style="text-align: right;">Costo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.operations.all %}
+                <tr>
+                    <td>{{ item.operation.folio|default:"OP-"|add:item.operation.id }}</td>
+                    <td>{{ item.operation.origin|default:"N/A" }}</td>
+                    <td>{{ item.operation.destination|default:"N/A" }}</td>
+                    <td>{{ item.operation.date|date:"d/m/Y"|default:"N/A" }}</td>
+                    <td style="text-align: right;">${{ item.operation.cost|floatformat:2|default:"0.00" }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if order.accessories.all %}
+    <h3>ACCESORIOS ADICIONALES</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>Descripción</th>
+                <th style="text-align: center;">Cantidad</th>
+                <th style="text-align: right;">Precio Unit.</th>
+                <th style="text-align: right;">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for accessory in order.accessories.all %}
+                <tr>
+                    <td>{{ accessory.get_type_display }}</td>
+                    <td>{{ accessory.description }}</td>
+                    <td style="text-align: center;">{{ accessory.quantity }}</td>
+                    <td style="text-align: right;">${{ accessory.unit_price|floatformat:2 }}</td>
+                    <td style="text-align: right;">${{ accessory.subtotal|floatformat:2 }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <div class="totals">
+        <table>
+            <tr>
+                <td><strong>Subtotal:</strong></td>
+                <td style="text-align: right;"><strong>${{ order.subtotal|floatformat:2 }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>IVA (16%):</strong></td>
+                <td style="text-align: right;"><strong>${{ order.tax_amount|floatformat:2 }}</strong></td>
+            </tr>
+            <tr style="border-top: 2px solid #333;">
+                <td><strong>TOTAL:</strong></td>
+                <td style="text-align: right;"><strong>${{ order.total|floatformat:2 }}</strong></td>
+            </tr>
+        </table>
+    </div>
+
+    {% if order.notes %}
+    <div style="clear: both; margin-top: 30px;">
+        <h3>OBSERVACIONES</h3>
+        <div style="border: 1px solid #ddd; padding: 15px; background-color: #f9f9f9;">
+            {{ order.notes|linebreaks }}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>Este documento fue generado automáticamente el {{ "now"|date:"d/m/Y H:i" }}</p>
+        <p>Para cualquier duda o aclaración, contactar al departamento de compras</p>
+    </div>
+</body>
+</html>

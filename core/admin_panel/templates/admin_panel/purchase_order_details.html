@@ -1,0 +1,246 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{{ title }}</h3>
+                    <div class="card-tools">
+                        <a href="{% url 'admin_panel:purchase_order_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver al listado
+                        </a>
+                        <a href="{% url 'admin_panel:purchase_order_pdf' order.id %}" class="btn btn-info" target="_blank">
+                            <i class="fas fa-file-pdf"></i> Generar PDF
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+
+                    <!-- Información básica -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">Información General</h5>
+                                    <p><strong>Folio:</strong> {{ order.folio }}</p>
+                                    <p><strong>Cliente:</strong> {{ order.client.business_name }}</p>
+                                    <p><strong>Driver:</strong> {{ order.driver.name|default:"N/A" }}</p>
+                                    <p><strong>Fecha de creación:</strong> {{ order.created_at|date:"d/m/Y H:i" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">Estado y Fechas</h5>
+                                    <form method="post" action="{% url 'admin_panel:purchase_order_update_status' order.id %}">
+                                        {% csrf_token %}
+                                        <div class="d-flex align-items-center mb-3">
+                                            <select name="status" class="form-control me-2" onchange="this.form.submit()">
+                                                {% for status_key, status_label in status_choices %}
+                                                    <option value="{{ status_key }}"
+                                                            {% if order.status == status_key %}selected{% endif %}>
+                                                        {{ status_label }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </form>
+
+                                    {% if order.sent_date %}
+                                        <p><small><strong>Enviada:</strong> {{ order.sent_date|date:"d/m/Y H:i" }}</small></p>
+                                    {% endif %}
+                                    {% if order.waiting_date %}
+                                        <p><small><strong>En espera:</strong> {{ order.waiting_date|date:"d/m/Y H:i" }}</small></p>
+                                    {% endif %}
+                                    {% if order.approved_date %}
+                                        <p><small><strong>Aprobada:</strong> {{ order.approved_date|date:"d/m/Y H:i" }}</small></p>
+                                    {% endif %}
+                                    {% if order.paid_date %}
+                                        <p><small><strong>Pagada:</strong> {{ order.paid_date|date:"d/m/Y H:i" }}</small></p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Operaciones incluidas con sus accesorios -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5>Operaciones y Accesorios</h5>
+                            {% for item in operations %}
+
+                                <div class="card mb-3 border-left-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">
+                                            {{ item.operation.folio }} -
+                                            {{ item.operation.route.initial_location|default:"N/A" }} → {{ item.operation.route.destination_location|default:"N/A" }}
+                                            <span class="float-right">${{ item.operation.total|floatformat:2|default:"0.00" }}</span>
+                                        </h6>
+                                    </div>
+
+                                    {% with operation_accessories=accessories|dictsort:"operation_id" %}
+                                        {% for accessory in operation_accessories %}
+                                            {% if accessory.operation.id == item.operation.id %}
+                                                {% if forloop.first %}
+                                                    <div class="card-body">
+                                                        <h6 class="text-muted">Accesorios de esta operación:</h6>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Tipo</th>
+                                                                        <th>Descripción</th>
+                                                                        <th>Cantidad</th>
+                                                                        <th>Precio Unit.</th>
+                                                                        <th>Subtotal</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                {% endif %}
+                                                                    <tr>
+                                                                        <td>{{ accessory.get_type_display }}</td>
+                                                                        <td>{{ accessory.description }}</td>
+                                                                        <td>{{ accessory.quantity }}</td>
+                                                                        <td>${{ accessory.unit_price|floatformat:2 }}</td>
+                                                                        <td>${{ accessory.subtotal|floatformat:2 }}</td>
+                                                                    </tr>
+                                                {% if forloop.last %}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endwith %}
+                                </div>
+                            {% empty %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> No hay operaciones incluidas en esta orden.
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Resumen financiero -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Resumen Financiero</h5>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <p><strong>Subtotal:</strong> ${{ order.subtotal|floatformat:2 }}</p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <p><strong>IVA (16%):</strong> ${{ order.tax_amount|floatformat:2 }}</p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <p><strong>Total:</strong> ${{ order.total|floatformat:2 }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    {% if order.notes %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5>Observaciones</h5>
+                            <div class="card">
+                                <div class="card-body">
+                                    <p>{{ order.notes|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Subir factura del cliente (solo si está en espera) -->
+                    {% if order.status == 'EN_ESPERA' %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card bg-warning">
+                                <div class="card-body">
+                                    <h5 class="card-title">Subir Factura del Cliente</h5>
+                                    <form method="post" enctype="multipart/form-data" id="upload-invoice-form">
+                                        {% csrf_token %}
+                                        <div class="d-flex align-items-center">
+                                            <input type="file" class="form-control me-2" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png">
+                                            <button type="submit" class="btn btn-primary">Subir</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Archivos adjuntos -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5>Archivos Adjuntos</h5>
+                            <div class="list-group">
+                                {% if order.pdf_file %}
+                                    <a href="{{ order.pdf_file.url }}" class="list-group-item list-group-item-action" target="_blank">
+                                        <i class="fas fa-file-pdf text-danger"></i> PDF de la Orden de Compra
+                                    </a>
+                                {% endif %}
+                                {% if order.invoice_file %}
+                                    <a href="{{ order.invoice_file.url }}" class="list-group-item list-group-item-action" target="_blank">
+                                        <i class="fas fa-file-invoice text-success"></i> Factura del Cliente
+                                    </a>
+                                {% endif %}
+                                {% if not order.pdf_file and not order.invoice_file %}
+                                    <div class="list-group-item text-muted">
+                                        No hay archivos adjuntos
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar subida de factura
+    $('#upload-invoice-form').on('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error al subir el archivo');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al subir el archivo');
+        });
+    });
+});
+</script>
+{% endblock %}
