@@ -3,86 +3,84 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.shortcuts import get_object_or_404
 
 from core.operations_panel.models import Supplier
-from core.supplier_panel.forms import PaymentRequestInvoiceForm, PaymentRequestCommentsForm, \
-    PaymentRequestComplementForm
-from core.supplier_panel.models import PaymentRequest
+from core.supplier_panel.forms import PurchaseOrderSupplierInvoiceForm
+from core.admin_panel.models.purchase_order import PurchaseOrder, PurchaseOrderStatus
 from core.system.views import AdminTemplateView, AdminListView
 import xml.etree.ElementTree as ET
 
+
 class SupplierListView(AdminListView):
-    model = PaymentRequest
-    form = PaymentRequestInvoiceForm
+    model = PurchaseOrder
+    form = PurchaseOrderSupplierInvoiceForm
     template_name = 'base/elements/views/supplier_panel/datatable_list.html'
-    datatable_headers = ["Control Vehicular", "Monto", "Status"]
-    datatable_keys = ["vehicle_control", "amount_before_taxes", "status"]
+    datatable_headers = ["Folio", "Subtotal", "Estado"]
+    datatable_keys = ["folio", "subtotal", "status"]
     datatable_actions = True
-    title = model._meta.verbose_name_plural.title()
+    title = "Órdenes de Compra"
     form_path = 'base/elements/forms/form.html'
-    section = 'Facturas'
-    category = 'Facturacion'
+    section = 'Órdenes'
+    category = 'Portal Proveedor'
+    # Usar base de tabla específica para portal proveedor con acciones personalizadas
+    static_path = 'supplier_panel/purchase_order/table_base.html'
+    search_fields = ["folio", "status", "supplier__business_name"]
 
-    def handle_add(self, request, data):
-        form = self.form(request.POST, request.FILES)
+    def handle_get(self, request, data):
+        obj_id = request.POST.get('id')
+        instance = get_object_or_404(self.model, pk=obj_id)
+        # Seguridad: validar que el proveedor logueado coincide con la OC
+        supplier = Supplier.objects.filter(code=request.user.username).first()
+        if not supplier or instance.supplier_id != supplier.id:
+            data['error'] = 'No tienes permiso para ver esta orden.'
+            return data
+        self.form_action = "Update"
+        data['id'] = str(instance.id)
+        data['form'] = self.render_form(request, instance)
+        return data
 
-        if not form.is_valid():
-            data["error"] = form.errors
+    def handle_update(self, request, data):
+        order = get_object_or_404(self.model, pk=request.POST.get('id'))
+        # Seguridad: validar que el proveedor logueado coincide con la OC
+        supplier = get_object_or_404(Supplier, code=request.user.username)
+        if order.supplier_id != supplier.id:
+            data['error'] = 'No tienes permiso para actualizar esta orden.'
             return data
 
-        xml_file = request.FILES.get("invoice_xml")
-        expected_rfc = Supplier.objects.get(code=self.request.user.username).rfc
-        expected_amount = form.cleaned_data.get("amount_before_taxes")
+        # Validación CFDI con RFC y subtotal de la OC
+        xml_file = request.FILES.get("supplier_invoice_xml")
+        expected_rfc = supplier.rfc
+        expected_amount = order.subtotal
 
         ok, err = validate_cfdi_xml(
             xml_file=xml_file,
             expected_rfc=expected_rfc,
             expected_subtotal=expected_amount,
-            rfc_from="emisor",  # o "receptor" según tu regla
+            rfc_from="emisor",
         )
-
         if not ok:
             data["error"] = err
             return data
 
-
-        instance = form.save()
-        instance.status = 'revision'
-        instance.user = request.user
-        instance.save()
-        data["success"] = True
-        data["id"] = str(instance.id)
-        return data
-
-    def handle_update(self, request, data):
-        instance = get_object_or_404(self.model, pk=request.POST.get('id'))
-        instance, errors = self.save_form(request, instance=instance)
-        if instance:
-            data['success'] = True
-            data['id'] = str(instance.id)
-        else:
+        # Guardar archivos usando el form
+        instance, errors = self.save_form(request, instance=order)
+        if not instance:
             data['error'] = errors
-        return data
+            return data
 
-    def handle_get(self, request, data):
-        obj_id = request.POST.get('id')
-        if obj_id == '-1':
-            instance = self.model()
-            self.form_action = "Add"
-        else:
-            instance = get_object_or_404(self.model, pk=obj_id)
-            if instance.status == 'revision':
-                self.form = PaymentRequestCommentsForm
-            elif instance.status == 'aprobada':
-                self.form = PaymentRequestComplementForm
-            self.form_action = "Update"
+        # Cambiar estado a ENVIADA si procede
+        if instance.status == PurchaseOrderStatus.BORRADOR:
+            instance.status = PurchaseOrderStatus.ENVIADA
+            instance.save(update_fields=["status"])  # archivos ya guardados por el form
+
+        data['success'] = True
         data['id'] = str(instance.id)
-        data['form'] = self.render_form(request, instance)
         return data
 
     def get_queryset(self):
-        qs = self.model.objects.filter(user=self.request.user)
+        supplier = Supplier.objects.filter(code=self.request.user.username).first()
+        qs = self.model.objects.none()
+        if supplier:
+            qs = self.model.objects.filter(supplier=supplier).exclude(status=PurchaseOrderStatus.BORRADOR)
         return qs
-
-
 
 
 def _norm_money(value: Decimal) -> Decimal:

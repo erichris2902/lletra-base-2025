@@ -111,15 +111,12 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.shortcuts import get_object_or_404
 
 from core.operations_panel.models import Supplier
-from core.supplier_panel.forms import PaymentRequestInvoiceForm, PaymentRequestCommentsForm, \
-    PaymentRequestComplementForm, PaymentRequestCompleteForm
 from core.supplier_panel.models import PaymentRequest
 from core.system.views import AdminTemplateView, AdminListView
 import xml.etree.ElementTree as ET
 
 class SupplierPaymentsListView(AdminListView):
     model = PaymentRequest
-    form = PaymentRequestCompleteForm
     template_name = 'base/elements/views/datatable_list.html'
     datatable_headers = ["Control Vehicular", "Monto", "Status"]
     datatable_keys = ["vehicle_control", "amount_before_taxes", "status"]

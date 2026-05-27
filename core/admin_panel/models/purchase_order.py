@@ -85,6 +85,19 @@ class PurchaseOrder(BaseModel):
         blank=True,
         verbose_name="Factura del cliente"
     )
+    # Archivos de factura cargados por el proveedor (portal)
+    supplier_invoice_pdf = models.FileField(
+        upload_to='purchase_orders/supplier_invoices/pdf/',
+        null=True,
+        blank=True,
+        verbose_name="Factura del proveedor (PDF)"
+    )
+    supplier_invoice_xml = models.FileField(
+        upload_to='purchase_orders/supplier_invoices/xml/',
+        null=True,
+        blank=True,
+        verbose_name="Factura del proveedor (XML)"
+    )
 
     # Observaciones
     notes = models.TextField(blank=True, null=True, verbose_name="Observaciones")
