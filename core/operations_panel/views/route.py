@@ -53,6 +53,7 @@ class RouteAsturianoListView(RouteListView):
     category = 'Operaciones'
     dropdown_action_path = 'operations_panel/route/table/actions.js'
     static_path = 'operations_panel/route/table/base.html'
+    action_headers = False
 
     def context_data_nav(self, context, user, session=None):
         context['navcategories'] = []
