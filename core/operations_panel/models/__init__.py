@@ -8,6 +8,7 @@ from core.operations_panel.models.route import Route
 from core.operations_panel.models.supplier import Supplier
 from core.operations_panel.models.transported_product import TransportedProduct
 from core.operations_panel.models.vehicle import Vehicle
+from core.operations_panel.models.operation_evidence import OperationEvidence
 
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     'TransportedProduct',
     'Cargo',
     'Route',
+    'OperationEvidence',
 ]

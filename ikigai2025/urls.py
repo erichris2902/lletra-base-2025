@@ -3,6 +3,8 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from core.operations_panel.views.route import RouteAsturianoListView
+
 admin.autodiscover()
 
 urlpatterns = [
@@ -17,4 +19,5 @@ urlpatterns = [
     path('system/', include("core.system_panel.urls")),  # System panel URLs
     path('supplier/', include("core.supplier_panel.urls")),  # System panel URLs
     path('', include("core.admin_panel.urls")),  # Admin panel URLs at root
+    path('asturiano/', RouteAsturianoListView.as_view(), name='routes_asturiano'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -396,14 +396,14 @@ def _serialize_related_document_from_payment(pay, currency: str) -> dict:
     base = amount if tasa_neta == 0 else (amount / (ONE + tasa_neta)).quantize(D2, rounding=ROUND_HALF_UP)
 
     taxes_payload = []
-    for t in taxes:
-        taxes_payload.append({
-            "type": getattr(t, "type", ""),  # IVA | ISR | IEPS
-            "factor": getattr(t, "factor", ""),  # Tasa | Cuota | Exento
-            "base": float(base),  # número
-            "withholding": bool(getattr(t, "withholding", False)),
-            "rate": float(q4(getattr(t, "rate", 0))),  # número con 4 dp
-        })
+    # for t in taxes:
+    #     taxes_payload.append({
+    #         "type": getattr(t, "type", ""),  # IVA | ISR | IEPS
+    #         "factor": getattr(t, "factor", ""),  # Tasa | Cuota | Exento
+    #         "base": float(base),  # número
+    #         "withholding": bool(getattr(t, "withholding", False)),
+    #         "rate": float(q4(getattr(t, "rate", 0))),  # número con 4 dp
+    #     })
 
     taxes = get_taxes(FacturapiInvoice.objects.get(uuid=pay.uuid).facturapi_id)
 

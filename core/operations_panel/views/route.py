@@ -54,6 +54,14 @@ class RouteAsturianoListView(RouteListView):
     dropdown_action_path = 'operations_panel/route/table/actions.js'
     static_path = 'operations_panel/route/table/base.html'
 
+    def context_data_nav(self, context, user, session=None):
+        context['navcategories'] = []
+        context['user'] = user
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(AdminListView, self).dispatch(request, *args, **kwargs)
+
     def handle_searchdata(self, request, data):
         queryset = self.get_queryset().exclude(name__contains="OPERATION").filter(name__contains="REGION").filter(name__contains="ZONA")
         data = [obj.to_display_dict(keys=self.datatable_keys) for obj in queryset]

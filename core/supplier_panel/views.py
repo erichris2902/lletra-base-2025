@@ -1,5 +1,6 @@
 from decimal import Decimal, ROUND_HALF_UP
 
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
 from core.operations_panel.models import Supplier
@@ -156,3 +157,111 @@ def validate_cfdi_xml(xml_file, expected_rfc: str, expected_subtotal: Decimal, r
         return False, "El archivo XML no es válido (no se pudo parsear)."
     except Exception as e:
         return False, f"Error validando XML: {e}"
+
+
+
+from core.operations_panel.views.operation import OperationListView
+from core.operations_panel.models.operation import Operation
+from django import forms
+from django.conf import settings
+from django.core.files.uploadedfile import UploadedFile
+
+
+class OperationEvidenceUploadForm(forms.Form):
+    description = forms.CharField(label="Descripción", required=False)
+    files = forms.FileField(
+        label="Evidencias (Fotos/PDF)",
+        widget=forms.FileInput(attrs={
+            "accept": "image/*,application/pdf"
+        })
+    )
+
+
+class OperationSupplierListView(OperationListView):
+    model = Operation
+    form = OperationEvidenceUploadForm
+    template_name = 'base/elements/views/supplier_panel/datatable_list.html'
+    datatable_headers = ["Folio", "Cliente", "Fecha", "Estatus", "Total"]
+    datatable_keys = ["folio", "client", "operation_date", "status", "total"]
+    datatable_actions = True
+    title = "Operaciones"
+    form_path = 'base/elements/forms/form.html'
+    section = 'Operaciones'
+    category = 'Portal Proveedor'
+    static_path = 'supplier_panel/operation/table_base.html'
+    search_fields = ["folio", "client__business_name", "status", "operation_date"]
+
+    def handle_get(self, request, data):
+        obj_id = request.POST.get('id')
+        from core.operations_panel.models import Supplier as OPSupplier
+        instance = get_object_or_404(self.model, pk=obj_id)
+        supplier = OPSupplier.objects.filter(code=request.user.username).first()
+        if not supplier or instance.supplier_id != supplier.id:
+            data['error'] = 'No tienes permiso para ver esta operación.'
+            return data
+        self.form_action = "UploadEvidence"
+        data['id'] = str(instance.id)
+        # Renderizamos usando un form simple (no ModelForm) sin pasar instance
+        form_instance = self.form()
+        data['form'] = self.render_others_form(request, instance, form_instance, action=self.form_action)
+        return data
+
+    def handle_uploadevidence(self, request, data):
+        from core.operations_panel.models import Supplier as OPSupplier
+        op = get_object_or_404(self.model, pk=request.POST.get('id'))
+        supplier = OPSupplier.objects.filter(code=request.user.username).first()
+        if not supplier or op.supplier_id != supplier.id:
+            data['error'] = 'No tienes permiso para subir evidencias de esta operación.'
+            return data
+
+        form = self.form(request.POST, request.FILES)
+        if not form.is_valid():
+            data['error'] = form.errors
+            return data
+
+        files = request.FILES.getlist('files')
+        description = form.cleaned_data.get('description')
+
+        from django.db import transaction
+        from core.operations_panel.models.operation_evidence import OperationEvidence
+
+        created = 0
+        with transaction.atomic():
+            for f in files:
+                if not isinstance(f, UploadedFile):
+                    continue
+                content_type = getattr(f, 'content_type', '') or ''
+                if content_type.startswith('image/'):
+                    kind = OperationEvidence.FileKind.PHOTO
+                elif content_type == 'application/pdf' or f.name.lower().endswith('.pdf'):
+                    kind = OperationEvidence.FileKind.PDF
+                else:
+                    # tipo no soportado
+                    continue
+                OperationEvidence.objects.create(
+                    operation=op,
+                    file=f,
+                    file_kind=kind,
+                    description=description or '' ,
+                    uploaded_by=getattr(request, 'user', None)
+                )
+                created += 1
+
+        if created == 0:
+            data['error'] = 'No se subieron archivos válidos (solo imágenes o PDF).'
+            return data
+
+        data['success'] = True
+        data['id'] = str(op.id)
+        return data
+
+    def get_queryset(self):
+        from core.operations_panel.models import Supplier as OPSupplier
+        supplier = OPSupplier.objects.filter(code=self.request.user.username).first()
+        qs = self.model.objects.none()
+        if supplier:
+            qs = self.model.objects.filter(supplier=supplier).exclude(Q(folio__isnull=True) | Q(folio="")) \
+                .prefetch_related("client", "driver", "vehicle", "route", "shipment_invoice", "transported_products")
+        return qs
+
+
