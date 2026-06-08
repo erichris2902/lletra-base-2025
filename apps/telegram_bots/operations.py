@@ -63,75 +63,54 @@ def register_operations(tool_input):
 
 
 def check_existing_operation(operation_data):
-    """
-    Verifica si ya existe una operación con datos similares.
-
-    Args:
-        operation_data (dict): Datos de la operación a verificar
-
-    Returns:
-        Operation: La operación existente si se encuentra, None si no existe
-    """
     try:
         # Obtener los datos clave para la comparación
         client_name = operation_data.get('cliente', '').strip()
-        origen = operation_data.get('origen', '').strip()
         destino = operation_data.get('destino', '').strip()
         fecha = operation_data.get('fecha', '')
-        placas = operation_data.get('placas', '').strip()
         operador = operation_data.get('operador', '').strip()
+
+        # Verificar que tenemos los datos mínimos necesarios
+        if not client_name or not destino or not fecha or not operador:
+            print(
+                f"Datos insuficientes para verificar duplicado: cliente='{client_name}', destino='{destino}', fecha='{fecha}', operador='{operador}'")
+            return None
 
         # Parsear la fecha
         operation_date = parse_date(fecha)
 
-        # Buscar operaciones con criterios similares
+        # Buscar cliente
+        client = Client.get_or_create_by_str(client_name)
+        if not client:
+            print(f"No se pudo encontrar o crear cliente: {client_name}")
+            return None
+
+        # Buscar operador/conductor
+        driver = Driver.get_or_create_by_str(operador)
+        if not driver:
+            print(f"No se pudo encontrar o crear operador: {operador}")
+            return None
+
+        # Buscar operaciones que coincidan con los 4 criterios principales
         potential_duplicates = Operation.objects.filter(
+            client=client,
+            driver=driver,
             operation_date=operation_date
         )
 
-        # Si hay cliente, filtrar por cliente
-        if client_name:
-            client = Client.get_or_create_by_str(client_name)
-            potential_duplicates = potential_duplicates.filter(client=client)
-
-        # Si hay vehículo, filtrar por vehículo
-        if placas:
-            try:
-                vehicle = Vehicle.objects.filter(license_plate__icontains=placas).first()
-                if vehicle:
-                    potential_duplicates = potential_duplicates.filter(vehicle=vehicle)
-            except:
-                pass
-
-        # Si hay conductor, filtrar por conductor
-        if operador:
-            try:
-                driver = Driver.objects.filter(name__icontains=operador).first()
-                if driver:
-                    potential_duplicates = potential_duplicates.filter(driver=driver)
-            except:
-                pass
-
-        # Verificar coincidencias más específicas en raw_payload
+        # Verificar coincidencias de destino en raw_payload
         for operation in potential_duplicates:
             if operation.raw_payload:
-                # Comparar datos del payload
-                raw_origen = operation.raw_payload.get('origen', '').strip()
                 raw_destino = operation.raw_payload.get('destino', '').strip()
-                raw_placas = operation.raw_payload.get('placas', '').strip()
-                raw_operador = operation.raw_payload.get('operador', '').strip()
 
-                # Verificar coincidencias (ignorando mayúsculas/minúsculas y espacios)
-                origen_match = origen.lower() == raw_origen.lower() if origen and raw_origen else True
-                destino_match = destino.lower() == raw_destino.lower() if destino and raw_destino else True
-                placas_match = placas.lower() == raw_placas.lower() if placas and raw_placas else True
-                operador_match = operador.lower() == raw_operador.lower() if operador and raw_operador else True
-
-                # Si la mayoría de los campos coinciden, considerar como duplicado
-                matches = sum([origen_match, destino_match, placas_match, operador_match])
-                if matches >= 3:  # Al menos 3 de 4 campos deben coincidir
+                # Verificar si el destino coincide (ignorando mayúsculas/minúsculas)
+                if destino.lower() == raw_destino.lower():
+                    print(
+                        f"Operación duplicada encontrada: ID={operation.id}, Cliente={client_name}, Destino={destino}, Fecha={fecha}, Operador={operador}")
                     return operation
 
+        print(
+            f"No se encontró duplicado para: Cliente={client_name}, Destino={destino}, Fecha={fecha}, Operador={operador}")
         return None
 
     except Exception as e:
