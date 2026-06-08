@@ -89,18 +89,25 @@ class InvoiceShipmentIFormView(InvoiceFormView):
         data['redirect_url'] = "/operations/"
 
     def handle_predictproduct(self, request, context):
+        print("predict product")
         operation = Operation.objects.get(id=self.kwargs['operation_id'])
-        if operation.route.initial_location.address.zip_code[:2] == "76" and operation.route.destination_location.address.zip_code[:2] == "76":
+        created = False
+        if FacturapiProduct.objects.filter(sku=operation.folio).exists():
+            productInvoice = FacturapiProduct.objects.get(sku=operation.folio)
+            created = True
+        elif operation.route.initial_location.address.zip_code[:2] == "76" and operation.route.destination_location.address.zip_code[:2] == "76":
             productInvoice = FacturapiProduct.objects.get(sku="BASE-LOCAL")
         else:
             productInvoice = FacturapiProduct.objects.get(sku="BASE-FORANEA")
-        productInvoice.name = operation.folio
 
-        productInvoice.description = operation.folio
-        productInvoice.description += " RUTA"
-        productInvoice.description += ", ".join([delivery.name for delivery in operation.route.route_stops.all()])
-        productInvoice.description += " " + operation.route.destination_location.name
-        productInvoice.description += " " + operation.cargo_appointment.strftime('%d/%m/%Y')
+        if not created:
+            productInvoice.name = operation.folio
+
+            productInvoice.description = operation.folio
+            productInvoice.description += " RUTA"
+            productInvoice.description += ", ".join([delivery.name for delivery in operation.route.route_stops.all()])
+            productInvoice.description += " " + operation.route.destination_location.name
+            productInvoice.description += " " + operation.cargo_appointment.strftime('%d/%m/%Y')
 
         context["price"] = str(productInvoice.price)
         context["product"] = str(productInvoice.name)
@@ -218,16 +225,23 @@ class InvoiceShipmentLocalFormView(InvoiceFormView):
         data['redirect_url'] = "/operations/"
 
     def handle_predictproduct(self, request, context):
+        print("predict product2")
         operation = Operation.objects.get(id=self.kwargs['operation_id'])
-        productInvoice = FacturapiProduct.objects.get(sku="BASE-LOCAL")
-        productInvoice.name = operation.folio
+        created = False
+        if FacturapiProduct.objects.filter(sku=operation.folio).exists():
+            productInvoice = FacturapiProduct.objects.get(sku=operation.folio)
+            created = True
+        else:
+            productInvoice = FacturapiProduct.objects.get(sku="BASE-LOCAL")
 
-        productInvoice.description = operation.folio
-        productInvoice.description += " RUTA"
-        if operation.route:
-            productInvoice.description += ", ".join([delivery.name for delivery in operation.route.route_stops.all()])
-            productInvoice.description += " " + operation.route.destination_location.name
-            productInvoice.description += " " + operation.cargo_appointment.strftime('%d/%m/%Y')
+        if not created:
+            productInvoice.name = operation.folio
+            productInvoice.description = operation.folio
+            productInvoice.description += " RUTA"
+            if operation.route:
+                productInvoice.description += ", ".join([delivery.name for delivery in operation.route.route_stops.all()])
+                productInvoice.description += " " + operation.route.destination_location.name
+                productInvoice.description += " " + operation.cargo_appointment.strftime('%d/%m/%Y')
 
         context["price"] = str(productInvoice.price)
         context["product"] = str(productInvoice.name)
