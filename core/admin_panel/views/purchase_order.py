@@ -52,6 +52,7 @@ class PurchaseOrderListView(AdminListView):
 
         data = []
         for order in orders:
+            order.calculate_totals()
             data.append({
                 'id': order.id,
                 'folio': order.folio,

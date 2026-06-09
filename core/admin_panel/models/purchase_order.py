@@ -2,6 +2,7 @@ from django.db import models, IntegrityError
 from django.utils import timezone
 from decimal import Decimal
 
+from apps.facturapi.choices import TaxRegime
 from core.system.models import BaseModel
 from core.operations_panel.models import Client, Operation, Driver, Supplier
 from apps.telegram_bots.models import TelegramUser
@@ -145,14 +146,21 @@ class PurchaseOrder(BaseModel):
         accessories_total = sum(
             acc.subtotal for acc in self.accessories.all()
         )
-
-        self.subtotal = operations_total + accessories_total
-        self.tax_amount = self.subtotal * Decimal('0.16')  # 16% IVA
-        self.total = self.subtotal + self.tax_amount
+        if not self.supplier:
+            print("No se ha seleccionado un proveedor para esta orden de compra.")
+            return
+        if self.supplier.tax_regime == TaxRegime.RF17B: #Si es RESICO usar 16 general
+            self.subtotal = operations_total + accessories_total
+            self.tax_amount = self.subtotal * Decimal('0.16')  # 16% IVA
+            self.total = self.subtotal + self.tax_amount
+        else:
+            self.subtotal = operations_total + accessories_total
+            self.tax_amount = operations_total * Decimal('0.12') +  accessories_total * Decimal('0.16') # 16% IVA
+            self.total = self.subtotal + self.tax_amount
         self.save()
 
     def __str__(self):
-        return f"{self.folio} - {self.client.business_name} - {self.get_status_display()}"
+        return f"{self.folio} - {self.supplier.business_name} - {self.get_status_display()}"
 
     class Meta:
         verbose_name = "Orden de Compra"

@@ -205,6 +205,8 @@ class Operation(BaseModel):
         result = self.to_display_dict(keys)
         result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route and self.route.route_stops else "[]"
         result["folio"] = "SIN FOLIO" if not self.folio else self.folio
+        if self.is_inverse_logistic and "route" in result.keys():
+            result["route"] += " (INVERSA)"
         if self.raw_payload:
 
             if self.shipment_type == ShipmentType.GENERAL:
@@ -245,6 +247,9 @@ class Operation(BaseModel):
             result["deliveries"] = self.raw_payload.get("repartos", "")
             result["vehicle"] = str(self.vehicle_type) if self.vehicle_type else self.raw_payload.get("unidad", "")
             result["driver"] = self.raw_payload.get("proveedor", "")
+
+        if self.route and self.is_inverse_logistic:
+            result["destination"] += " (INVERSA)"
 
         result["invoice_id"] = str(self.shipment_invoice.id) if self.shipment_invoice else None
         return result
