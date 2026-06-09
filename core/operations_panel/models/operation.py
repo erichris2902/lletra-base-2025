@@ -600,6 +600,12 @@ class Operation(BaseModel):
         # Get the deliveries as a comma-separated list
         deliveries = ", ".join([d.name for d in self.route.route_stops.all()])
 
+        cargo_time = (
+            self.cargo_appointment.strftime("%H:%M")
+            if self.cargo_appointment
+            else "N/A"
+        )
+
         # Format the message
         message = (
             f"🚚 Nueva operación registrada:\n"
@@ -610,6 +616,8 @@ class Operation(BaseModel):
             f"Proveedor: {self.supplier.business_name if self.supplier else 'N/A'}\n"
             f"Operador: {self.driver.name + ' ' + self.driver.last_name if self.driver else 'N/A'}\n"
             f"Fecha: {self.operation_date.strftime('%Y-%m-%d')}\n"
+            f"Logística inversa: {'Sí' if self.is_inverse_logistic else 'No'}\n"
+            f"Hora de carga: {cargo_time}\n"
         )
 
         if deliveries:
