@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, time, timedelta
 
 from django.db import transaction
 from apps.telegram_bots.models import TelegramGroup
@@ -118,7 +118,7 @@ def check_existing_operation(operation_data):
         return None
 
 
-def create_operation_from_data(data):
+def create_operation_from_data_respaldo(data):
     # Find or create related entities
     client = Client.get_or_create_by_str(data.get('cliente'))
     route = look_for_route(data.get('destino'))
@@ -219,6 +219,125 @@ def create_operation_from_data(data):
         operation.save()
         print("Ruta duplicada")
 
+
+    return operation
+
+
+
+def create_operation_from_data(data):
+    # Find or create related entities
+    client = Client.get_or_create_by_str(data.get('cliente'))
+    route = look_for_route(data.get('destino'))
+
+    supplier = Supplier.get_or_create_by_str(data.get('proveedor'))
+    driver = Driver.get_or_create_by_str(data.get('operador'))
+    vehicle = Vehicle.get_or_create_by_plate(data.get('placas'), data.get('unidad'))
+    accessories = True if data.get('accesorios', "").strip().lower() == "maniobra" else False
+
+    # Parse date
+    operation_date = parse_date(data.get('fecha'))
+
+    # Logistica inversa
+    is_inverse_logistic = bool(data.get("log_inv", False))
+
+    # Hora de carga
+    cargo_time = data.get("cargo_time", -1)
+
+    cargo_appointment = None
+    scheduled_departure_time = None
+    download_appointment = None
+
+    if cargo_time not in [None, "", -1, "-1"]:
+        try:
+            cargo_hour = int(cargo_time)
+
+            if 0 <= cargo_hour <= 23:
+                cargo_appointment = datetime.combine(
+                    operation_date,
+                    time(hour=cargo_hour, minute=0)
+                )
+
+                scheduled_departure_time = cargo_appointment
+                download_appointment = cargo_appointment + timedelta(hours=10)
+
+        except (ValueError, TypeError):
+            cargo_appointment = None
+            scheduled_departure_time = None
+            download_appointment = None
+
+    shipment_type = data.get('type')
+    if shipment_type.lower() == '3b':
+        shipment_type = ShipmentType.THREE_B
+    elif shipment_type.lower() == 'asturiano':
+        shipment_type = ShipmentType.ASTURIANO
+    elif shipment_type.lower() == 'chem':
+        shipment_type = ShipmentType.CHEM
+    else:
+        shipment_type = ShipmentType.GENERAL
+
+    # Create the operation
+    operation = Operation.objects.create(
+        client=client,
+        route=route,
+        supplier=supplier,
+        driver=driver,
+        vehicle=vehicle,
+        operation_date=operation_date,
+        shipment_type=shipment_type,
+        status=OperationStatus.PENDING,
+        vehicle_type=vehicle.unit_type if vehicle else None,
+        raw_payload=data,
+        accessories=accessories,
+
+        # Nuevos campos
+        is_inverse_logistic=is_inverse_logistic,
+        cargo_appointment=cargo_appointment,
+        scheduled_departure_time=scheduled_departure_time,
+        download_appointment=download_appointment,
+    )
+
+    if not route:
+        origin = DeliveryLocation.get_or_create_by_str(data.get('origen'))
+        destination = DeliveryLocation.get_or_create_by_str(data.get('destino'))
+
+        route = Route.objects.create(
+            name="OPERATION-" + str(operation.id),
+            initial_location=origin,
+            destination_location=destination,
+        )
+
+        deliveries = data.get('repartos', [])
+
+        if deliveries:
+            for delivery in deliveries:
+                delivery_location = DeliveryLocation.get_or_create_by_str(delivery)
+                if delivery_location:
+                    route.route_stops.add(delivery_location)
+                    route.save()
+
+        operation.route = route
+        operation.save()
+
+    else:
+        print("Ruta en proceso de duplicacion")
+
+        original_stops = list(route.route_stops.all())
+
+        route.pk = None
+        route.id = None
+        route.name = f"{route.name} - copia"
+        route.published = False
+        route.save()
+
+        route.name = f"OPERATION-{operation.id}"
+        route.save()
+
+        route.route_stops.set(original_stops)
+
+        operation.route = route
+        operation.save()
+
+        print("Ruta duplicada")
 
     return operation
 

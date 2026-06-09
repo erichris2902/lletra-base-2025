@@ -35,6 +35,7 @@ from django.db import models
 class Operation(BaseModel):
     folio = models.CharField(_("Folio"), max_length=10, unique=True, null=True, blank=True)
     pre_folio = models.CharField(_("Pre-folio"), max_length=10, null=True, blank=True, db_index=True)
+    is_inverse_logistic = models.BooleanField(_("¿Es logistica inversa?"), default=False, blank=True)
 
     shipment_invoice = models.ForeignKey("facturapi.FacturapiInvoice", blank=True, null=True,
                                          related_name="shipment_invoice", on_delete=models.PROTECT)
