@@ -16,6 +16,10 @@ function dropdown(data, type, row) {
         `;
     }
 
+    if (row.invoiceable) {
+        dropdown += '<a rel="auto_invoice" class="btn btn-outline-danger"  type="button">Timbrar</a>';
+    }
+
 
     dropdown += '<button class="btn btn-primary dropdown-toggle btn-sm rounded-pill" type="button" data-bs-toggle="dropdown">Acciones</button>';
     dropdown += '<div class="dropdown-menu">';

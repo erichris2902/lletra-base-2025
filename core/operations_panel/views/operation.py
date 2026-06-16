@@ -655,12 +655,14 @@ class ShipmentOperationListView(AdminListView):
         else:
             data['error'] = form.errors
 
-    def handle_generate_invoice(self, request, data):
+    def handle_auto_invoice(self, request, data):
         try:
+
+
             instance = self.model.objects.get(pk=request.POST.get('id'))
-            if not instance.folio:
-                data['error'] = "No se puede generar factura sin un folio asignado"
-                return True
+
+            if instance.shipment_invoice:
+                raise Exception("Ya existe una factura para esta operacion")
 
             invoice = instance.generate_invoice(request.user)
             data['success'] = True

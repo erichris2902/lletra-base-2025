@@ -10,7 +10,7 @@ from django.db import models, transaction
 from django.template.loader import render_to_string
 from packaging.utils import _
 
-from apps.facturapi.models import FacturapiInvoice
+from apps.facturapi.models import FacturapiInvoice, FacturapiProduct, FacturapiInvoiceItem
 from apps.facturapi.services import download_invoice_pdf, download_invoice_xml
 from apps.google_drive.services import check_folder_exists_with_service_account, create_folder_with_service_account, \
     upload_file_with_service_account
@@ -251,6 +251,10 @@ class Operation(BaseModel):
         if self.route and self.is_inverse_logistic:
             result["destination"] += " (INVERSA)"
 
+        if FacturapiProduct.objects.filter(sku=self.folio).exists():
+            result["invoiceable"] = True
+            print("Facturaable")
+
         result["invoice_id"] = str(self.shipment_invoice.id) if self.shipment_invoice else None
         return result
 
@@ -449,6 +453,59 @@ class Operation(BaseModel):
 
         if not self.folio:
             raise ValueError("Cannot generate invoice without a folio")
+
+        data = {}
+        instance = self
+        with transaction.atomic():
+            customer = self.client
+
+            product = FacturapiProduct.objects.get(sku=self.folio)
+
+            invoice = ShipmentFacturapiInvoice()
+            invoice.operation = instance
+            invoice.customer = customer
+
+            invoice.departure_at = self.cargo_appointment
+
+            invoice.total_distance_km = self.route.direct_distance
+            invoice.departure_at = self.cargo_appointment
+            invoice.scheduled_arrival_at = self.download_appointment
+            invoice.sender_name = self.client.business_name
+            invoice.sender_rfc = self.client.rfc
+            invoice.sct_permit_number = self.vehicle.sct_permit if self.vehicle.sct_permit and self.vehicle.sct_permit != "NULL" else "0919ACA22052014021001000"
+            invoice.insurer_name = self.vehicle.insurance_company
+            invoice.insurance_policy_number = self.vehicle.insurance_code
+            invoice.sct_permit_type = "TPAF01"
+
+            if product.price == 0:
+                invoice.customer = Client.objects.get(name="LLETRA")
+                invoice.cfdi_type = "T"
+            else:
+                invoice.cfdi_type = "I"
+            invoice.use = "G03"
+            invoice.payment_form = "PPD"
+            invoice.payment_method = "99"
+
+            invoice.currency = 'MXN'
+            invoice.expeditionPlace = '76100'
+            invoice.save()
+
+            invoice_item = FacturapiInvoiceItem()
+            invoice_item.quantity = 1
+            invoice_item.unit_price = product.price
+            invoice_item.product = product
+            invoice_item.description = product.description
+            invoice_item.discount = 0
+            invoice_item.subtotal = product.price
+            invoice_item.invoice = invoice
+            invoice_item.save()
+            invoice.items.add(invoice_item)
+
+            invoice.bill()
+
+            instance.shipment_invoice = invoice
+            instance.save()
+        return data
 
         # For now, we'll just update the status
         self.status = OperationStatus.INVOICED
