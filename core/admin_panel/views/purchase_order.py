@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from django.views import View
 from django.utils import timezone
+from django import forms
 
 from core.admin_panel.models.purchase_order import (
     PurchaseOrder,
@@ -20,6 +21,17 @@ from core.admin_panel.models.purchase_order import (
 from core.operations_panel.models import Operation, Client, Driver, Supplier
 from apps.telegram_bots.models import TelegramUser
 from core.system.views import AdminListView
+
+
+class EditOperationForm(forms.Form):
+    total = forms.DecimalField(max_digits=12, decimal_places=2, label='Costo de la operación')
+
+
+class EditAccessoryForm(forms.Form):
+    type = forms.ChoiceField(choices=AccessoryType.choices, label='Tipo')
+    description = forms.CharField(max_length=255, required=False, label='Descripción')
+    quantity = forms.DecimalField(max_digits=8, decimal_places=2, label='Cantidad')
+    unit_price = forms.DecimalField(max_digits=10, decimal_places=2, label='Precio unitario')
 
 
 class PurchaseOrderListView(AdminListView):
@@ -187,8 +199,47 @@ def get_operations_by_filter(request):
 
 
 def purchase_order_detail(request, order_id):
-    """Vista de detalle de orden de compra"""
+    """Vista de detalle de orden de compra y carga de archivos del proveedor"""
     order = get_object_or_404(PurchaseOrder, id=order_id)
+
+    # Asegurar que los totales estén actualizados al cargar la vista
+    try:
+        order.calculate_totals()
+    except Exception:
+        pass
+
+    if request.method == 'POST':
+        updated_fields = []
+
+        # Manejar carga de factura del cliente (soporte existente)
+        client_invoice = request.FILES.get('invoice_file')
+        if client_invoice:
+            order.invoice_file = client_invoice
+            updated_fields.append('Factura del cliente')
+
+        # Manejar archivos del proveedor
+        mapping = {
+            'supplier_invoice_pdf': 'Factura del proveedor (PDF)',
+            'supplier_invoice_xml': 'Factura del proveedor (XML)',
+            'supplier_invoice_payment_pdf': 'Complemento de pago (PDF)',
+            'supplier_invoice_payment_xml': 'Complemento de pago (XML)',
+        }
+        for field_name, label in mapping.items():
+            f = request.FILES.get(field_name)
+            if f:
+                setattr(order, field_name, f)
+                updated_fields.append(label)
+
+        if updated_fields:
+            order.save()
+            messages.success(
+                request,
+                'Se cargaron correctamente: ' + ', '.join(updated_fields)
+            )
+        else:
+            messages.info(request, 'No se seleccionaron archivos para subir.')
+
+        return redirect('admin_panel:purchase_order_detail', order_id)
 
     context = {
         'title': f'Orden de Compra {order.folio}',
@@ -232,21 +283,356 @@ def purchase_order_update_status(request, order_id):
     return redirect('admin_panel:purchase_order_detail', order_id)
 
 
+def purchase_order_edit_operation(request, order_id, po_op_id):
+    """Editar el costo total de una Operación ligada a la OC (campo Operation.total)."""
+    order = get_object_or_404(PurchaseOrder, id=order_id)
+    rel = get_object_or_404(PurchaseOrderOperation, id=po_op_id, purchase_order=order)
+    op = rel.operation
+
+    if request.method == 'POST':
+        form = EditOperationForm(request.POST)
+        if form.is_valid():
+            op.total = form.cleaned_data['total']
+            op.save(update_fields=['total'])
+            # Recalcular totales de la OC
+            order.calculate_totals()
+            messages.success(request, 'Operación actualizada correctamente.')
+            return redirect('admin_panel:purchase_order_detail', order_id=order.id)
+    else:
+        form = EditOperationForm(initial={'total': getattr(op, 'total', 0) or 0})
+
+    context = {
+        'title': f'Editar operación {getattr(op, "folio", "OP-")+str(op.id)}',
+        'order': order,
+        'rel': rel,
+        'operation': op,
+        'form': form,
+    }
+    return render(request, 'admin_panel/purchase_order_edit_operation.html', context)
+
+
+def purchase_order_edit_accessory(request, order_id, accessory_id):
+    """Editar un accesorio de la OC."""
+    order = get_object_or_404(PurchaseOrder, id=order_id)
+    accessory = get_object_or_404(PurchaseOrderAccessory, id=accessory_id, purchase_order=order)
+
+    if request.method == 'POST':
+        form = EditAccessoryForm(request.POST)
+        if form.is_valid():
+            accessory.type = form.cleaned_data['type']
+            accessory.description = form.cleaned_data['description']
+            accessory.quantity = form.cleaned_data['quantity']
+            accessory.unit_price = form.cleaned_data['unit_price']
+            accessory.save()
+            # save() de Accessory ya recalcula subtotal y totales de la OC
+            messages.success(request, 'Accesorio actualizado correctamente.')
+            return redirect('admin_panel:purchase_order_detail', order_id=order.id)
+    else:
+        form = EditAccessoryForm(initial={
+            'type': accessory.type,
+            'description': accessory.description,
+            'quantity': accessory.quantity,
+            'unit_price': accessory.unit_price,
+        })
+
+    context = {
+        'title': f'Editar accesorio',
+        'order': order,
+        'accessory': accessory,
+        'form': form,
+    }
+    return render(request, 'admin_panel/purchase_order_edit_accessory.html', context)
+
+
 def purchase_order_generate_pdf(request, order_id):
-    """Generar PDF de la orden de compra"""
+    """Genera el PDF de la OC. Prioriza usar una plantilla PDF base (core/templates/admin_panel_PlantillaOC.pdf)
+    como fondo y sobreponer el contenido con ReportLab para máxima fidelidad. Si no está disponible o falla,
+    hace fallback al motor xhtml2pdf existente.
+    """
+    from io import BytesIO
+    import os
+    from decimal import Decimal as _D
+    from django.conf import settings
+    from django.template.loader import render_to_string
+    from xhtml2pdf import pisa
+
+    # Librerías para el backend de "PDF base + overlay"
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.units import mm
+    try:
+        # pypdf 4+
+        from pypdf import PdfReader, PdfWriter
+    except Exception:  # pragma: no cover
+        PdfReader = None
+        PdfWriter = None
+
     order = get_object_or_404(PurchaseOrder, id=order_id)
 
-    # Por ahora, respuesta simple - puedes implementar generación de PDF más tarde
-    from django.template.loader import render_to_string
+    # Asegurar totales actualizados
+    try:
+        order.calculate_totals()
+    except Exception:
+        pass
 
-    html_content = render_to_string(
-        'admin_panel/purchase_order/pdf_template.html',
-        {'order': order}
-    )
+    # Recolectar datos necesarios (mismo criterio que DOCX/xhtml2pdf)
+    operations_rel = order.operations.select_related('operation', 'operation__route').all()
+    accessories = list(order.accessories.select_related('operation').all())
 
-    response = HttpResponse(html_content, content_type='text/html')
-    response['Content-Disposition'] = f'inline; filename="{order.folio}.html"'
+    # Mapear accesorios por operación
+    acc_by_op = {}
+    for acc in accessories:
+        op_id = getattr(acc.operation, 'id', None)
+        if op_id:
+            acc_by_op.setdefault(op_id, []).append(acc)
 
+    subtotal_operations = _D('0.00')
+    subtotal_accessories = _D('0.00')
+
+    ops_data = []
+    for rel in operations_rel:
+        op = rel.operation
+        op_base_total = _D(getattr(op, 'total', 0) or 0)
+        op_accessories = acc_by_op.get(op.id, [])
+        op_acc_total = sum(_D(getattr(a, 'subtotal', 0) or 0) for a in op_accessories)
+        total_op = op_base_total + op_acc_total
+
+        subtotal_operations += op_base_total
+        subtotal_accessories += op_acc_total
+
+        ops_data.append({
+            'op': op,
+            'route': getattr(op, 'route', None),
+            'accessories': op_accessories,
+            'op_base_total': op_base_total,
+            'op_acc_total': op_acc_total,
+            'total_op': total_op,
+        })
+
+    subtotal = subtotal_operations + subtotal_accessories
+    iva = subtotal * _D('0.16')
+    retention = subtotal_operations * _D('0.04')
+    total = subtotal + iva - retention
+
+    # 1) Intentar backend: Plantilla PDF base + overlay
+    try:
+        base_pdf_path = os.path.join(settings.BASE_DIR, 'core', 'templates', 'admin_panel_PlantillaOC.pdf')
+        use_overlay_backend = os.path.isfile(base_pdf_path) and PdfReader is not None and PdfWriter is not None
+
+        if use_overlay_backend:
+            # Cargar plantilla base para conocer tamaño de página
+            with open(base_pdf_path, 'rb') as f:
+                base_reader = PdfReader(f)
+                base_pages = base_reader.pages
+                # Asumimos tamaño de la primera página para todas
+                media_box = base_pages[0].mediabox
+                page_width = float(media_box.width)
+                page_height = float(media_box.height)
+
+            # Crear overlay dinámico con ReportLab (mismo tamaño que la base)
+            overlay_buffer = BytesIO()
+            c = canvas.Canvas(overlay_buffer, pagesize=(page_width, page_height))
+
+            # Márgenes y posiciones base (en puntos). Ajustables según la plantilla.
+            left = 20 * mm
+            right = page_width - 20 * mm
+            top = page_height - 20 * mm
+            y = top
+            line_h = 5.5 * mm
+
+            # Encabezado datos clave (ajustar X/Y para tu plantilla concreta)
+            c.setFont('Helvetica-Bold', 11)
+            c.drawRightString(right, y, f"Orden de Compra • Folio: {order.folio}")
+            y -= line_h
+            c.setFont('Helvetica', 10)
+            c.drawRightString(right, y, f"Fecha: {order.created_at.strftime('%d/%m/%Y')}")
+            y -= (line_h * 1.2)
+
+            # Bloque proveedor/driver/estatus
+            c.setFont('Helvetica-Bold', 10)
+            c.drawString(left, y, 'Proveedor:')
+            c.setFont('Helvetica', 10)
+            c.drawString(left + 28 * mm, y, f"{getattr(order.supplier, 'business_name', 'N/A')}")
+            y -= line_h
+            c.setFont('Helvetica-Bold', 10)
+            c.drawString(left, y, 'Driver:')
+            c.setFont('Helvetica', 10)
+            c.drawString(left + 28 * mm, y, f"{getattr(order.driver, 'name', 'N/A') or 'N/A'}")
+            y -= line_h
+            c.setFont('Helvetica-Bold', 10)
+            c.drawString(left, y, 'Estatus:')
+            c.setFont('Helvetica', 10)
+            c.drawString(left + 28 * mm, y, f"{order.get_status_display()}")
+            y -= (line_h * 1.5)
+
+            # Título detalle
+            c.setFont('Helvetica-Bold', 11)
+            c.drawString(left, y, 'Detalle de Operaciones')
+            y -= (line_h * 1.2)
+
+            # Encabezados de tabla
+            headers = [
+                ('Folio', 28*mm),
+                ('Origen', 45*mm),
+                ('Destino', 45*mm),
+                ('Fecha', 20*mm),
+                ('Base', 20*mm),
+                ('Accs.', 20*mm),
+                ('Total', 20*mm),
+            ]
+            c.setFont('Helvetica-Bold', 9)
+            x = left
+            for text, w in headers:
+                c.drawString(x, y, text)
+                x += w
+            y -= (line_h * 0.9)
+            c.setLineWidth(0.5)
+            c.line(left, y, right, y)
+            y -= (line_h * 0.4)
+
+            # Filas de operaciones con paginación simple
+            c.setFont('Helvetica', 9)
+            def ensure_space(row_height= line_h):
+                nonlocal y, c
+                if y < 25*mm:  # pie de página: 25mm
+                    # Resumen parcial o salto de página
+                    c.showPage()
+                    # Reset de coordenadas en nueva página
+                    new_top = page_height - 20*mm
+                    y = new_top
+
+            for item in ops_data:
+                op = item['op']
+                route = item['route']
+                op_folio = getattr(op, 'folio', None) or f"OP-{op.id}"
+                origin = str(getattr(route, 'initial_location', '') or 'N/A')
+                dest = str(getattr(route, 'destination_location', '') or 'N/A')
+                date_str = op.cargo_appointment.strftime('%d/%m/%Y') if getattr(op, 'cargo_appointment', None) else 'N/A'
+
+                ensure_space()
+                x = left
+                cols = [
+                    (op_folio, 28*mm),
+                    (origin, 45*mm),
+                    (dest, 45*mm),
+                    (date_str, 20*mm),
+                    (f"$ {item['op_base_total']:.2f}", 20*mm),
+                    (f"$ {item['op_acc_total']:.2f}", 20*mm),
+                    (f"$ {item['total_op']:.2f}", 20*mm),
+                ]
+                for text, w in cols:
+                    c.drawString(x, y, str(text))
+                    x += w
+                y -= (line_h * 0.9)
+
+                # Accesorios (si deseas listarlos en detalle debajo de cada operación)
+                accs = item['accessories'] or []
+                for acc in accs:
+                    ensure_space()
+                    x = left + 10*mm
+                    c.setFont('Helvetica-Oblique', 8)
+                    c.drawString(x, y, f"• {acc.get_type_display()} | {acc.description} | Cant: {acc.quantity} | PU: $ {acc.unit_price or 0:.2f} | Sub: $ {acc.subtotal or 0:.2f}")
+                    c.setFont('Helvetica', 9)
+                    y -= (line_h * 0.8)
+
+            # Línea y resumen financiero global al final
+            ensure_space()
+            c.setLineWidth(0.5)
+            c.line(left, y, right, y)
+            y -= (line_h * 0.8)
+
+            c.setFont('Helvetica-Bold', 10)
+            labels = [
+                ('Subtotal operaciones', subtotal_operations),
+                ('Subtotal accesorios', subtotal_accessories),
+                ('Subtotal', subtotal),
+                ('IVA (16%)', iva),
+                ('Retención 4% (solo operaciones)', -retention),
+                ('Total', total),
+            ]
+            for name, val in labels:
+                ensure_space()
+                c.drawRightString(right - 40*mm, y, name + ':')
+                c.drawRightString(right, y, f"$ {val:.2f}")
+                y -= (line_h * 0.9)
+
+            c.save()
+            overlay_buffer.seek(0)
+
+            overlay_reader = PdfReader(overlay_buffer)
+            writer = PdfWriter()
+
+            # Si el overlay tiene más páginas de contenido que la base, repetimos la primera página base.
+            base_first_page = None
+            with open(base_pdf_path, 'rb') as f2:
+                base_reader2 = PdfReader(f2)
+                base_first_page = base_reader2.pages[0]
+
+            total_pages = max(len(overlay_reader.pages), len(base_pages))
+            for i in range(total_pages):
+                if i < len(base_pages):
+                    base_page = base_pages[i]
+                else:
+                    base_page = base_first_page
+                # Clonar la página para no mutar el buffer original (pypdf maneja internamente)
+                page = base_page
+                if i < len(overlay_reader.pages):
+                    page.merge_page(overlay_reader.pages[i])
+                writer.add_page(page)
+
+            out = BytesIO()
+            writer.write(out)
+            out.seek(0)
+
+            filename = f"orden-pago-{order.folio}.pdf"
+            response = HttpResponse(out.getvalue(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+    except Exception as _e:
+        # Si algo falla en el backend de overlay, seguimos al fallback HTML.
+        pass
+
+    # 2) Fallback: xhtml2pdf con la plantilla HTML existente
+    # Preparar contexto y renderizar HTML
+    context = {
+        'order': order,
+        'ops_data': ops_data,
+        'subtotal_operations': subtotal_operations,
+        'subtotal_accessories': subtotal_accessories,
+        'subtotal': subtotal,
+        'iva': iva,
+        'retention': retention,
+        'total': total,
+        # logo_url se resuelve dentro de la plantilla si se requiere; mantenemos el enfoque anterior si necesario.
+    }
+
+    html = render_to_string('admin_panel/purchase_order/pdf_template.html', context)
+
+    def link_callback(uri, rel):
+        # MEDIA
+        if uri.startswith(settings.MEDIA_URL):
+            path = os.path.join(settings.MEDIA_ROOT, uri.replace(settings.MEDIA_URL, '').replace('/', os.sep))
+            if os.path.isfile(path):
+                return path
+        # STATIC
+        if uri.startswith(settings.STATIC_URL):
+            if getattr(settings, 'STATIC_ROOT', None):
+                path = os.path.join(settings.STATIC_ROOT, uri.replace(settings.STATIC_URL, '').replace('/', os.sep))
+                if os.path.isfile(path):
+                    return path
+            alt_path = os.path.join(settings.BASE_DIR, 'static', uri.replace(settings.STATIC_URL, '').replace('/', os.sep))
+            if os.path.isfile(alt_path):
+                return alt_path
+        return uri
+
+    result = BytesIO()
+    pdf_status = pisa.CreatePDF(src=html, dest=result, encoding='utf-8', link_callback=link_callback)
+
+    if pdf_status.err:
+        return HttpResponse(html)
+
+    filename = f"orden-pago-{order.folio}.pdf"
+    response = HttpResponse(result.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
 
@@ -348,8 +734,10 @@ def purchase_order_generate_docx(request, order_id):
     for acc in accessories:
         subtotal_accessories += Decimal(acc.subtotal or 0)
 
-    tax = Decimal(getattr(order, "tax", 0) or 0)
-    total = subtotal_operations + subtotal_accessories + tax
+    subtotal = subtotal_operations + subtotal_accessories
+    iva = subtotal * Decimal("0.16")
+    retention = subtotal_operations * Decimal("0.04")
+    total = subtotal + iva - retention
 
     replacements = {
         "<FOLIO>": order.folio,
@@ -361,7 +749,10 @@ def purchase_order_generate_docx(request, order_id):
         "<NOTAS>": order.notes or "Sin notas",
         "<SUBTOTAL_OPERACIONES>": money(subtotal_operations),
         "<SUBTOTAL_ACCESORIOS>": money(subtotal_accessories),
-        "<IMPUESTOS>": money(tax),
+        "<SUBTOTAL>": money(subtotal),
+        "<IVA_16>": money(iva),
+        "<RETENCION_4>": money(retention),
+        "<IMPUESTOS>": money(iva),
         "<TOTAL>": money(total),
     }
 

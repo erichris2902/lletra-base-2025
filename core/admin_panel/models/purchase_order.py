@@ -100,6 +100,19 @@ class PurchaseOrder(BaseModel):
         verbose_name="Factura del proveedor (XML)"
     )
 
+    supplier_invoice_payment_pdf = models.FileField(
+        upload_to='purchase_orders/supplier_invoices/pdf/',
+        null=True,
+        blank=True,
+        verbose_name="Complemento de pago (PDF)"
+    )
+    supplier_invoice_payment_xml = models.FileField(
+        upload_to='purchase_orders/supplier_invoices/xml/',
+        null=True,
+        blank=True,
+        verbose_name="Complemento de pago (XML)"
+    )
+
     # Observaciones
     notes = models.TextField(blank=True, null=True, verbose_name="Observaciones")
 
@@ -138,26 +151,52 @@ class PurchaseOrder(BaseModel):
         raise IntegrityError("No se pudo generar un folio único para la orden de compra.")
 
     def calculate_totals(self):
-        """Calcula los totales basado en operaciones y accesorios"""
+        """Calcula totales con IVA 16% sobre subtotal y retención 4% solo sobre operaciones.
+        Fórmula: total = (ops + acc) + 16%*(ops + acc) - 4%*ops
+        """
         operations_total = sum(
-            item.operation.total or Decimal('0.00')
+            (item.operation.total or Decimal('0.00'))
             for item in self.operations.all()
         )
         accessories_total = sum(
-            acc.subtotal for acc in self.accessories.all()
+            (acc.subtotal or Decimal('0.00')) for acc in self.accessories.all()
         )
-        if not self.supplier:
-            print("No se ha seleccionado un proveedor para esta orden de compra.")
-            return
-        if self.supplier.tax_regime == TaxRegime.RF17B: #Si es RESICO usar 16 general
-            self.subtotal = operations_total + accessories_total
-            self.tax_amount = self.subtotal * Decimal('0.16')  # 16% IVA
-            self.total = self.subtotal + self.tax_amount
-        else:
-            self.subtotal = operations_total + accessories_total
-            self.tax_amount = operations_total * Decimal('0.12') +  accessories_total * Decimal('0.16') # 16% IVA
-            self.total = self.subtotal + self.tax_amount
+
+        subtotal = operations_total + accessories_total
+        iva = subtotal * Decimal('0.16')  # 16% IVA sobre todo el subtotal
+        retention = operations_total * Decimal('0.04')  # 4% solo sobre operaciones
+
+        self.subtotal = subtotal
+        self.tax_amount = iva  # mantenemos tax_amount como IVA para compatibilidad
+        self.total = subtotal + iva - retention
         self.save()
+
+    # Helpers para plantillas y reportes (no requieren migración)
+    def get_operations_total(self):
+        return sum(
+            (item.operation.total or Decimal('0.00'))
+            for item in self.operations.all()
+        )
+
+    def get_accessories_total(self):
+        return sum(
+            (acc.subtotal or Decimal('0.00')) for acc in self.accessories.all()
+        )
+
+    def get_retention_amount(self):
+        return self.get_operations_total() * Decimal('0.04')
+
+    @property
+    def operations_total(self):
+        return self.get_operations_total()
+
+    @property
+    def accessories_total(self):
+        return self.get_accessories_total()
+
+    @property
+    def retention_amount(self):
+        return self.get_operations_total() * Decimal('0.04')
 
     def __str__(self):
         return f"{self.folio} - {self.supplier.business_name} - {self.get_status_display()}"

@@ -251,7 +251,7 @@ class Operation(BaseModel):
         if self.route and self.is_inverse_logistic:
             result["destination"] += " (INVERSA)"
 
-        if FacturapiProduct.objects.filter(sku=self.folio).exists():
+        if FacturapiProduct.objects.filter(sku=self.folio).exists() and self.shipment_invoice:
             result["invoiceable"] = True
             print("Facturaable")
 

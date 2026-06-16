@@ -7,7 +7,9 @@ from core.admin_panel.views.purchase_order import (
     purchase_order_detail,
     purchase_order_update_status,
     purchase_order_generate_pdf,
-    get_operations_by_filter, purchase_order_generate_docx
+    get_operations_by_filter, purchase_order_generate_docx,
+    purchase_order_edit_operation,
+    purchase_order_edit_accessory,
 )
 
 app_name = 'admin_panel'
@@ -32,8 +34,11 @@ urlpatterns = [
     path('purchase-orders/<uuid:order_id>/', purchase_order_detail, name='purchase_order_detail'),
     path('purchase-orders/<uuid:order_id>/update-status/', purchase_order_update_status,
          name='purchase_order_update_status'),
-    path('purchase-orders/<uuid:order_id>/pdf/', purchase_order_generate_docx, name='purchase_order_pdf'),
-    path("purchase-orders/<uuid:order_id>/docx/", purchase_order_generate_docx, name="purchase_order_docx"),
+    path('purchase-orders/<uuid:order_id>/pdf/', purchase_order_generate_pdf, name='purchase_order_pdf'),
+    path('purchase-orders/<uuid:order_id>/docx/', purchase_order_generate_docx, name='purchase_order_docx'),
+    # Edit endpoints
+    path('purchase-orders/<uuid:order_id>/operations/<uuid:po_op_id>/edit/', purchase_order_edit_operation, name='purchase_order_edit_operation'),
+    path('purchase-orders/<uuid:order_id>/accessories/<uuid:accessory_id>/edit/', purchase_order_edit_accessory, name='purchase_order_edit_accessory'),
 
     # API endpoints
     path('api/operations/', get_operations_by_filter, name='api_operations_filter'),

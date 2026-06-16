@@ -15,6 +15,9 @@
                         <a href="{% url 'admin_panel:purchase_order_pdf' order.id %}" class="btn btn-info" target="_blank">
                             <i class="fas fa-file-pdf"></i> Generar PDF
                         </a>
+                        <a href="{% url 'admin_panel:purchase_order_docx' order.id %}" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-file-word"></i> Generar DOCX
+                        </a>
                     </div>
                 </div>
                 <div class="card-body">
@@ -26,7 +29,7 @@
                                 <div class="card-body">
                                     <h5 class="card-title">Información General</h5>
                                     <p><strong>Folio:</strong> {{ order.folio }}</p>
-                                    <p><strong>Cliente:</strong> {{ order.client.business_name }}</p>
+                                    <p><strong>Proveedor:</strong> {{ order.supplier.business_name }}</p>
                                     <p><strong>Driver:</strong> {{ order.driver.name|default:"N/A" }}</p>
                                     <p><strong>Fecha de creación:</strong> {{ order.created_at|date:"d/m/Y H:i" }}</p>
                                 </div>
@@ -75,10 +78,17 @@
 
                                 <div class="card mb-3 border-left-primary">
                                     <div class="card-header bg-primary text-white">
-                                        <h6 class="mb-0">
-                                            {{ item.operation.folio }} -
-                                            {{ item.operation.route.initial_location|default:"N/A" }} → {{ item.operation.route.destination_location|default:"N/A" }}
-                                            <span class="float-right">${{ item.operation.total|floatformat:2|default:"0.00" }}</span>
+                                        <h6 class="mb-0 d-flex justify-content-between align-items-center">
+                                            <span>
+                                                {{ item.operation.folio }} -
+                                                {{ item.operation.route.initial_location|default:"N/A" }} → {{ item.operation.route.destination_location|default:"N/A" }}
+                                            </span>
+                                            <span>
+                                                <a href="{% url 'admin_panel:purchase_order_edit_operation' order.id item.id %}" class="btn btn-light btn-sm me-2">
+                                                    <i class="fas fa-edit"></i> Editar
+                                                </a>
+                                                <span class="badge bg-light text-dark">${{ item.operation.total|floatformat:2|default:"0.00" }}</span>
+                                            </span>
                                         </h6>
                                     </div>
 
@@ -97,6 +107,7 @@
                                                                         <th>Cantidad</th>
                                                                         <th>Precio Unit.</th>
                                                                         <th>Subtotal</th>
+                                                                                                                                                <th>Acciones</th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
@@ -107,6 +118,11 @@
                                                                         <td>{{ accessory.quantity }}</td>
                                                                         <td>${{ accessory.unit_price|floatformat:2 }}</td>
                                                                         <td>${{ accessory.subtotal|floatformat:2 }}</td>
+                                                                        <td>
+                                                                            <a href="{% url 'admin_panel:purchase_order_edit_accessory' order.id accessory.id %}" class="btn btn-sm btn-outline-light">
+                                                                                <i class="fas fa-edit"></i> Editar
+                                                                            </a>
+                                                                        </td>
                                                                     </tr>
                                                 {% if forloop.last %}
                                                                 </tbody>
@@ -133,13 +149,17 @@
                                 <div class="card-body">
                                     <h5 class="card-title">Resumen Financiero</h5>
                                     <div class="row">
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
                                             <p><strong>Subtotal:</strong> ${{ order.subtotal|floatformat:2 }}</p>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
                                             <p><strong>IVA (16%):</strong> ${{ order.tax_amount|floatformat:2 }}</p>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
+                                            <p><strong>Retención (4% solo operaciones):</strong>
+                                                -${{ order.retention_amount|floatformat:2 }}</p>
+                                        </div>
+                                        <div class="col-md-3">
                                             <p><strong>Total:</strong> ${{ order.total|floatformat:2 }}</p>
                                         </div>
                                     </div>
@@ -182,6 +202,63 @@
                     </div>
                     {% endif %}
 
+                    <!-- Archivos del proveedor -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">Subir archivos del proveedor</h5>
+                                    <form method="post" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Factura del proveedor (PDF)</label>
+                                                <input type="file" class="form-control" name="supplier_invoice_pdf" accept=".pdf">
+                                                {% if order.supplier_invoice_pdf %}
+                                                <small class="d-block mt-1">
+                                                    Actual: <a href="{{ order.supplier_invoice_pdf.url }}" target="_blank">Ver archivo</a>
+                                                </small>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Factura del proveedor (XML)</label>
+                                                <input type="file" class="form-control" name="supplier_invoice_xml" accept=".xml">
+                                                {% if order.supplier_invoice_xml %}
+                                                <small class="d-block mt-1">
+                                                    Actual: <a href="{{ order.supplier_invoice_xml.url }}" target="_blank">Descargar</a>
+                                                </small>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Complemento de pago (PDF)</label>
+                                                <input type="file" class="form-control" name="supplier_invoice_payment_pdf" accept=".pdf">
+                                                {% if order.supplier_invoice_payment_pdf %}
+                                                <small class="d-block mt-1">
+                                                    Actual: <a href="{{ order.supplier_invoice_payment_pdf.url }}" target="_blank">Ver archivo</a>
+                                                </small>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Complemento de pago (XML)</label>
+                                                <input type="file" class="form-control" name="supplier_invoice_payment_xml" accept=".xml">
+                                                {% if order.supplier_invoice_payment_xml %}
+                                                <small class="d-block mt-1">
+                                                    Actual: <a href="{{ order.supplier_invoice_payment_xml.url }}" target="_blank">Descargar</a>
+                                                </small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-upload"></i> Subir archivos
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Archivos adjuntos -->
                     <div class="row">
                         <div class="col-12">
@@ -197,7 +274,27 @@
                                         <i class="fas fa-file-invoice text-success"></i> Factura del Cliente
                                     </a>
                                 {% endif %}
-                                {% if not order.pdf_file and not order.invoice_file %}
+                                {% if order.supplier_invoice_pdf %}
+                                    <a href="{{ order.supplier_invoice_pdf.url }}" class="list-group-item list-group-item-action" target="_blank">
+                                        <i class="fas fa-file-pdf text-primary"></i> Factura del Proveedor (PDF)
+                                    </a>
+                                {% endif %}
+                                {% if order.supplier_invoice_xml %}
+                                    <a href="{{ order.supplier_invoice_xml.url }}" class="list-group-item list-group-item-action" target="_blank">
+                                        <i class="fas fa-file-code text-secondary"></i> Factura del Proveedor (XML)
+                                    </a>
+                                {% endif %}
+                                {% if order.supplier_invoice_payment_pdf %}
+                                    <a href="{{ order.supplier_invoice_payment_pdf.url }}" class="list-group-item list-group-item-action" target="_blank">
+                                        <i class="fas fa-file-pdf text-primary"></i> Complemento de Pago (PDF)
+                                    </a>
+                                {% endif %}
+                                {% if order.supplier_invoice_payment_xml %}
+                                    <a href="{{ order.supplier_invoice_payment_xml.url }}" class="list-group-item list-group-item-action" target="_blank">
+                                        <i class="fas fa-file-code text-secondary"></i> Complemento de Pago (XML)
+                                    </a>
+                                {% endif %}
+                                {% if not order.pdf_file and not order.invoice_file and not order.supplier_invoice_pdf and not order.supplier_invoice_xml and not order.supplier_invoice_payment_pdf and not order.supplier_invoice_payment_xml %}
                                     <div class="list-group-item text-muted">
                                         No hay archivos adjuntos
                                     </div>

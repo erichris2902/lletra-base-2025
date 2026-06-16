@@ -1,0 +1,54 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12 col-lg-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h3 class="card-title">{{ title }}</h3>
+          <div class="card-tools">
+            <a href="{% url 'admin_panel:purchase_order_detail' order.id %}" class="btn btn-secondary">
+              <i class="fas fa-arrow-left"></i> Volver a la OC
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <p><strong>OC:</strong> {{ order.folio }}</p>
+            <p><strong>Operación:</strong> {% if accessory.operation.folio %}{{ accessory.operation.folio }}{% else %}OP-{{ accessory.operation.id }}{% endif %}</p>
+          </div>
+
+          <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="id_type">Tipo</label>
+                {{ form.type }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="id_quantity">Cantidad</label>
+                {{ form.quantity }}
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="id_description">Descripción</label>
+                {{ form.description }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="id_unit_price">Precio unitario</label>
+                {{ form.unit_price }}
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
+              <a href="{% url 'admin_panel:purchase_order_detail' order.id %}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

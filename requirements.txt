@@ -64,3 +64,6 @@ gunicorn
 python-Levenshtein
 openpyxl
 qrcode==7.4.2
+reportlab~=3.6.13
+xhtml2pdf~=0.2.13
+pypdf~=4.3.1

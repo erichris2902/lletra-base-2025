@@ -1,0 +1,38 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12 col-lg-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h3 class="card-title">{{ title }}</h3>
+          <div class="card-tools">
+            <a href="{% url 'admin_panel:purchase_order_detail' order.id %}" class="btn btn-secondary">
+              <i class="fas fa-arrow-left"></i> Volver a la OC
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <p><strong>OC:</strong> {{ order.folio }}</p>
+            <p><strong>Operación:</strong> {% if operation.folio %}{{ operation.folio }}{% else %}OP-{{ operation.id }}{% endif %}</p>
+            <p><strong>Ruta:</strong> {% if operation.route and operation.route.initial_location %}{{ operation.route.initial_location }}{% else %}N/A{% endif %} -> {% if operation.route and operation.route.destination_location %}{{ operation.route.destination_location }}{% else %}N/A{% endif %}</p>
+          </div>
+
+          <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label" for="id_total">Costo de la operación</label>
+              {{ form.total }}
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
+            <a href="{% url 'admin_panel:purchase_order_detail' order.id %}" class="btn btn-outline-secondary">Cancelar</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
