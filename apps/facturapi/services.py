@@ -385,15 +385,11 @@ def _serialize_related_document_from_payment(pay, currency: str) -> dict:
     - Usa is_retained para 'withholding'.
     """
     amount = q2(pay.amount)
+    print(amount)
     # Suma neta de tasas (negativas si son retenciones)
     tasa_neta = Decimal('0')
     taxes = list(pay.taxes.all())
-    for t in taxes:
-        rate = q4(getattr(t, 'rate', 0))
-        tasa_neta += (-rate if getattr(t, 'withholding', False) else rate)
 
-    # Base: si el monto incluye impuestos, dividir entre (1 + tasa_neta)
-    base = amount if tasa_neta == 0 else (amount / (ONE + tasa_neta)).quantize(D2, rounding=ROUND_HALF_UP)
 
     taxes_payload = []
     # for t in taxes:
@@ -408,10 +404,17 @@ def _serialize_related_document_from_payment(pay, currency: str) -> dict:
     taxes = get_taxes(FacturapiInvoice.objects.get(uuid=pay.uuid).facturapi_id)
 
     for _tax in taxes:
+        rate = q4(_tax["rate"])
+        print(rate)
+        tasa_neta += (-rate if _tax['withholding'] else rate)
+
+    # Base: si el monto incluye impuestos, dividir entre (1 + tasa_neta)
+    base = amount if tasa_neta == 0 else (amount / (ONE + tasa_neta)).quantize(D2, rounding=ROUND_HALF_UP)
+    for _tax in taxes:
         tax = {}
         tax['type'] = _tax['type']
         tax['factor'] = _tax['factor']
-        tax['base'] = _tax['base']
+        tax['base'] = base
         tax['withholding'] = _tax['withholding']
         tax['rate'] = _tax["rate"]
         taxes_payload.append(tax)
