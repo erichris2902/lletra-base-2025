@@ -410,6 +410,7 @@ def _serialize_related_document_from_payment(pay, currency: str) -> dict:
 
     # Base: si el monto incluye impuestos, dividir entre (1 + tasa_neta)
     base = amount if tasa_neta == 0 else (amount / (ONE + tasa_neta)).quantize(D2, rounding=ROUND_HALF_UP)
+    print(base)
     for _tax in taxes:
         tax = {}
         tax['type'] = _tax['type']
