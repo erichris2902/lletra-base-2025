@@ -69,7 +69,7 @@ class RouteAsturianoListView(RouteListView):
         return data
 
 
-class RouteMapView(LoginRequiredMixin, TemplateView):
+class RouteMapView(TemplateView):
     template_name = 'operations_panel/route_map.html'
 
     def get_context_data(self, **kwargs):
