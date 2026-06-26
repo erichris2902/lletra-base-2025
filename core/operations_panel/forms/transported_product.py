@@ -67,3 +67,12 @@ class OperationTransportedProductForm(BaseModelForm):
             "amount",
             "weight"
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["transported_product"].queryset = (
+            TransportedProduct.objects
+            .order_by("description", "id")
+            .distinct("description")
+        )
