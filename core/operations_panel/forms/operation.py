@@ -160,9 +160,10 @@ class OperationFolioWebsiteForm(BaseModelForm):
 class OperationShipmentForm(BaseModelForm):
     layout = [
         {"type": "row", "fields": [
-            {"name": "folio", "size": 3},
-            {"name": "client", "size": 5},
-            {"name": "supplier", "size": 4},
+            {"name": "clave_seguimiento", "size": 3},
+            {"name": "folio", "size": 2},
+            {"name": "client", "size": 4},
+            {"name": "supplier", "size": 3},
         ]},
         {"type": "row", "fields": [
             {"name": "driver", "size": 4},
@@ -198,6 +199,7 @@ class OperationShipmentForm(BaseModelForm):
             "scheduled_departure_time",
 
             "notes",
+            "clave_seguimiento",
         ]
 
 
@@ -250,4 +252,30 @@ class OperationRouteForm(BaseModelForm):
         fields = [
             "route",
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        unique_route_ids = (
+            Route.objects
+            .exclude(initial_location__isnull=True)
+            .exclude(destination_location__isnull=True)
+            .order_by(
+                "initial_location_id",
+                "destination_location_id",
+                "-created_at",
+            )
+            .distinct(
+                "initial_location_id",
+                "destination_location_id",
+            )
+            .values_list("id", flat=True)
+        )
+
+        self.fields["route"].queryset = Route.objects.filter(
+            id__in=unique_route_ids
+        ).select_related(
+            "initial_location",
+            "destination_location",
+        )
 
