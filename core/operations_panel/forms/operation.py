@@ -1,5 +1,6 @@
 from django import forms
 
+from core.operations_panel.models import Route
 from core.operations_panel.models.operation import Operation
 from core.system.forms import BaseModelForm
 
@@ -7,9 +8,10 @@ from core.system.forms import BaseModelForm
 class OperationForm(BaseModelForm):
     layout = [
         {"type": "row", "fields": [
-            {"name": "folio", "size": 3},
-            {"name": "client", "size": 5},
-            {"name": "supplier", "size": 4},
+            {"name": "clave_seguimiento", "size": 3},
+            {"name": "folio", "size": 2},
+            {"name": "client", "size": 4},
+            {"name": "supplier", "size": 3},
         ]},
         {"type": "row", "fields": [
             {"name": "driver", "size": 4},
@@ -51,7 +53,8 @@ class OperationForm(BaseModelForm):
             "scheduled_departure_time",
             "need_cartaporte",
             "notes",
-            "accessories"
+            "accessories",
+            "clave_seguimiento"
         ]
 
         widgets = {
@@ -59,6 +62,29 @@ class OperationForm(BaseModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        unique_route_ids = (
+            Route.objects
+            .exclude(initial_location__isnull=True)
+            .exclude(destination_location__isnull=True)
+            .order_by(
+                "initial_location_id",
+                "destination_location_id",
+                "-created_at",
+            )
+            .distinct(
+                "initial_location_id",
+                "destination_location_id",
+            )
+            .values_list("id", flat=True)
+        )
+
+        self.fields["route"].queryset = Route.objects.filter(
+            id__in=unique_route_ids
+        ).select_related(
+            "initial_location",
+            "destination_location",
+        )
 
 
 class OperationFolioWebsiteForm(BaseModelForm):
