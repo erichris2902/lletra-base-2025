@@ -16,6 +16,7 @@ urlpatterns = [
     path('sales/', include("core.sales_panel.urls")),  # Sales panel URLs
     path('rh/', include("core.rh_panel.urls")),  # RH panel URLs
     path('operations/', include("core.operations_panel.urls")),  # Operations panel URLs
+    path('system/operations-master/', include("core.operation_control.urls")),  # Operations master control module
     path('system/', include("core.system_panel.urls")),  # System panel URLs
     path('supplier/', include("core.supplier_panel.urls")),  # System panel URLs
     path('', include("core.admin_panel.urls")),  # Admin panel URLs at root

@@ -86,6 +86,8 @@ INSTALLED_APPS = [
 
     # Project apps - FacturAPI
     'apps.facturapi',
+    "core.operation_control.apps.OperationControlConfig",
+
 ]
 
 # Custom user model

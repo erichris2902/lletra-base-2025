@@ -380,7 +380,7 @@ class InvoiceListView(AdminListView):
     section = 'Facturas Vigentes'
     category = 'Facturacion MX'
     action_headers = False
-    search_fields = ['type', 'use', 'uuid', 'folio_number']
+    search_fields = ['type', 'use', 'uuid', 'folio_number', 'customer']
 
     static_path = 'facturapi/invoice/base.html'
 

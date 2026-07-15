@@ -1,0 +1,254 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Control Maestro de Operaciones</title>
+  <!-- AdminLTE + FontAwesome -->
+  <link rel="stylesheet" href="{% static 'lib/adminlte/plugins/fontawesome-free/css/all.min.css' %}">
+  <link rel="stylesheet" href="{% static 'lib/adminlte/dist/css/adminlte.min.css' %}">
+  <!-- DataTables (opcional, si está disponible) -->
+  <link rel="stylesheet" href="{% static 'plugins/datatables-bs4/css/dataTables.bootstrap4.min.css' %}">
+  <link rel="stylesheet" href="{% static 'plugins/datatables-responsive/css/responsive.bootstrap4.min.css' %}">
+  <link rel="stylesheet" href="{% static 'plugins/datatables-fixedcolumns/css/fixedColumns.bootstrap4.min.css' %}">
+  <!-- Overrides mínimos propios -->
+  <link rel="stylesheet" href="{% static 'operation_control/styles.css' %}">
+</head>
+<body class="hold-transition layout-top-nav">
+<div class="wrapper">
+  <!-- Navbar superior local (sin plantilla base) -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light border-bottom">
+    <span class="navbar-brand mx-2 text-bold">Control Maestro de Operaciones</span>
+    <ul class="navbar-nav ms-auto">
+      <li class="nav-item me-2">
+        <button id="btn-export" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-export me-1"></i>Exportar</button>
+      </li>
+      <li class="nav-item">
+        <button id="btn-reset" class="btn btn-outline-secondary btn-sm"><i class="fas fa-broom me-1"></i>Limpiar filtros</button>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Contenido principal -->
+  <div class="content-wrapper">
+    <!-- Encabezado -->
+    <section class="content-header py-2">
+      <div class="container-fluid">
+        <div class="row mb-1">
+          <div class="col-sm-6">
+            <h1 class="h4 mb-0">Control Maestro de Operaciones</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right mb-0">
+              <li class="breadcrumb-item"><a href="#">Sistema</a></li>
+              <li class="breadcrumb-item active">Operaciones</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contenido -->
+    <section class="content">
+      <div class="container-fluid">
+
+        <!-- KPIs (small-box) -->
+        <div class="row" id="summary-cards">
+          <div class="col-6 col-sm-4 col-md-2">
+            <div class="small-box bg-info">
+              <div class="inner">
+                <h4 id="kpi-sales" class="mb-0">$0.00</h4>
+                <p class="mb-0">Ventas</p>
+              </div>
+              <div class="icon"><i class="fas fa-dollar-sign"></i></div>
+            </div>
+          </div>
+          <div class="col-6 col-sm-4 col-md-2">
+            <div class="small-box bg-success">
+              <div class="inner">
+                <h4 id="kpi-collected" class="mb-0">$0.00</h4>
+                <p class="mb-0">Cobrado</p>
+              </div>
+              <div class="icon"><i class="fas fa-check-circle"></i></div>
+            </div>
+          </div>
+          <div class="col-6 col-sm-4 col-md-2">
+            <div class="small-box bg-warning">
+              <div class="inner">
+                <h4 id="kpi-pending" class="mb-0">$0.00</h4>
+                <p class="mb-0">Por cobrar</p>
+              </div>
+              <div class="icon"><i class="fas fa-hourglass-half"></i></div>
+            </div>
+          </div>
+          <div class="col-6 col-sm-4 col-md-2">
+            <div class="small-box bg-secondary">
+              <div class="inner">
+                <h4 id="kpi-costs" class="mb-0">$0.00</h4>
+                <p class="mb-0">Costos</p>
+              </div>
+              <div class="icon"><i class="fas fa-file-invoice-dollar"></i></div>
+            </div>
+          </div>
+          <div class="col-6 col-sm-4 col-md-2">
+            <div class="small-box bg-primary">
+              <div class="inner">
+                <h4 id="kpi-paid" class="mb-0">$0.00</h4>
+                <p class="mb-0">Pagado prov.</p>
+              </div>
+              <div class="icon"><i class="fas fa-hand-holding-usd"></i></div>
+            </div>
+          </div>
+          <div class="col-6 col-sm-4 col-md-2">
+            <div class="small-box bg-teal">
+              <div class="inner d-flex align-items-baseline gap-2">
+                <h4 id="kpi-profit" class="mb-0">$0.00</h4>
+                <small id="kpi-margin" class="text-white-50">0%</small>
+              </div>
+              <div class="icon"><i class="fas fa-chart-line"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card card-outline card-primary mb-3">
+          <div class="card-header">
+            <h3 class="card-title">Filtros</h3>
+            <div class="card-tools">
+              <button type="button" class="btn btn-tool" id="btn-quick-7d">
+                <i class="far fa-calendar-alt me-1"></i>7 días
+              </button>
+              <button type="button" class="btn btn-tool" id="btn-quick-month">
+                <i class="far fa-calendar me-1"></i>Mes
+              </button>
+            </div>
+          </div>
+          <div class="card-body py-2">
+            <form id="filters" class="row g-2 align-items-end">
+              <div class="col-sm-6 col-md-2">
+                <label class="form-label">Desde</label>
+                <input type="date" class="form-control form-control-sm" name="date_from" />
+              </div>
+              <div class="col-sm-6 col-md-2">
+                <label class="form-label">Hasta</label>
+                <input type="date" class="form-control form-control-sm" name="date_to" />
+              </div>
+              <div class="col-sm-6 col-md-3 col-lg-2">
+                <label class="form-label">Cliente</label>
+                <input type="text" class="form-control form-control-sm" name="client" placeholder="Nombre del cliente" />
+              </div>
+              <div class="col-sm-6 col-md-3 col-lg-2">
+                <label class="form-label">Proveedor</label>
+                <input type="text" class="form-control form-control-sm" name="supplier" placeholder="Proveedor" />
+              </div>
+              <div class="col-6 col-md-2 col-lg-1">
+                <label class="form-label">Facturado</label>
+                <select class="form-select form-select-sm" name="invoiced">
+                  <option value="">Todos</option>
+                  <option value="y">Sí</option>
+                  <option value="n">No</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-2 col-lg-1">
+                <label class="form-label">Vo.Bo.</label>
+                <select class="form-select form-select-sm" name="missing_approval">
+                  <option value="">Todos</option>
+                  <option value="y">Sí</option>
+                  <option value="n">No</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-2 col-lg-1">
+                <label class="form-label">Factoraje</label>
+                <select class="form-select form-select-sm" name="has_factoring">
+                  <option value="">Todos</option>
+                  <option value="y">Sí</option>
+                  <option value="n">No</option>
+                </select>
+              </div>
+              <div class="col-12 col-lg-2 text-end">
+                <div class="d-flex gap-2 justify-content-end">
+                  <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter me-1"></i>Aplicar</button>
+                </div>
+              </div>
+            </form>
+            <div id="active-filters" class="mt-2 d-flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+
+        <!-- Leyenda de estados -->
+        <p class="small text-muted d-flex align-items-center gap-2 flex-wrap">
+          <span class="badge badge-success"><i class="fas fa-check-circle me-1"></i>Cobrado/Pagado</span>
+          <span class="badge badge-warning text-dark"><i class="fas fa-adjust me-1"></i>Parcial</span>
+          <span class="badge badge-danger"><i class="fas fa-exclamation-triangle me-1"></i>Vencido</span>
+          <span class="badge badge-secondary">Sin programación</span>
+          <span class="badge badge-primary"><i class="fas fa-calendar-check me-1"></i>Programado</span>
+          <span class="badge bg-purple"><i class="fas fa-percentage me-1"></i>Factoraje</span>
+          <span class="badge bg-orange"><i class="fas fa-user-check me-1"></i>Falta Vo.Bo.</span>
+          <span class="ms-3">🔒 Automático · ✏️ Editable · 🧮 Calculado · ⚠️ Sobrescrito</span>
+        </p>
+
+        <!-- Grid -->
+        <div class="card shadow-sm" id="grid-card">
+          <div class="card-body p-0 position-relative">
+            <div id="loading" class="overlay dark d-none"><i class="fas fa-2x fa-sync-alt fa-spin"></i></div>
+            <div class="table-responsive" style="max-height: 70vh;">
+              <table class="table table-striped table-hover table-sm mb-0 align-middle" id="grid">
+                <thead class="thead-light sticky-top">
+                  <tr>
+                    <th class="frozen col-date">Fecha</th>
+                    <th class="frozen-2 col-folio">Código V</th>
+                    <th class="col-client">Cliente 🔒</th>
+                    <th class="col-origin">Origen 🔒</th>
+                    <th class="col-destination">Destino 🔒</th>
+                    <th class="text-end col-money">Precio 🧮</th>
+                    <th class="text-end col-money">Costo 🧮</th>
+                    <th class="text-end col-money">Factoraje 🧮</th>
+                    <th class="text-end col-money">Utilidad 🧮</th>
+                    <th class="text-end col-percent">Utilidad % 🧮</th>
+                    <th class="cell-editable">Contrarrecibo ✏️</th>
+                    <th class="cell-editable">F. Contrarrecibo ✏️</th>
+                    <th class="cell-editable">Cód. Factura ✏️</th>
+                    <th class="cell-editable">F. Factura ✏️</th>
+                    <th class="cell-editable">F. Estimada Cobro ✏️</th>
+                    <th class="cell-editable">F. Fac Proveedor ✏️</th>
+                    <th class="cell-editable">No. Fac. Prov. ✏️</th>
+                    <th class="cell-editable">F. Prog. Pago ✏️</th>
+                    <th class="cell-editable">Orden de compra ✏️</th>
+                    <th>Vo.Bo.</th>
+                    <th>Factoraje</th>
+                    <th class="cell-editable">Notas ✏️</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toasts (AdminLTE) -->
+        <div class="position-fixed" style="right: 1rem; bottom: 1rem; z-index: 1080;">
+          <div id="toast" class="toast bg-primary text-white" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2200">
+            <div class="toast-body" id="toast-body">Guardado</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Scripts: jQuery, Bootstrap (AdminLTE), AdminLTE -->
+<script src="{% static 'lib/adminlte/plugins/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'lib/adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'lib/adminlte/dist/js/adminlte.min.js' %}"></script>
+<!-- DataTables (opcional) -->
+<script src="{% static 'plugins/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'plugins/datatables-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+<script src="{% static 'plugins/datatables-responsive/js/dataTables.responsive.min.js' %}"></script>
+<script src="{% static 'plugins/datatables-responsive/js/responsive.bootstrap4.min.js' %}"></script>
+<script src="{% static 'plugins/datatables-fixedcolumns/js/dataTables.fixedColumns.min.js' %}"></script>
+<!-- JS del módulo -->
+<script src="{% static 'operation_control/master_list.js' %}"></script>
+</body>
+</html>
