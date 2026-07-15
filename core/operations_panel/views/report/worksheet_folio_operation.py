@@ -38,7 +38,7 @@ def _agregar_fila(op, ws, redFill, greenFill):
         stops = op.raw_payload.get('repartos', '') if op.raw_payload else ''
 
     date = op.operation_date if op.operation_date else op.raw_payload.get('fecha', '')
-    client = op.raw_payload.get('cliente', '') if op.raw_payload else ''
+    client = str(op.client) #op.raw_payload.get('cliente', '') if op.raw_payload else ''
     origin = op.raw_payload.get('origen', '') if op.raw_payload else ''
     destiny = op.raw_payload.get('destino', '') if op.raw_payload else ''
 
