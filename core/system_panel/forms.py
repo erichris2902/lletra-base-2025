@@ -95,6 +95,7 @@ class ReportEngineForm(BaseForm):
         ("facturacion", "Facturacion"),
         ("packing_asturiano", "Packing de Asturiano"),
         ("asistencia", "Reporte de asistencia"),
+        ("operations_master", "Control maestro de operaciones"),
     ]
     layout = [
         {

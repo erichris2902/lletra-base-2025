@@ -6,6 +6,7 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.db.models import Q
 from django.urls import reverse
+from django.utils.timezone import make_aware
 from django.views.decorators.http import require_http_methods
 from django.views import View
 from django.utils import timezone
@@ -191,7 +192,7 @@ def get_operations_by_filter(request):
             'origin': str(op.route.initial_location) if op.route and op.route.initial_location else 'N/A',
             'destination': str(op.route.destination_location) if op.route and op.route.destination_location else 'N/A',
             'cost': float(getattr(op, 'total', 0) or 0),
-            'date': op.cargo_appointment.strftime('%d/%m/%Y') if op.cargo_appointment else 'N/A',
+            'date': make_aware(op.cargo_appointment).strftime('%d/%m/%Y') if make_aware(op.cargo_appointment) else 'N/A',
             'folio': getattr(op, 'folio', f'OP-{op.id}')
         })
 

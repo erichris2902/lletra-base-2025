@@ -7,7 +7,8 @@ from core.admin_panel.views.purchase_order import (
     purchase_order_detail,
     purchase_order_update_status,
     purchase_order_generate_pdf,
-    get_operations_by_filter, purchase_order_generate_docx,
+    get_operations_by_filter,
+    purchase_order_generate_docx,
     purchase_order_edit_operation,
     purchase_order_edit_accessory,
 )
