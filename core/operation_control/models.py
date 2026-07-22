@@ -24,7 +24,7 @@ class OperationMasterControl(BaseModel):
     )
 
     counter_receipt = models.CharField(
-        verbose_name="Contrarrecibo",
+        verbose_name="Codigo de plantilla",
         max_length=150,
         blank=True,
         default="",

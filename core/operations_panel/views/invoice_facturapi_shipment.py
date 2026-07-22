@@ -221,7 +221,8 @@ class InvoiceShipmentLocalFormView(InvoiceFormView):
     template_name = 'operations_panel/invoice_shipment_form.html'
 
     def handle_generateinvoice(self, request, data):
-        super().handle_generateinvoice(request, data)
+        operation = Operation.objects.get(id=self.kwargs['operation_id'])
+        super().handle_generateinvoice(request, data, operation)
         data['redirect_url'] = "/operations/"
 
     def handle_predictproduct(self, request, context):

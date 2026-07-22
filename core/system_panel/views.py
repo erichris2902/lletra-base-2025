@@ -1,20 +1,23 @@
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 
 import dateutil
 from dateutil.utils import today
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.http import HttpResponseBadRequest, HttpResponse
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import PatternFill, Border, Side, Alignment
 from openpyxl.styles.borders import BORDER_THIN
 
+from apps.facturapi.models import FacturapiProduct, FacturapiTax
 from core.operations_panel.choices import AsturianoPacking
 from core.operations_panel.models import Operation, TransportedProduct, Client
 from core.operations_panel.models.distribution_packing import DistributionPacking
 from core.operations_panel.views.report.attendance import report_attendance
 from core.operations_panel.views.report.invoice import report_xml_invoices
 from core.operations_panel.views.report.worksheet_folio_operation import report_xml_worksheet_folios_by_date, \
-    report_xml_worksheet_folios_by_folio
+    report_xml_worksheet_folios_by_folio, report_xml_worksheet_folios_by_date2
 from core.system.models import Category, Section
 from core.system.views import AdminTemplateView, AdminListView
 from core.system_panel.forms import CategoryForm, SectionForm, AssistantForm, ActionEngineForm, ReportEngineForm, \
@@ -82,6 +85,146 @@ class ActionEngineView(AdminTemplateView):
     section = "Motor de acciones"
     category = "Facturacion MX"
 
+    def post(self, request, *args, **kwargs):
+        print(request.POST)
+        print(request.FILES)
+        action = request.POST.get("action")
+        plantilla_excel = request.FILES.get("file")
+
+        if not plantilla_excel:
+            return HttpResponseBadRequest("Faltan incluir plantilla")
+        print(action)
+        if "PPP" == action:
+            try:
+                workbook = load_workbook(
+                    filename=plantilla_excel,
+                    read_only=True,
+                    data_only=True,
+                )
+                worksheet = workbook.active
+            except Exception as exc:
+                return HttpResponseBadRequest(
+                    f"No fue posible leer el archivo Excel: {exc}"
+                )
+
+            encabezados_requeridos = {
+                "CONTROL VEHICULAR",
+                "DESCRIPCION",
+                "TOTAL (SIN IMPUESTOS)",
+                "CARTAPORTE",
+            }
+
+            filas = worksheet.iter_rows(values_only=True)
+
+            try:
+                primera_fila = next(filas)
+            except StopIteration:
+                return HttpResponseBadRequest("El archivo está vacío.")
+
+            encabezados = {
+                str(valor).strip().upper(): indice
+                for indice, valor in enumerate(primera_fila)
+                if valor is not None
+            }
+
+            encabezados_faltantes = encabezados_requeridos - set(encabezados.keys())
+
+            if encabezados_faltantes:
+                return HttpResponseBadRequest(
+                    "Faltan los siguientes encabezados: "
+                    + ", ".join(sorted(encabezados_faltantes))
+                )
+
+            try:
+                retencion = FacturapiTax.objects.get(name="RETENCIÓN")
+                traslado = FacturapiTax.objects.get(name="TRASLADADO")
+            except FacturapiTax.DoesNotExist as exc:
+                return HttpResponseBadRequest(
+                    f"No se encontró uno de los impuestos requeridos: {exc}"
+                )
+
+            productos_creados = 0
+            filas_omitidas = []
+            errores = []
+
+            with transaction.atomic():
+                for numero_fila, fila in enumerate(filas, start=2):
+                    control_vehicular = fila[
+                        encabezados["CONTROL VEHICULAR"]
+                    ]
+                    descripcion = fila[
+                        encabezados["DESCRIPCION"]
+                    ]
+                    total_sin_impuestos = fila[
+                        encabezados["TOTAL (SIN IMPUESTOS)"]
+                    ]
+                    carta_porte = fila[
+                        encabezados["CARTAPORTE"]
+                    ]
+
+                    # Ignorar filas completamente vacías.
+                    if not any(
+                            valor not in (None, "")
+                            for valor in (
+                                    control_vehicular,
+                                    descripcion,
+                                    total_sin_impuestos,
+                                    carta_porte,
+                            )
+                    ):
+                        continue
+
+                    if not control_vehicular or not descripcion:
+                        filas_omitidas.append(numero_fila)
+                        errores.append(
+                            f"Fila {numero_fila}: falta CONTROL VEHICULAR "
+                            "o DESCRIPCION."
+                        )
+                        continue
+
+                    try:
+                        precio = convertir_decimal(total_sin_impuestos)
+                    except (InvalidOperation, ValueError, TypeError):
+                        filas_omitidas.append(numero_fila)
+                        errores.append(
+                            f"Fila {numero_fila}: el TOTAL (SIN IMPUESTOS) "
+                            f"no es válido: {total_sin_impuestos!r}."
+                        )
+                        continue
+
+                    product = FacturapiProduct.objects.create(
+                        name=str(descripcion).strip(),
+                        sku=str(control_vehicular).strip(),
+                        description=str(descripcion).strip(),
+                        product_key="78101802",
+                        unit_key="E48",
+                        price=precio,
+                    )
+
+                    es_carta_porte = (
+                            str(carta_porte).strip().upper() == "S"
+                    )
+
+                    if es_carta_porte:
+                        product.taxes.add(retencion, traslado)
+                    else:
+                        product.taxes.add(traslado)
+
+                    productos_creados += 1
+
+            mensaje = (
+                f"Se crearon exitosamente {productos_creados} productos."
+            )
+
+            if filas_omitidas:
+                mensaje += (
+                        f" Se omitieron {len(filas_omitidas)} filas: "
+                        + "; ".join(errores)
+                )
+            return HttpResponse(mensaje)
+
+        return HttpResponseBadRequest("Tipo de accion inactiva.")
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         form = ActionEngineForm()
@@ -122,7 +265,7 @@ class ReportEngineView(AdminTemplateView):
             return HttpResponseBadRequest("Faltan parámetros: tipo, fecha de inicio o fecha de fin")
 
         if report_type == "folios":
-            return report_xml_worksheet_folios_by_date(request)
+            return report_xml_worksheet_folios_by_date2(request)
         elif report_type == "facturacion":
             return report_xml_invoices(request)
         elif report_type == "packing_asturiano":
@@ -239,11 +382,11 @@ def report_operations_master(request):
 
     headers = [
         # 1-3: Pago/VoBo/Contrarrecibo
-        "Fecha a pago", "Falta de Vo.Bo.", "Contrarrecibo",
+        "Fecha a pago", "Codigo de plantilla",
         # 4-6: Datos operativos base
         "Fecha", "Código V", "Cód. Factura",
         # 7-12: Cliente/servicio/ruta/unidad
-        "Fecha de factura (cliente)", "Tipo de servicio", "Cliente", "Origen", "Destino", "Unidad",
+        "Fecha de factura (cliente)", "Tipo de servicio", "Cliente", "Origen", "Destino", "Unidad", "Maniobras",
         # 13-16: Ventas y cobranza
         "Precio", "Pago de clientes", "Por cobrar", "Fecha cobro (estimada)",
         # 17-21: Costos y pagos a proveedor
@@ -278,11 +421,13 @@ def report_operations_master(request):
         folio = getattr(op, "folio", None)
         client = getattr(op.client, "name", None) if op and op.client else None
         origin = destination = None
+        maniobras = getattr(op, "handling_amount", None)
         if op and getattr(op, "route", None):
             origin = safe_str(getattr(op.route, "initial_location", None))
             destination = safe_str(getattr(op.route, "destination_location", None))
-        unit_display = safe_str(getattr(op, "vehicle_type", None))
-        service_display = safe_str(getattr(op, "get_shipment_type_display", lambda: getattr(op, "shipment_type", ""))())
+
+        if op.raw_payload:
+            unit_display = safe_str(str(op.vehicle_type) if op.vehicle_type else op.raw_payload.get("unidad", ""))
 
         # Determine client invoice (prefer shipment_invoice, fallback to any in operation.invoices)
         invoice = None
@@ -427,7 +572,6 @@ def report_operations_master(request):
         row = [
             # 1-3: Pago/VoBo/Contrarrecibo
             c.counter_receipt_date,
-            "Sí" if c.missing_approval else "No",
             c.counter_receipt or "",
             # 4-6
             date_val,
@@ -435,11 +579,12 @@ def report_operations_master(request):
             invoice_code or "",
             # 7-12
             invoice_date,
-            service_display or "",
+            "TRANSLADO",
             client or "",
             origin or "",
             destination or "",
             unit_display or "",
+            maniobras,
             # 13-16
             price_final,
             paid_clients,
@@ -669,3 +814,31 @@ def report_asturiano(request):
     response["Content-Disposition"] = contenido
     wb.save(response)
     return response
+
+def convertir_decimal(valor):
+    """
+    Convierte valores como:
+    1500
+    1500.50
+    $1,500.50
+    '1,500.50'
+    a Decimal.
+    """
+    if valor is None or valor == "":
+        raise ValueError("El valor está vacío.")
+
+    if isinstance(valor, Decimal):
+        return valor
+
+    if isinstance(valor, (int, float)):
+        return Decimal(str(valor))
+
+    valor_limpio = (
+        str(valor)
+        .strip()
+        .replace("$", "")
+        .replace(",", "")
+        .replace(" ", "")
+    )
+
+    return Decimal(valor_limpio)

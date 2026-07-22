@@ -46,7 +46,7 @@ urlpatterns = [
 
     path('generate_invoice/i/<uuid:operation_id>/', InvoiceShipmentIFormView.as_view(), name='invoice_shipment_i'),
     path('generate_invoice/t/<uuid:operation_id>/', InvoiceShipmentTFormView.as_view(), name='invoice_shipment_t'),
-    path('generate_invoice/local/<uuid:operation_id>/', InvoiceShipmentLocalFormView.as_view(), name='invoice_shipment_t'),
+    path('generate_invoice/local/<uuid:operation_id>/', InvoiceShipmentLocalFormView.as_view(), name='invoice_shipment_local'),
 
     path('download/shipment-invoice/<uuid:operation_id>/no-signed', DownloadShipmentPDF, name='shipment_cartaporte'),
 ]

@@ -33,6 +33,7 @@ from django.db import models
 
 
 class Operation(BaseModel):
+    codigo_plantilla = models.CharField(_("Codigo de plantilla"), max_length=10, unique=True, null=True, blank=True)
     folio = models.CharField(_("Folio"), max_length=10, unique=True, null=True, blank=True)
     pre_folio = models.CharField(_("Pre-folio"), max_length=10, null=True, blank=True, db_index=True)
     clave_seguimiento = models.CharField(_("Clave cliente"), max_length=10, null=True, blank=True, db_index=True)

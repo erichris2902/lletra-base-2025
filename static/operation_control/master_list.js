@@ -57,20 +57,6 @@
       <td class="text-end col-money">${fmtMoney(r.profit)}</td>
       <td class="text-end col-percent">${fmtPercent(r.profit_percentage)}</td>
       <td contenteditable class="cell-editable" data-field="counter_receipt">${r.customer_invoice_code ? '' : (r.counter_receipt || '')}</td>
-      <td contenteditable class="cell-editable" data-field="counter_receipt_date">${r.counter_receipt_date || ''}</td>
-      <td contenteditable class="cell-editable" data-field="customer_invoice_code">${r.customer_invoice_code || ''}</td>
-      <td contenteditable class="cell-editable" data-field="customer_invoice_date">${r.customer_invoice_date || ''}</td>
-      <td contenteditable class="cell-editable" data-field="expected_collection_date">${r.expected_collection_date || ''}</td>
-      <td contenteditable class="cell-editable" data-field="supplier_invoice_date">${r.supplier_invoice_date || ''}</td>
-      <td contenteditable class="cell-editable" data-field="supplier_invoice_number">${r.supplier_invoice_number || ''}</td>
-      <td contenteditable class="cell-editable" data-field="scheduled_supplier_payment_date">${r.scheduled_supplier_payment_date || ''}</td>
-      <td contenteditable class="cell-editable" data-field="purchase_order">${r.purchase_order || ''}</td>
-      <td>
-        <select class="form-select form-select-sm bool-select" data-field="missing_approval">
-          <option value="n" ${r.missing_approval ? '' : 'selected'}>No</option>
-          <option value="y" ${r.missing_approval ? 'selected' : ''}>Sí</option>
-        </select>
-      </td>
       <td>
         <select class="form-select form-select-sm bool-select" data-field="has_factoring">
           <option value="n" ${r.has_factoring ? '' : 'selected'}>No</option>

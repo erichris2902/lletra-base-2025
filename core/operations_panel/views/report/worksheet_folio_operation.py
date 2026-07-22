@@ -159,6 +159,124 @@ def report_xml_worksheet_folios_by_date(request):
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
+def report_xml_worksheet_folios_by_date2(request):
+    fecha_inicio_str = request.POST.get("fecha_inicial")
+    fecha_fin_str = request.POST.get("fecha_final")
+
+    if not fecha_inicio_str or not fecha_fin_str:
+        return HttpResponse(
+            "Faltan parámetros: fecha_inicial y fecha_final",
+            status=400,
+        )
+
+    try:
+        fecha_inicio = datetime.strptime(
+            fecha_inicio_str,
+            "%d/%m/%Y",
+        ).date()
+
+        fecha_fin = datetime.strptime(
+            fecha_fin_str,
+            "%d/%m/%Y",
+        ).date()
+
+    except ValueError:
+        return HttpResponse(
+            "Formato de fecha inválido. Usa DD/MM/YYYY.",
+            status=400,
+        )
+
+    operations = (
+        Operation.objects
+        .filter(operation_date__range=[fecha_inicio, fecha_fin])
+        .order_by("operation_date", "folio")
+    )
+
+    if not operations.exists():
+        return HttpResponse(
+            "No hay operaciones en el rango seleccionado.",
+            status=404,
+        )
+
+    wb = Workbook()
+
+    # Eliminar siempre la hoja creada por defecto.
+    wb.remove(wb.active)
+
+    blueFill = PatternFill(
+        start_color="00B0F0",
+        end_color="00B0F0",
+        fill_type="solid",
+    )
+    greenFill = PatternFill(
+        start_color="00EF23",
+        end_color="00EF23",
+        fill_type="solid",
+    )
+    redFill = PatternFill(
+        start_color="ED000B",
+        end_color="ED000B",
+        fill_type="solid",
+    )
+
+    # Agrupar operaciones por fecha.
+    grouped = {}
+
+    for operation in operations:
+        grouped.setdefault(
+            operation.operation_date,
+            [],
+        ).append(operation)
+
+    # Ordenar las hojas desde la fecha más antigua a la más reciente.
+    for fecha in sorted(grouped.keys()):
+        operaciones_fecha = grouped[fecha]
+
+        # Orden adicional en Python, por seguridad.
+        operaciones_fecha.sort(
+            key=lambda operation: operation.folio or ""
+        )
+
+        ws = wb.create_sheet(
+            title=fecha.strftime("%Y-%m-%d")
+        )
+
+        _agregar_encabezados(ws, blueFill)
+
+        for operation in operaciones_fecha:
+            _agregar_fila(
+                operation,
+                ws,
+                redFill,
+                greenFill,
+            )
+
+        _ajustar_columnas(ws)
+
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    filename = (
+        f"hoja_trabajo_"
+        f"{fecha_inicio.strftime('%Y-%m-%d')}_a_"
+        f"{fecha_fin.strftime('%Y-%m-%d')}.xlsx"
+    )
+
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+    )
+
+    response["Content-Disposition"] = (
+        f'attachment; filename="{filename}"'
+    )
+
+    return response
+
 def generar_reporte_hoja_trabajo(fecha_inicio, fecha_fin):
     operations = Operation.objects.filter(
         operation_date__range=[fecha_inicio, fecha_fin]

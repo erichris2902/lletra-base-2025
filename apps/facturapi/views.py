@@ -239,7 +239,7 @@ class InvoiceFormView(AdminTemplateView):
         return JsonResponse(data, safe=False)
 
     @transaction.atomic
-    def handle_generateinvoice(self, request, data):
+    def handle_generateinvoice(self, request, data, operation=None):
         form = FacturapiInvocieForm(request.POST, request.FILES)
         if not form.is_valid():
             print(form.errors)
@@ -301,6 +301,11 @@ class InvoiceFormView(AdminTemplateView):
         invoice.save()
 
         invoice.bill()
+
+        if operation:
+            operation.invoices.add(invoice)
+            operation.save()
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

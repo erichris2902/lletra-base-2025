@@ -43,7 +43,7 @@ def api_list(request):
             "operation__route",
             "operation__vehicle",
         )
-        .all()
+        .all().order_by("-operation__folio")
     )
 
     date_from = parse_date(request.GET.get("date_from") or "")
@@ -127,7 +127,6 @@ def api_list(request):
             "supplier_invoice_date": c.supplier_invoice_date,
             "scheduled_supplier_payment_date": c.scheduled_supplier_payment_date,
             "purchase_order": c.purchase_order,
-            "missing_approval": c.missing_approval,
             "has_factoring": c.has_factoring,
             "notes": c.notes,
         }

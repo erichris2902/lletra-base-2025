@@ -57,6 +57,10 @@ class ActionEngineForm(BaseForm):
         ("CM", "CM - Cancelación masiva de facturas"),
         ("CMR", "CMR - Cancelación masiva de facturas con relacion"),
         ("CP", "CP - Complementos de pago"),
+        ("CMI", "CMI - Control maestro INGRESOS"),
+        ("CME", "CME - Control maestro EGRESOS"),
+        ("CMP", "CMP - Control maestro PLANTILLAS"),
+        ("PPP", "PPP - Plantilla de productos precargados"),
     ]
 
     layout = [
