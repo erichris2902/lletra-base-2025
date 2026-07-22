@@ -10,7 +10,7 @@ function styleCells(row) {
 
     $('td', row).each(function () {
         const value = $(this).text().trim();
-        if (value === "CANCELED") {
+        if (value === "CANCELED" || value === "CANCELLED") {
             $(this).closest('td').css('background-color', 'rgb(255, 200, 200)');
         }
     });
