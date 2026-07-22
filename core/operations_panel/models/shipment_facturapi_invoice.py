@@ -111,9 +111,8 @@ class ShipmentFacturapiInvoice(FacturapiInvoice):
 
         _send_invoice_to_facturapi(self, data)
         if self.operation:
-            if self.operation.shipment_invoice == None:
-                self.operation.shipment_invoice = self
-                self.operation.save()
+            self.operation.shipment_invoice = self
+            self.operation.save()
 
     def bill_type_t_shipment(self):
         from apps.facturapi.services import _set_facturapi_invoice_base_data, _set_facturapi_invoice_cfdi_relation, \

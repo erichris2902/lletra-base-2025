@@ -125,6 +125,7 @@ class FolioOperationListView(AdminListView):
     section = 'Folios'
     category = 'Operaciones'
     ordering = 'desc'
+    static_path = 'operations_panel/folio/table/base.html'
 
     search_fields = ['folio', 'client', 'route', 'operation_date', 'vehicle', 'driver', 'status', 'raw_payload']
 
