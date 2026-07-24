@@ -10,7 +10,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import PatternFill, Border, Side, Alignment
 from openpyxl.styles.borders import BORDER_THIN
 
-from apps.facturapi.models import FacturapiProduct, FacturapiTax
+from apps.facturapi.models import FacturapiProduct, FacturapiTax, FacturapiInvoice
 from core.operations_panel.choices import AsturianoPacking
 from core.operations_panel.models import Operation, TransportedProduct, Client
 from core.operations_panel.models.distribution_packing import DistributionPacking
@@ -94,6 +94,213 @@ class ActionEngineView(AdminTemplateView):
         if not plantilla_excel:
             return HttpResponseBadRequest("Faltan incluir plantilla")
         print(action)
+        if action == "CMR":
+            try:
+                workbook = load_workbook(
+                    filename=plantilla_excel,
+                    read_only=True,
+                    data_only=True,
+                )
+                worksheet = workbook.active
+            except Exception as exc:
+                return HttpResponseBadRequest(
+                    f"No fue posible leer el archivo Excel: {exc}"
+                )
+
+            encabezados_requeridos = {
+                "UUID A CANCELAR",
+            }
+
+            filas = worksheet.iter_rows(values_only=True)
+
+            try:
+                primera_fila = next(filas)
+            except StopIteration:
+                workbook.close()
+                return HttpResponseBadRequest("El archivo está vacío.")
+
+            encabezados = {
+                str(valor).strip().upper(): indice
+                for indice, valor in enumerate(primera_fila)
+                if valor is not None
+            }
+
+            encabezados_faltantes = encabezados_requeridos - set(encabezados.keys())
+
+            if encabezados_faltantes:
+                workbook.close()
+                return HttpResponseBadRequest(
+                    "Faltan los siguientes encabezados: "
+                    + ", ".join(sorted(encabezados_faltantes))
+                )
+
+            facturas_canceladas = 0
+            filas_omitidas = []
+            errores = []
+
+            try:
+                indice_uuid = encabezados["UUID A CANCELAR"]
+                indice_uuid_relacion = encabezados["UUID A RELACIONAR"]
+
+                with transaction.atomic():
+                    for numero_fila, fila in enumerate(filas, start=2):
+
+                        if indice_uuid >= len(fila):
+                            filas_omitidas.append(
+                                f"Fila {numero_fila}: no contiene la columna UUID A CANCELAR."
+                            )
+                            continue
+
+                        uuid_a_cancelar = fila[indice_uuid]
+                        uuid_a_relacionar = fila[indice_uuid_relacion]
+
+                        if uuid_a_cancelar in (None, ""):
+                            filas_omitidas.append(
+                                f"Fila {numero_fila}: UUID vacío."
+                            )
+                            continue
+
+                        uuid_a_cancelar = str(uuid_a_cancelar).strip()
+                        uuid_a_relacionar = str(uuid_a_relacionar).strip()
+
+                        try:
+                            factura = FacturapiInvoice.objects.get(
+                                uuid__iexact=uuid_a_cancelar
+                            )
+                        except FacturapiInvoice.DoesNotExist:
+                            errores.append(
+                                f"Fila {numero_fila}: no existe una factura "
+                                f"con UUID {uuid_a_cancelar}."
+                            )
+                            continue
+
+                        try:
+                            factura.cancel(motivo="01", sustitucion=uuid_a_relacionar)
+                            facturas_canceladas += 1
+                        except Exception as exc:
+                            errores.append(
+                                f"Fila {numero_fila}: error al cancelar "
+                                f"{uuid_a_cancelar}: {exc}"
+                            )
+
+            finally:
+                workbook.close()
+
+            mensaje = (
+                f"Proceso terminado. "
+                f"Facturas canceladas: {facturas_canceladas}. "
+                f"Filas omitidas: {len(filas_omitidas)}. "
+                f"Errores: {len(errores)}."
+            )
+
+            if errores:
+                mensaje += "\n\n" + "\n".join(errores)
+
+            return HttpResponse(mensaje, content_type="text/plain")
+
+        if action == "CM":
+            try:
+                workbook = load_workbook(
+                    filename=plantilla_excel,
+                    read_only=True,
+                    data_only=True,
+                )
+                worksheet = workbook.active
+            except Exception as exc:
+                return HttpResponseBadRequest(
+                    f"No fue posible leer el archivo Excel: {exc}"
+                )
+
+            encabezados_requeridos = {
+                "UUID A CANCELAR",
+            }
+
+            filas = worksheet.iter_rows(values_only=True)
+
+            try:
+                primera_fila = next(filas)
+            except StopIteration:
+                workbook.close()
+                return HttpResponseBadRequest("El archivo está vacío.")
+
+            encabezados = {
+                str(valor).strip().upper(): indice
+                for indice, valor in enumerate(primera_fila)
+                if valor is not None
+            }
+
+            encabezados_faltantes = encabezados_requeridos - set(encabezados.keys())
+
+            if encabezados_faltantes:
+                workbook.close()
+                return HttpResponseBadRequest(
+                    "Faltan los siguientes encabezados: "
+                    + ", ".join(sorted(encabezados_faltantes))
+                )
+
+            facturas_canceladas = 0
+            filas_omitidas = []
+            errores = []
+
+            try:
+                indice_uuid = encabezados["UUID A CANCELAR"]
+
+                with transaction.atomic():
+                    for numero_fila, fila in enumerate(filas, start=2):
+
+                        if indice_uuid >= len(fila):
+                            filas_omitidas.append(
+                                f"Fila {numero_fila}: no contiene la columna UUID A CANCELAR."
+                            )
+                            continue
+
+                        uuid_a_cancelar = fila[indice_uuid]
+
+                        if uuid_a_cancelar in (None, ""):
+                            filas_omitidas.append(
+                                f"Fila {numero_fila}: UUID vacío."
+                            )
+                            continue
+
+                        uuid_a_cancelar = str(uuid_a_cancelar).strip()
+
+                        try:
+                            factura = FacturapiInvoice.objects.get(
+                                uuid__iexact=uuid_a_cancelar
+                            )
+                        except FacturapiInvoice.DoesNotExist:
+                            errores.append(
+                                f"Fila {numero_fila}: no existe una factura "
+                                f"con UUID {uuid_a_cancelar}."
+                            )
+                            continue
+
+                        try:
+                            factura.cancel("02")
+                            facturas_canceladas += 1
+                        except Exception as exc:
+                            errores.append(
+                                f"Fila {numero_fila}: error al cancelar "
+                                f"{uuid_a_cancelar}: {exc}"
+                            )
+
+            finally:
+                workbook.close()
+
+            mensaje = (
+                f"Proceso terminado. "
+                f"Facturas canceladas: {facturas_canceladas}. "
+                f"Filas omitidas: {len(filas_omitidas)}. "
+                f"Errores: {len(errores)}."
+            )
+
+            if errores:
+                mensaje += "\n\n" + "\n".join(errores)
+
+            return HttpResponse(mensaje, content_type="text/plain")
+
+
+
         if "PPP" == action:
             try:
                 workbook = load_workbook(

@@ -64,6 +64,7 @@ class Operation(BaseModel):
         on_delete=models.SET_NULL, null=True, blank=True
     )
     vehicle_type = models.CharField(_("Tipo de unidad"), max_length=30, choices=UnitType.choices, null=True, blank=True)
+    vehicle_type_to_invoice = models.CharField(_("Unidad tarifaria"), max_length=30, choices=UnitType.choices, null=True, blank=True)
 
     operation_date = models.DateField(_("Fecha de operación"))
     shipment_type = models.CharField(_("Tipo de embarque"), max_length=20, choices=ShipmentType.choices)
@@ -125,6 +126,18 @@ class Operation(BaseModel):
             raise Exception("La operacion no tiene una ruta asociada.")
         self.route.route_stops.add(location)
 
+    def get_vehicle_type_to_invoice(self):
+        if self.vehicle_type_to_invoice:
+            return self.vehicle_type_to_invoice
+        elif self.vehicle_type:
+            return self.vehicle_type
+        elif self.vehicle:
+            return self.vehicle.unit_type
+        elif self.raw_payload:
+            return self.raw_payload.get("unidad", "")
+        else:
+            return "Sin unidad"
+
     def save(self, *args, **kwargs):
         old_route_id = None
 
@@ -133,6 +146,9 @@ class Operation(BaseModel):
 
             if old_operation:
                 old_route_id = old_operation.route_id
+
+            if self.vehicle_type and not self.vehicle_type_to_invoice:
+                self.vehicle_type_to_invoice = self.vehicle_type
 
         route_changed = (
             self.pk and
