@@ -191,6 +191,7 @@ class AdminListView(AdminView, ListView):
 
     def handle_searchdata(self, request, data):
         # DataTables manda esto
+        print(1)
         draw = int(request.POST.get("draw", 1))
         start = int(request.POST.get("start", 0))
         length = int(request.POST.get("length", 50))
@@ -239,7 +240,7 @@ class AdminListView(AdminView, ListView):
 
         # 5) data
         data = [obj.to_display_dict(keys=self.datatable_keys) for obj in qs_page]
-
+        print(data)
         return {
             "draw": draw,
             "recordsTotal": records_total,

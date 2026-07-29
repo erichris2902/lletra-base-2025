@@ -34,6 +34,60 @@ class EmployeeListView(AdminListView):
     category = 'Recursos Humanos'
     static_path = 'static/employee/base.html'
 
+    def handle_searchdata(self, request, data):
+        # DataTables manda esto
+        print(1)
+        draw = int(request.POST.get("draw", 1))
+        start = int(request.POST.get("start", 0))
+        length = int(request.POST.get("length", 50))
+        search = (request.POST.get("search", "") or "").strip()
+
+        # 1) queryset base
+        qs = self.get_queryset()
+        records_total = qs.count()
+
+        # 2) filtro por búsqueda
+        if search:
+            search_fields = getattr(self, "search_fields", self.search_fields)
+            search_fields = self._safe_search_fields(search_fields)
+
+            q_obj = Q()
+            for field in search_fields:
+                q_obj |= Q(**{f"{field}__icontains": search})
+            qs = qs.filter(q_obj)
+
+        records_filtered = qs.count()
+
+        # 3) orden (opcional, pero recomendado)
+        order_col = request.POST.get("order_col")
+        order_dir = request.POST.get("order_dir", "asc")
+        if order_col is not None and order_col != "":
+            try:
+                col_idx = int(order_col)
+                col_key = self.datatable_keys[col_idx]  # ej: "name"
+
+                # si es columna virtual, se anota
+                if col_key in self.virtual_search:
+                    qs = qs.annotate(**{col_key: self.virtual_search[col_key]})
+                    order_field = col_key
+                else:
+                    order_field = self.datatable_keys[col_idx]
+
+                if order_dir == "desc":
+                    order_field = f"-{order_field}"
+
+                qs = qs.order_by(order_field)
+            except (ValueError, IndexError):
+                pass
+
+        # 4) paginación
+        qs_page = qs[start:start + length]
+
+        # 5) data
+        data = [obj.to_display_dict(keys=self.datatable_keys) for obj in qs_page]
+        print(data)
+        return datag
+
     def handle_add_attendance(self, request, data):
         try:
             employee = Employee.objects.get(pk=request.POST["employee_id"])
