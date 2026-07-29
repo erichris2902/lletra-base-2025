@@ -86,7 +86,7 @@ class EmployeeListView(AdminListView):
         # 5) data
         data = [obj.to_display_dict(keys=self.datatable_keys) for obj in qs_page]
         print(data)
-        return datag
+        return data
 
     def handle_add_attendance(self, request, data):
         try:
