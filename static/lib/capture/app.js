@@ -321,7 +321,7 @@ async function init() {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Fuera de zona permitida',
-                    html: `Estás a ${dist.toFixed(1)} m del CEDIS. Debes estar dentro de ${MAX_DISTANCE_METERS} m.`,
+                    html: `Estás a ${dist.toFixed(1)} m de la oficina. Debes estar dentro de ${MAX_DISTANCE_METERS} m.`,
                 });
             }
         }, (err) => {

@@ -145,6 +145,9 @@ class CaptureLocationView(AllowAnyMixin, TemplateView):
         }
 
 
+class CaptureLocationOfficeView(CaptureLocationView):
+    template_name = 'rh_panel/index_office.html'
+
 class RegisterFaceView(LoginRequiredMixin, AdminTemplateView):
     template_name = 'rh_panel/enroll.html'
 
