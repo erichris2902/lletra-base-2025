@@ -12,13 +12,13 @@ from core.rh_panel.models import Attendance
 def report_attendance(request):
     fecha_inicio_str = request.POST.get("fecha_inicial")
     fecha_fin_str = request.POST.get("fecha_final")
-
+    print(fecha_inicio_str, fecha_fin_str)
     if not fecha_inicio_str or not fecha_fin_str:
         return HttpResponse("Faltan parámetros: fecha_inicial y fecha_final", status=400)
 
     try:
-        fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
-        fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
+        fecha_inicio = datetime.strptime(fecha_inicio_str, "%d/%m/%Y").date()
+        fecha_fin = datetime.strptime(fecha_fin_str, "%d/%m/%Y").date()
     except ValueError:
         return HttpResponse("Formato de fecha inválido. Usa YYYY-MM-DD.", status=400)
 
