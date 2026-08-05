@@ -154,6 +154,33 @@ class PurchaseOrder(BaseModel):
         """Calcula totales con IVA 16% sobre subtotal y retención 4% solo sobre operaciones.
         Fórmula: total = (ops + acc) + 16%*(ops + acc) - 4%*ops
         """
+        # operations_total = sum(
+        #     (item.operation.total or Decimal('0.00'))
+        #     for item in self.operations.all()
+        # )
+        # accessories_total = sum(
+        #     (acc.subtotal or Decimal('0.00')) for acc in self.accessories.all()
+        # )
+        #
+        # subtotal = operations_total + accessories_total
+        # iva = subtotal * Decimal('0.16')  # 16% IVA sobre todo el subtotal
+        # retention = operations_total * Decimal('0.04')  # 4% solo sobre operaciones
+        #
+        # self.subtotal = subtotal
+        # self.tax_amount = iva  # mantenemos tax_amount como IVA para compatibilidad
+        # self.total = subtotal + iva - retention
+        # self.save()
+        self.get_total()
+
+    def get_total(self):
+        """Calcula y devuelve el total de la orden con IVA 12%.
+        - Suma el total de todas las operaciones de la orden (`PurchaseOrderOperation`).
+        - Suma el subtotal de todos los accesorios (`PurchaseOrderAccessory`).
+        - Calcula el 12% del subtotal como `tax_amount`.
+        - Define `total = subtotal + tax_amount`.
+        También actualiza y guarda los campos `subtotal`, `tax_amount` y `total` en la instancia.
+        """
+        print(1)
         operations_total = sum(
             (item.operation.total or Decimal('0.00'))
             for item in self.operations.all()
@@ -163,13 +190,16 @@ class PurchaseOrder(BaseModel):
         )
 
         subtotal = operations_total + accessories_total
-        iva = subtotal * Decimal('0.16')  # 16% IVA sobre todo el subtotal
-        retention = operations_total * Decimal('0.04')  # 4% solo sobre operaciones
+        tax = subtotal * Decimal('0.12')
 
         self.subtotal = subtotal
-        self.tax_amount = iva  # mantenemos tax_amount como IVA para compatibilidad
-        self.total = subtotal + iva - retention
+        print(self.subtotal)
+        self.tax_amount = tax
+        print(self.tax_amount)
+        self.total = subtotal + tax
+        print(self.total)
         self.save()
+        return self.total
 
     # Helpers para plantillas y reportes (no requieren migración)
     def get_operations_total(self):

@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 
+from core.admin_panel.models.purchase_order import PurchaseOrder
 from core.operations_panel.models.address import Address
 from core.operations_panel.models.distribution_packing import DistributionPacking
 from core.operations_panel.models.shipment_facturapi_invoice import ShipmentFacturapiInvoice
@@ -242,3 +243,4 @@ from core.rh_panel.models import Employee, Embedding
 admin.site.register(Employee)
 admin.site.register(Embedding)
 admin.site.register(ShipmentFacturapiInvoice)
+admin.site.register(PurchaseOrder)

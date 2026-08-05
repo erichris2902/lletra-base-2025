@@ -12,5 +12,8 @@ class Command(BaseCommand):
 
 
     def handle(self, *args, **options):
+
         order = PurchaseOrder.objects.get(folio='OC-2026-0139')
+        print(order.total)
         order.calculate_totals()
+        print(order.total)
