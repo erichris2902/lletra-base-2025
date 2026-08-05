@@ -149,17 +149,13 @@
                                 <div class="card-body">
                                     <h5 class="card-title">Resumen Financiero</h5>
                                     <div class="row">
-                                        <div class="col-md-3">
+                                        <div class="col-md-4">
                                             <p><strong>Subtotal:</strong> ${{ order.subtotal|floatformat:2 }}</p>
                                         </div>
-                                        <div class="col-md-3">
-                                            <p><strong>IVA (16%):</strong> ${{ order.tax_amount|floatformat:2 }}</p>
+                                        <div class="col-md-4">
+                                            <p><strong>Total impuestos:</strong> ${{ order.tax_amount|floatformat:2 }}</p>
                                         </div>
-                                        <div class="col-md-3">
-                                            <p><strong>Retención (4% solo operaciones):</strong>
-                                                -${{ order.retention_amount|floatformat:2 }}</p>
-                                        </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-4">
                                             <p><strong>Total:</strong> ${{ order.total|floatformat:2 }}</p>
                                         </div>
                                     </div>

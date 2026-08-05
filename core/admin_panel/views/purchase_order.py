@@ -412,7 +412,7 @@ def purchase_order_generate_pdf(request, order_id):
 
     subtotal = subtotal_operations + subtotal_accessories
     iva = subtotal * _D('0.16')
-    retention = subtotal_operations * _D('0.04')
+    retention = subtotal * _D('0.04')
     total = subtotal + iva - retention
 
     # 1) Intentar backend: Plantilla PDF base + overlay
@@ -738,7 +738,7 @@ def purchase_order_generate_docx(request, order_id):
 
     subtotal = subtotal_operations + subtotal_accessories
     iva = subtotal * Decimal("0.16")
-    retention = subtotal_operations * Decimal("0.04")
+    retention = subtotal * Decimal("0.04")
     total = subtotal + iva - retention
 
     replacements = {
