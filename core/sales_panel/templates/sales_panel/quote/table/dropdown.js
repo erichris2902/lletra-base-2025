@@ -3,6 +3,7 @@ function dropdown(data, type, row) {
     dropdown += '<button class="btn btn-primary dropdown-toggle btn-sm rounded-pill" type="button" data-bs-toggle="dropdown">Acciones</button>';
     dropdown += '<div class="dropdown-menu">';
     dropdown += '<a rel="update" class="dropdown-item" type="button">Actualizar</a>';
+    //dropdown += `<a href=\"/sales/quote/${row.id}/document/\" class=\"dropdown-item\"><i class=\"bx bx-download me-1\"></i> Generar y descargar cotización</a>`;
     dropdown += `<a href="/operations/routes/${row.id}/map/" target="_blank" class="dropdown-item">Mapa de ruta</a>`;
     dropdown += '<hr class="dropdown-divider">';
     dropdown += '<a rel="delete" class="dropdown-item" type="button">Eliminar</a>';

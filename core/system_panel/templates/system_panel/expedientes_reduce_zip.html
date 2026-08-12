@@ -1,0 +1,67 @@
+{% extends "base/layout.html" %}
+{% load static %}
+
+{% block title %}Reducir PDFs{% endblock %}
+
+{% block content %}
+<div class="pagetitle d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bx bx-compress me-2"></i>Reducir PDFs</h1>
+        <nav>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Sistema</a></li>
+                <li class="breadcrumb-item active">Reducir PDFs</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="section">
+    <div class="row">
+        <div class="col-12 col-lg-10 col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bx bx-archive-in me-2"></i>Subir ZIP con PDFs</h5>
+                </div>
+
+                <form id="PdfReduceZipForm" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="card-body">
+                        <p class="text-muted">Sube un archivo <strong>.zip</strong> con PDFs. Se reducirá el tamaño de cada PDF aplicando rasterización JPEG según la <em>calidad</em> y <em>escala</em> seleccionadas. Una calidad o escala menores generan archivos más pequeños pero con mayor pérdida visual.</p>
+                        {% include "base/elements/forms/render_with_layout.html" with add_form=form add_form_layout=add_form_layout add_form_fields=add_form_fields %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger mt-3">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-end gap-2">
+                            <button id="submitBtn" type="submit" class="btn btn-primary">
+                                <i class="bx bx-cog me-1"></i> Procesar y descargar
+                            </button>
+                            <a href="javascript:history.back()" class="btn btn-secondary">
+                                <i class="bx bx-x me-1"></i> Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Evitar dobles envíos básicos
+(function(){
+  const form = document.getElementById('PdfReduceZipForm');
+  const btn = document.getElementById('submitBtn');
+  if(form && btn){
+    form.addEventListener('submit', function(){
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Procesando...';
+    });
+  }
+})();
+</script>
+{% endblock %}

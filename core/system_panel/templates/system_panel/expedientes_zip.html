@@ -1,0 +1,53 @@
+{% extends "base/layout.html" %}
+{% load static %}
+
+{% block title %}Procesar expedientes{% endblock %}
+
+{% block content %}
+<div class="pagetitle d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bx bx-folder me-2"></i>Procesar expedientes</h1>
+        <nav>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Sistema</a></li>
+                <li class="breadcrumb-item active">Procesar expedientes</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="section">
+    <div class="row">
+        <div class="col-12 col-lg-10 col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bx bx-archive-in me-2"></i>Subir ZIP de expedientes</h5>
+                </div>
+
+                <form id="ExpedientesZipForm" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="card-body">
+                        <p class="text-muted">Sube un archivo <strong>.zip</strong> que contenga carpetas. Cada carpeta representa un expediente y debe contener archivos PDF. El sistema unirá los PDFs por carpeta y te devolverá un ZIP con un PDF por expediente.</p>
+                        {% include "base/elements/forms/render_with_layout.html" with add_form=form add_form_layout=add_form_layout add_form_fields=add_form_fields %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger mt-3">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bx bx-cog me-1"></i> Procesar y descargar
+                            </button>
+                            <a href="javascript:history.back()" class="btn btn-secondary">
+                                <i class="bx bx-x me-1"></i> Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

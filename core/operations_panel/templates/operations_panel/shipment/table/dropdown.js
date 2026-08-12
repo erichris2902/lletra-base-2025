@@ -37,6 +37,8 @@ function dropdown(data, type, row) {
     }
     dropdown += '<a rel="update" class="dropdown-item" type="button">Editar viaje</a>';
     dropdown += '<hr class="dropdown-divider">';
+    dropdown += '<a rel="duplicate" class="dropdown-item" type="button">Duplicar</a>';
+    dropdown += '<hr class="dropdown-divider">';
     dropdown += '<a rel="update_route" class="dropdown-item" type="button">Verificar ruta</a>';
     dropdown += '<a rel="update_route_select" class="dropdown-item" type="button">Cambiar ruta</a>';
     dropdown += '<a rel="update_stops" class="dropdown-item" type="button">Actualizar paradas</a>';

@@ -3,9 +3,13 @@ from django.db.models.aggregates import Sum
 from django.utils import timezone
 from datetime import timedelta
 
+from django.contrib.auth.decorators import login_required
+from django.http import FileResponse, HttpResponseBadRequest
+from django.shortcuts import get_object_or_404
 from core.sales_panel.forms import LeadCategoryForm, LeadIndustryForm, LeadForm, QuotationForm, LeadExpenseForm
 from core.sales_panel.models.commercial import LeadState, Lead, LeadExpense, LeadCategory, LeadIndustry, Quotation
 from core.system.views import AdminTemplateView, AdminListView
+import logging
 
 
 class DashboardSaleView(AdminTemplateView):
@@ -299,6 +303,45 @@ class QuoteListView(AdminListView):
     category = 'Ventas'
     catalogs = [
     ]
+
+class QuotationDocxDownloadView(AdminTemplateView):
+    """
+    Generate and download a Quotation DOCX using the existing Quotation.generateDocx().
+    Enforces that the quotation belongs to the current SystemUser.
+    """
+    def get(self, request, pk, *args, **kwargs):
+        # Resolve current SystemUser
+        try:
+            system_user = request.user.user
+        except Exception:
+            system_user = None
+        # Fetch only quotations owned by the current user (or allow staff/superusers to bypass)
+        try:
+            if system_user is not None and not getattr(request.user, 'is_superuser', False):
+                quotation = get_object_or_404(Quotation, pk=pk, user=system_user)
+            else:
+                quotation = get_object_or_404(Quotation, pk=pk)
+        except Exception:
+            # get_object_or_404 will raise Http404; let it bubble
+            raise
+        # Generate fresh document
+        try:
+            quotation.generateDocx()
+        except Exception as exc:
+            logging.getLogger(__name__).error("Error generando DOCX de cotización %s", pk, exc_info=True)
+            return HttpResponseBadRequest("No se pudo generar la cotización. Inténtalo nuevamente.")
+        # Stream file using storage-agnostic API
+        try:
+            quotation.docx.open('rb')
+            fh = quotation.docx
+        except Exception:
+            logging.getLogger(__name__).error("Archivo DOCX no disponible para cotización %s", pk, exc_info=True)
+            return HttpResponseBadRequest("El documento de la cotización no está disponible para descargar.")
+        filename = f"cotizacion-{quotation.id}.docx"
+        resp = FileResponse(fh, as_attachment=True, filename=filename)
+        resp["Content-Type"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        return resp
+
 
 class ExpenseListView(AdminListView):
     model = LeadExpense

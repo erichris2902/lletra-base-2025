@@ -141,3 +141,28 @@ $('#main_datatable tbody').on('click', 'a[rel="confirm"]', function () {
         });
     });
 });
+
+$('#main_datatable tbody').on('click', 'a[rel="duplicate"]', function () {
+    const tr = tblClient.cell($(this).closest('td, li')).index();
+    const data = tblClient.row(tr.row).data();
+
+    const parameters = new FormData();
+    parameters.append('action', 'duplicate');
+    parameters.append('id', data.id);
+    parameters.append('csrfmiddlewaretoken', csrfToken);
+
+    submit_with_ajax(window.location.pathname, parameters, function (data) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: 'Se duplico exitosamente',
+        });
+        tblClient.ajax.reload(null, false);
+    }, function (data) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: data.error,
+        });
+    });
+});

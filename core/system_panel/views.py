@@ -21,7 +21,7 @@ from core.operations_panel.views.report.worksheet_folio_operation import report_
 from core.system.models import Category, Section
 from core.system.views import AdminTemplateView, AdminListView
 from core.system_panel.forms import CategoryForm, SectionForm, AssistantForm, ActionEngineForm, ReportEngineForm, \
-    ReportEngineByFolioForm
+    ReportEngineByFolioForm, ExpedienteZipForm, PdfReduceZipForm
 from apps.openai_assistant.models import Assistant
 from core.operation_control.models import OperationMasterControl
 from core.admin_panel.models.purchase_order import PurchaseOrderOperation, PurchaseOrderAccessory, PurchaseOrderStatus
@@ -512,11 +512,8 @@ class ReportEngineByFolioView(ReportEngineView):
     category = "Reporteria"
 
     def post(self, request, *args, **kwargs):
-        from django.utils.dateparse import parse_date
         print(request.POST)
         report_type = request.POST.get("report_type")
-        folio_serie = parse_date(request.POST.get("folio_serie"))
-        folio_number = parse_date(request.POST.get("folio_number"))
 
         if report_type == "folios":
             return report_xml_worksheet_folios_by_folio(request)
@@ -540,6 +537,109 @@ class ReportEngineByFolioView(ReportEngineView):
             'section': self.section,
         })
         return context
+
+
+class ExpedienteZipProcessorView(AdminTemplateView):
+    template_name = 'system_panel/expedientes_zip.html'
+    title = 'Procesar expedientes (ZIP → PDFs)'
+    section = 'Utilidades de documentos'
+    category = 'Sistema'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form = ExpedienteZipForm()
+        context.update({
+            'form': form,
+            'form_type': 'vertical',
+            'add_form_layout': getattr(form, 'layout', []),
+            'add_form_fields': {name: form[name] for name in form.fields},
+            'title': self.title,
+            'category': self.category,
+            'section': self.section,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        from django.http import FileResponse
+        from .services.expediente_processor import process_expedientes_zip, ProcessorError, ProcessorConfig
+        form = ExpedienteZipForm(request.POST, request.FILES)
+        if not form.is_valid():
+            # Re-render with errors
+            context = self.get_context_data()
+            context['form'] = form
+            return self.render_to_response(context)
+
+        upload = form.cleaned_data['zip_file']
+        try:
+            output_io, out_name = process_expedientes_zip(upload, config=ProcessorConfig())
+        except ProcessorError as e:
+            import logging
+            logging.getLogger(__name__).error("Error procesando ZIP de expedientes", exc_info=True)
+            form.add_error('zip_file', str(e))
+            context = self.get_context_data()
+            context['form'] = form
+            return self.render_to_response(context)
+
+        response = FileResponse(output_io, as_attachment=True, filename=out_name)
+        response['Content-Type'] = 'application/zip'
+        return response
+
+
+class PdfZipReducerView(AdminTemplateView):
+    template_name = 'system_panel/expedientes_reduce_zip.html'
+    title = 'Reducir PDFs (ZIP → ZIP)'
+    section = 'Utilidades de documentos'
+    category = 'Sistema'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form = PdfReduceZipForm()
+        context.update({
+            'form': form,
+            'form_type': 'vertical',
+            'add_form_layout': getattr(form, 'layout', []),
+            'add_form_fields': {name: form[name] for name in form.fields},
+            'title': self.title,
+            'category': self.category,
+            'section': self.section,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        from django.http import FileResponse
+        from .services.pdf_reducer import process_zip_pdf_reduction
+        from .services.expediente_processor import ProcessorError
+
+        form = PdfReduceZipForm(request.POST, request.FILES)
+        if not form.is_valid():
+            context = self.get_context_data()
+            context['form'] = form
+            return self.render_to_response(context)
+
+        upload = form.cleaned_data['zip_file']
+        quality = form.cleaned_data['quality']
+        scale = form.cleaned_data['scale']
+        keep_first = form.cleaned_data.get('keep_first_page', True)
+
+        try:
+            output_io, out_name = process_zip_pdf_reduction(
+                upload,
+                quality=quality,
+                scale=scale,
+                keep_first=keep_first,
+            )
+        except ProcessorError as e:
+            import logging
+            logging.getLogger(__name__).error("Error reduciendo PDFs desde ZIP", exc_info=True)
+            form.add_error('zip_file', str(e))
+            context = self.get_context_data()
+            context['form'] = form
+            return self.render_to_response(context)
+
+        # Force standard output name per spec
+        response = FileResponse(output_io, as_attachment=True, filename='expedientes_reducidos.zip')
+        response['Content-Type'] = 'application/zip'
+        return response
 
 
 def report_operations_master(request):

@@ -12,5 +12,6 @@ urlpatterns = [
     path('leads/user', views.LeadSaleView.as_view(), name="LeadSaleView"),
     path('agenda', views.AgendaView.as_view(), name="AgendaView"),
     path('quote', views.QuoteListView.as_view(), name="QuoteListView"),
+    path('quote/<int:pk>/document/', views.QuotationDocxDownloadView.as_view(), name="quotation_document"),
     path('expenses', views.ExpenseListView.as_view(), name="ExpenseListView"),
 ]

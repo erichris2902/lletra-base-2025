@@ -59,6 +59,7 @@ folium~=0.20.0
 
 python-docx~=1.2.0
 Pillow~=10.4.0
+PyMuPDF~=1.24.9
 django-redis-cache
 gunicorn
 python-Levenshtein
@@ -67,3 +68,4 @@ qrcode
 reportlab
 xhtml2pdf
 pypdf
+pymupdf
