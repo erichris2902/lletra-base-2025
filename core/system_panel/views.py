@@ -6,8 +6,9 @@ from dateutil.utils import today
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.http import HttpResponseBadRequest, HttpResponse
+from django.utils import timezone
 from openpyxl import Workbook, load_workbook
-from openpyxl.styles import PatternFill, Border, Side, Alignment
+from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl.styles.borders import BORDER_THIN
 
 from apps.facturapi.models import FacturapiProduct, FacturapiTax, FacturapiInvoice
@@ -481,6 +482,8 @@ class ReportEngineView(AdminTemplateView):
             return report_attendance(request)
         elif report_type == "operations_master":
             return report_operations_master(request)
+        elif report_type == "bitacora_cambio_turno":
+            return report_operations_coordinators(request)
 
         return HttpResponseBadRequest("Tipo de reporte no reconocido.")
 
@@ -1149,3 +1152,682 @@ def convertir_decimal(valor):
     )
 
     return Decimal(valor_limpio)
+
+
+def report_operations_coordinators(request):
+    start_date = request.POST.get("fecha_inicial")
+    end_date = request.POST.get("fecha_final")
+
+    try:
+        fecha_inicio = datetime.strptime(start_date, "%d/%m/%Y").date()
+        fecha_fin = datetime.strptime(end_date, "%d/%m/%Y").date()
+    except Exception:
+        return HttpResponseBadRequest(
+            "Fechas inválidas. Formato esperado: dd/mm/YYYY"
+        )
+
+    operations = (
+        Operation.objects
+        .filter(operation_date__range=[fecha_inicio, fecha_fin])
+        .order_by("operation_date", "folio")
+    )
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Operaciones"
+
+    def style_section(cell_range, fill):
+        for row in ws[cell_range]:
+            for cell in row:
+                cell.fill = fill
+                cell.font = main_header_font
+                cell.alignment = center
+                cell.border = thin_border
+
+    # =========================================================
+    # ESTILOS
+    # =========================================================
+
+    thin_border = Border(
+        left=Side(border_style=BORDER_THIN, color="000000"),
+        right=Side(border_style=BORDER_THIN, color="000000"),
+        top=Side(border_style=BORDER_THIN, color="000000"),
+        bottom=Side(border_style=BORDER_THIN, color="000000"),
+    )
+
+    center = Alignment(
+        horizontal="center",
+        vertical="center",
+        wrap_text=True,
+    )
+
+    top_center = Alignment(
+        horizontal="center",
+        vertical="top",
+        wrap_text=True,
+    )
+
+    # Texto de encabezados principales
+    main_header_font = Font(
+        color="FFFFFF",
+        bold=True,
+        size=11,
+    )
+
+    # Identificación del servicio - Azul marino
+    identification_fill = PatternFill(
+        start_color="1F4E78",
+        end_color="1F4E78",
+        fill_type="solid",
+    )
+
+    # Planeación - Naranja
+    planning_fill = PatternFill(
+        start_color="C65911",
+        end_color="C65911",
+        fill_type="solid",
+    )
+
+    # 1er turno - Verde
+    first_shift_fill = PatternFill(
+        start_color="548235",
+        end_color="548235",
+        fill_type="solid",
+    )
+
+    # 2do turno - Azul
+    second_shift_fill = PatternFill(
+        start_color="2F75B5",
+        end_color="2F75B5",
+        fill_type="solid",
+    )
+
+    # 3er turno - Morado
+    third_shift_fill = PatternFill(
+        start_color="7030A0",
+        end_color="7030A0",
+        fill_type="solid",
+    )
+
+    # Jefatura - Rojo oscuro
+    management_fill = PatternFill(
+        start_color="C00000",
+        end_color="C00000",
+        fill_type="solid",
+    )
+
+    # Encabezados de columnas
+    header_fill = PatternFill(
+        start_color="D9E1F2",
+        end_color="D9E1F2",
+        fill_type="solid",
+    )
+
+    # =========================================================
+    # ENCABEZADOS PRINCIPALES
+    # =========================================================
+
+    # Identificación del servicio
+    ws.merge_cells("A1:L1")
+    ws.merge_cells("M1:Q1")
+    ws.merge_cells("R1:AK1")
+    ws.merge_cells("AL1:BE1")
+    ws.merge_cells("BF1:BY1")
+    ws["A1"] = "Identificación del servicio"
+
+    # Planeación
+    ws["A1"] = "Identificación del servicio"
+    ws["M1"] = "Planeación"
+    # 1er turno
+    #ws.merge_cells("D1:AK1")
+    ws["R1"] = "1er. Turno ( 8 am a 3 pm) Coordinadores"
+    ws["AL1"] = "2do. Turno (3 pm a 10 pm) Monitoreo Operativo"
+    ws["BF1"] = "3er.Turno (10 pm a 6 am) Monitoreo Nocturno"
+    ws["BZ1"] = "Jefatura"
+
+    # Colores de encabezados principales
+    for row in ws["A1:B1"]:
+        for cell in row:
+            cell.fill = identification_fill
+            cell.alignment = center
+            cell.border = thin_border
+
+    ws["C1"].fill = planning_fill
+    ws["C1"].alignment = center
+    ws["C1"].border = thin_border
+
+    style_section("A1:L1", identification_fill)
+    style_section("M1:Q1", planning_fill)
+    style_section("R1:AK1", first_shift_fill)
+    style_section("AL1:BE1", second_shift_fill)
+    style_section("BF1:BY1", third_shift_fill)
+
+    # Jefatura por ahora es solamente BZ
+    style_section("BZ1:BZ1", management_fill)
+
+    for row in ws["D1:BZ1"]:
+        for cell in row:
+            cell.alignment = center
+            cell.border = thin_border
+
+    # =========================================================
+    # ENCABEZADOS DE COLUMNAS
+    # =========================================================
+
+    headers = [
+        "Fecha",
+        "C. Vehicular",
+        "Cliente",
+        "Coordinador",
+        "Origen",
+        "Destino",
+        "Repartos",
+        "Proveedor",
+        "Operador",
+        "Placas",
+        "Economico",
+        "Division",
+        "C. carga",
+        "H. de salida",
+        "C. descarga",
+        "Ruta",
+        "Indicaciones de seguridad",
+
+        "H. llegada",
+        "Semaforo",
+        "Motivo",
+        "H. de salida",
+        "Evidencias Carga",
+        "Carta porte",
+        "Estatus (Corte 11 am)",
+        "Comentarios",
+        "Estatus (Corte 2 pm)",
+        "Comentarios",
+        "Incidencias",
+        "Comentarios",
+        "Dadivas",
+        "Comentarios",
+        "Evidencias (pod's clientes)",
+        "Evidencias (carga en drive)",
+        "Estatus cambio de turno",
+        "Pendientes",
+        "Calificacion (0 al 10 pts)",
+        "Motivo",
+
+        "H. llegada",
+        "Semaforo",
+        "Motivo",
+        "H. de salida",
+        "Evidencias Carga",
+        "Carta porte",
+        "Estatus (Corte 11 am)",
+        "Comentarios",
+        "Estatus (Corte 2 pm)",
+        "Comentarios",
+        "Incidencias",
+        "Comentarios",
+        "Dadivas",
+        "Comentarios",
+        "Evidencias (pod's clientes)",
+        "Evidencias (carga en drive)",
+        "Estatus cambio de turno",
+        "Pendientes",
+        "Calificacion (0 al 10 pts)",
+        "Motivo",
+
+        "H. llegada",
+        "Semaforo",
+        "Motivo",
+        "H. de salida",
+        "Evidencias Carga",
+        "Carta porte",
+        "Estatus (Corte 11 am)",
+        "Comentarios",
+        "Estatus (Corte 2 pm)",
+        "Comentarios",
+        "Incidencias",
+        "Comentarios",
+        "Dadivas",
+        "Comentarios",
+        "Evidencias (pod's clientes)",
+        "Evidencias (carga en drive)",
+        "Estatus cambio de turno",
+        "Pendientes",
+        "Calificacion (0 al 10 pts)",
+        "Motivo",
+    ]
+
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws.cell(
+            row=2,
+            column=col_idx,
+            value=header,
+        )
+
+        cell.fill = header_fill
+        cell.alignment = center
+        cell.border = thin_border
+
+    # =========================================================
+    # DATOS
+    # =========================================================
+
+    row_number = 3
+
+    for operation in operations:
+        row = [
+            # A - Fecha
+            operation.operation_date,
+
+            # B - C. Vehicular
+            operation.folio,
+
+            # C - Cliente
+            str(operation.client),
+
+            # D - Coordinador
+            "",
+
+            # E - Origen
+            str(operation.route.initial_location) if operation.route else "",
+
+            # F - Destino
+            str(operation.route.destination_location) if operation.route else "",
+
+            # G - Repartos
+            "",
+
+            # H - Proveedor
+            str(operation.supplier),
+
+            # I - Operador
+            str(operation.driver),
+
+            # J - Placas
+            operation.vehicle.license_plate if operation.vehicle else "",
+
+            # K - Economico
+            "",
+
+            # L - Division
+            "",
+
+            # M - C. carga
+            excel_datetime(operation.cargo_appointment),
+
+            # N - H. de salida
+            excel_datetime(operation.scheduled_departure_time),
+
+            # O - C. descarga
+            excel_datetime(operation.download_appointment),
+
+            # P - Ruta
+            "",
+
+            # Q - Indicaciones de seguridad
+            "",
+
+            # R - H. llegada
+            "",
+
+            # S - Semaforo
+            "",
+
+            # T - Motivo
+            "",
+
+            # U - H. de salida
+            "",
+
+            # V - Evidencias Carga
+            "",
+
+            # W - Carta porte
+            "",
+
+            # X - Estatus corte 11 am
+            "",
+
+            # Y - Comentarios
+            "",
+
+            # Z - Estatus corte 2 pm
+            "",
+
+            # AA - Comentarios
+            "",
+
+            # AB - Incidencias
+            "",
+
+            # AC - Comentarios
+            "",
+
+            # AD - Dadivas
+            "",
+
+            # AE - Comentarios
+            "",
+
+            # AF - Evidencias pod's clientes
+            "",
+
+            # AG - Evidencias carga drive
+            "",
+
+            # AH - Estatus cambio de turno
+            "",
+
+            # AI - Pendientes
+            "",
+
+            # AJ - Calificación
+            "",
+
+            # AK - Motivo
+            "",
+
+            # R - H. llegada
+            "",
+
+            # S - Semaforo
+            "",
+
+            # T - Motivo
+            "",
+
+            # U - H. de salida
+            "",
+
+            # V - Evidencias Carga
+            "",
+
+            # W - Carta porte
+            "",
+
+            # X - Estatus corte 11 am
+            "",
+
+            # Y - Comentarios
+            "",
+
+            # Z - Estatus corte 2 pm
+            "",
+
+            # AA - Comentarios
+            "",
+
+            # AB - Incidencias
+            "",
+
+            # AC - Comentarios
+            "",
+
+            # AD - Dadivas
+            "",
+
+            # AE - Comentarios
+            "",
+
+            # AF - Evidencias pod's clientes
+            "",
+
+            # AG - Evidencias carga drive
+            "",
+
+            # AH - Estatus cambio de turno
+            "",
+
+            # AI - Pendientes
+            "",
+
+            # AJ - Calificación
+            "",
+
+            # AK - Motivo
+            "",
+
+            # R - H. llegada
+            "",
+
+            # S - Semaforo
+            "",
+
+            # T - Motivo
+            "",
+
+            # U - H. de salida
+            "",
+
+            # V - Evidencias Carga
+            "",
+
+            # W - Carta porte
+            "",
+
+            # X - Estatus corte 11 am
+            "",
+
+            # Y - Comentarios
+            "",
+
+            # Z - Estatus corte 2 pm
+            "",
+
+            # AA - Comentarios
+            "",
+
+            # AB - Incidencias
+            "",
+
+            # AC - Comentarios
+            "",
+
+            # AD - Dadivas
+            "",
+
+            # AE - Comentarios
+            "",
+
+            # AF - Evidencias pod's clientes
+            "",
+
+            # AG - Evidencias carga drive
+            "",
+
+            # AH - Estatus cambio de turno
+            "",
+
+            # AI - Pendientes
+            "",
+
+            # AJ - Calificación
+            "",
+
+            # AK - Motivo
+            "",
+        ]
+
+        for col_idx, value in enumerate(row, start=1):
+            cell = ws.cell(
+                row=row_number,
+                column=col_idx,
+                value=value,
+            )
+
+            cell.border = thin_border
+            cell.alignment = top_center
+
+        row_number += 1
+
+    # =========================================================
+    # FORMATOS
+    # =========================================================
+
+    # Fecha
+    for row in range(3, ws.max_row + 1):
+        ws.cell(row=row, column=1).number_format = "dd/mm/yyyy"
+
+    # Horas
+    time_columns = [
+        14,  # N - H. salida
+        18,  # R - H. llegada
+        21,  # U - H. salida
+    ]
+
+    for row in range(3, ws.max_row + 1):
+        for col_idx in time_columns:
+            ws.cell(
+                row=row,
+                column=col_idx,
+            ).number_format = "hh:mm"
+
+    # =========================================================
+    # TAMAÑOS
+    # =========================================================
+
+    widths = {
+        "A": 13,
+        "B": 16,
+        "C": 25,
+        "D": 25,
+        "E": 25,
+        "F": 25,
+        "G": 12,
+        "H": 25,
+        "I": 25,
+        "J": 15,
+        "K": 15,
+        "L": 15,
+        "M": 15,
+        "N": 15,
+        "O": 15,
+        "P": 25,
+        "Q": 35,
+        "R": 15,
+        "S": 15,
+        "T": 25,
+        "U": 15,
+        "V": 25,
+        "W": 20,
+        "X": 22,
+        "Y": 30,
+        "Z": 22,
+        "AA": 30,
+        "AB": 25,
+        "AC": 30,
+        "AD": 15,
+        "AE": 30,
+        "AF": 30,
+        "AG": 30,
+        "AH": 25,
+        "AI": 30,
+        "AJ": 22,
+        "AK": 30,
+
+        "AL": 15,
+        "AM": 15,
+        "AN": 25,
+        "AO": 15,
+        "AP": 25,
+        "AQ": 20,
+        "AR": 22,
+        "AS": 30,
+        "AT": 22,
+        "AU": 30,
+        "AV": 25,
+        "AW": 30,
+        "AX": 15,
+        "AY": 30,
+        "AZ": 30,
+        "BA": 30,
+        "BB": 25,
+        "BC": 30,
+        "BD": 22,
+        "BE": 30,
+
+        "BF": 15,
+        "BG": 15,
+        "BH": 25,
+        "BI": 15,
+        "BJ": 25,
+        "BK": 20,
+        "BL": 22,
+        "BM": 30,
+        "BN": 22,
+        "BO": 30,
+        "BP": 25,
+        "BQ": 30,
+        "BR": 15,
+        "BS": 30,
+        "BT": 30,
+        "BU": 30,
+        "BV": 25,
+        "BW": 30,
+        "BX": 22,
+        "BY": 30,
+    }
+
+    for column, width in widths.items():
+        ws.column_dimensions[column].width = width
+
+    ws.row_dimensions[1].height = 30
+    ws.row_dimensions[2].height = 55
+
+    # =========================================================
+    # CONFIGURACIÓN DE LA HOJA
+    # =========================================================
+
+    ws.freeze_panes = "A3"
+    ws.auto_filter.ref = f"A2:AK{max(ws.max_row, 2)}"
+
+    ws.sheet_view.showGridLines = False
+
+    ws.page_setup.orientation = "landscape"
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+
+    # =========================================================
+    # RESPUESTA
+    # =========================================================
+
+    nombre_archivo = (
+        f"Operaciones Coordinadores "
+        f"{fecha_inicio} - {fecha_fin}.xlsx"
+    )
+
+    response = HttpResponse(
+        content_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        )
+    )
+
+    contenido = (
+        'attachment; filename="{0}"'
+        .format(nombre_archivo)
+    )
+
+    response["Content-Disposition"] = contenido
+
+    wb.save(response)
+
+    return response
+
+
+def excel_datetime(value):
+    """
+    Convierte un datetime de Django a un datetime compatible con Excel.
+
+    - Conserva la hora local.
+    - Elimina tzinfo porque Excel/openpyxl no soporta timezones.
+    """
+    if value is None:
+        return None
+
+    if isinstance(value, datetime) and timezone.is_aware(value):
+        value = timezone.localtime(value)
+        value = value.replace(tzinfo=None)
+
+    return value.time() if isinstance(value, datetime) else value
+

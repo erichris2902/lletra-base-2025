@@ -100,6 +100,7 @@ class ReportEngineForm(BaseForm):
         ("packing_asturiano", "Packing de Asturiano"),
         ("asistencia", "Reporte de asistencia"),
         ("operations_master", "Control maestro de operaciones"),
+        ("bitacora_cambio_turno", "Bitacora de cambio de turno"),
     ]
     layout = [
         {

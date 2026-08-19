@@ -243,6 +243,26 @@ class FolioOperationListView(AdminListView):
             "data": data
         }
 
+    def handle_get_shipment(self, request, data):
+        obj_id = request.POST.get('id')
+        if obj_id == '-1':
+            instance = self.model()
+            self.form_action = "Add"
+        else:
+            instance = get_object_or_404(self.model, pk=obj_id)
+            self.form_action = "update_shipment"
+        data['id'] = str(instance.id)
+        data['form'] = self.render_form(request, instance, form=OperationShipmentForm)
+        return data
+
+    def handle_update_shipment(self, request, data):
+        operation = Operation.objects.get(pk=request.POST.get('id'))
+        form = OperationShipmentForm(request.POST, instance=operation)
+        if form.is_valid():
+            instance = form.save()
+            data['success'] = True
+            data['message'] = f"Operacion actualizada exitosamente"
+
     def get_queryset(self):
         return self.model.objects.prefetch_related("client", "driver",
                                                    "vehicle", "route",
