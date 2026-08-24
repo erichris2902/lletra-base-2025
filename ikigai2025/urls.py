@@ -40,7 +40,7 @@ def qr_landing(request):
         content="width=device-width, initial-scale=1, viewport-fit=cover"
     >
 
-    <title>Cornerstone</title>
+    <title>Lletra</title>
 
     <style>
         * {{
