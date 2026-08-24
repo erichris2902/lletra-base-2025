@@ -1,3 +1,5 @@
+import html
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -11,83 +13,454 @@ admin.autodiscover()
 
 
 def qr_landing(request):
-    """
-    Interstitial QR landing page.
-    Usage: /qr/?to=https://destino.final/&s=3&title=Titulo&msg=Mensaje
-    - to: URL final a donde redirigir (http/https obligatorio)
-    - s: segundos de espera antes de redirigir (0-15, por defecto 3)
-    - title/msg: textos opcionales para personalizar la página
-    """
-    to = 'https://www.facebook.com/LLETRAMX'
-    if not to:
-        return HttpResponseBadRequest("Falta el parámetro 'to'.")
-    if not (to.startswith('http://') or to.startswith('https://')):
-        return HttpResponseBadRequest("El parámetro 'to' debe iniciar con http:// o https://")
+    # Parámetro opcional:
+    # /redirect/?to=https://google.com
+    to = request.GET.get("to", "").strip()
 
-    try:
-        seconds = int(request.GET.get('s', 3))
-    except (TypeError, ValueError):
-        seconds = 3
-    # Limitar a 0-15 segundos para evitar abusos
-    seconds = max(0, min(seconds, 15))
+    # Escapamos por seguridad para insertarlo en HTML
+    safe_to = html.escape(to, quote=True)
 
-    title = request.GET.get('title', 'Te estamos redirigiendo…')
-    msg = request.GET.get('msg', f'Serás redirigido automáticamente en {seconds} segundos.')
+    # URL del minivideo
+    # Puedes cambiarla por un archivo dentro de static.
+    video_url = "/static/video_lletra_qr.mp4"
 
-    # Escapar textos para evitar inyecciones
-    safe_title = escape(title)
-    safe_msg = escape(msg)
-    safe_to = escape(to)
+    # Redes sociales
+    facebook_url = "https://www.facebook.com/lletra"
+    instagram_url = "https://www.instagram.com/lletralogistica.mx/"
+    linkedin_url = "https://www.linkedin.com/company/lletra-mx/?originalSubdomain=mx"
+    tiktok_url = ""
 
-    html = f"""
+    html_content = f"""
 <!DOCTYPE html>
-<html lang=\"es\">
+<html lang="es">
 <head>
-  <meta charset=\"utf-8\">
-  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
-  <title>{safe_title}</title>
-  <meta http-equiv=\"refresh\" content=\"{seconds};url={safe_to}\">
-  <style>
-    body {{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: #0b1220; color: #f3f4f6; }}
-    .wrap {{ max-width: 720px; margin: 0 auto; padding: 24px; }}
-    .card {{ background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,.35); }}
-    .ad {{ background: linear-gradient(135deg,#0ea5e9,#6366f1); border-radius: 10px; padding: 18px; margin-top: 12px; color: white; text-align: center; }}
-    .btn {{ display: inline-block; padding: 10px 16px; background: #22c55e; color: #06240f; border-radius: 8px; text-decoration: none; font-weight: 700; }}
-    .btn:hover {{ filter: brightness(1.05); }}
-    .muted {{ color: #9ca3af; }}
-  </style>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+
+    <title>Cornerstone</title>
+
+    <style>
+        * {{
+            box-sizing: border-box;
+        }}
+
+        html,
+        body {{
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100%;
+            background: #000;
+            font-family:
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+        }}
+
+        body {{
+            min-height: 100dvh;
+            overflow: hidden;
+        }}
+
+        .page {{
+            position: relative;
+            width: 100%;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+        }}
+
+        /*
+         * VIDEO
+         */
+
+        #video-container {{
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity .5s ease;
+        }}
+
+        #intro-video {{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }}
+
+        #video-container.hide {{
+            opacity: 0;
+            pointer-events: none;
+        }}
+
+        /*
+         * REDES SOCIALES
+         */
+
+        #social-container {{
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            min-height: 100dvh;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding:
+                max(24px, env(safe-area-inset-top))
+                24px
+                max(24px, env(safe-area-inset-bottom));
+
+            background:
+                radial-gradient(
+                    circle at top,
+                    #1f2937 0%,
+                    #0b1220 45%,
+                    #05070b 100%
+                );
+
+            opacity: 0;
+            visibility: hidden;
+
+            transition:
+                opacity .6s ease,
+                visibility .6s ease;
+        }}
+
+        #social-container.show {{
+            opacity: 1;
+            visibility: visible;
+        }}
+
+        .social-content {{
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            color: #fff;
+        }}
+
+        .logo {{
+            width: 110px;
+            max-width: 35vw;
+            margin-bottom: 20px;
+        }}
+
+        h1 {{
+            font-size: clamp(26px, 7vw, 38px);
+            margin: 0 0 10px;
+            line-height: 1.15;
+        }}
+
+        .subtitle {{
+            color: #9ca3af;
+            font-size: 16px;
+            margin: 0 0 32px;
+        }}
+
+        .social-buttons {{
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 100%;
+        }}
+
+        .social-btn {{
+            position: relative;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 100%;
+            min-height: 58px;
+
+            padding: 15px 20px;
+
+            border-radius: 16px;
+
+            text-decoration: none;
+            color: #fff;
+
+            font-size: 17px;
+            font-weight: 700;
+
+            border: 1px solid rgba(255,255,255,.12);
+
+            background: rgba(255,255,255,.08);
+
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+
+            transition:
+                transform .2s ease,
+                background .2s ease,
+                border-color .2s ease;
+        }}
+
+        .social-btn:hover {{
+            transform: translateY(-2px);
+            background: rgba(255,255,255,.14);
+            border-color: rgba(255,255,255,.25);
+        }}
+
+        .social-btn:active {{
+            transform: scale(.98);
+        }}
+
+        .social-icon {{
+            position: absolute;
+            left: 20px;
+
+            width: 30px;
+            height: 30px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 22px;
+        }}
+
+        /*
+         * REDIRECCIÓN
+         */
+
+        #redirect-message {{
+            position: absolute;
+            bottom: max(24px, env(safe-area-inset-bottom));
+
+            left: 50%;
+            transform: translateX(-50%);
+
+            color: rgba(255,255,255,.65);
+
+            font-size: 13px;
+            text-align: center;
+
+            z-index: 10;
+
+            display: none;
+        }}
+
+        #redirect-message.show {{
+            display: block;
+        }}
+
+        @media (min-width: 768px) {{
+            #intro-video {{
+                object-fit: contain;
+            }}
+        }}
+    </style>
 </head>
+
 <body>
-  <div class=\"wrap\">
-    <div class=\"card\">
-      <h1 style=\"margin-top:0\">{safe_title}</h1>
-      <p class=\"muted\">{safe_msg} <span id=\"count\">{seconds}</span>s</p>
-      <div class=\"ad\">
-        <strong>Publicidad</strong>
-        <div style=\"margin-top:8px\">Aquí puedes colocar tu anuncio, imagen o mensaje promocional.</div>
-      </div>
-      <p style=\"margin-top:16px\"><a class=\"btn\" href=\"{safe_to}\">Continuar ahora</a></p>
-      <p class=\"muted\">Destino: <span style=\"word-break:break-all\">{safe_to}</span></p>
+
+<div class="page">
+
+    <!-- VIDEO -->
+    <div id="video-container">
+        <video
+            id="intro-video"
+            autoplay
+            muted
+            playsinline
+            preload="auto"
+        >
+            <source src="{video_url}" type="video/mp4">
+        </video>
     </div>
-  </div>
-  <script>
-    (function() {{
-      var to = {safe_to!r};
-      var remaining = {seconds};
-      var el = document.getElementById('count');
-      function tick() {{
-        if (remaining <= 0) return;
-        remaining -= 1;
-        if (el) el.textContent = remaining;
-        if (remaining <= 0) window.location.href = to;
-      }}
-      setInterval(tick, 1000);
-    }})();
-  </script>
+
+
+    <!-- REDES SOCIALES -->
+    <div id="social-container">
+
+        <div class="social-content">
+
+            <h1>Síguenos</h1>
+
+            <p class="subtitle">
+                Conoce más sobre nosotros y mantente conectado.
+            </p>
+
+            <div class="social-buttons">
+
+                <a
+                    href="{instagram_url}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="social-btn"
+                >
+                    <span class="social-icon">◎</span>
+                    Instagram
+                </a>
+
+                <a
+                    href="{facebook_url}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="social-btn"
+                >
+                    <span class="social-icon">f</span>
+                    Facebook
+                </a>
+
+                <a
+                    href="{tiktok_url}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="social-btn"
+                >
+                    <span class="social-icon">♪</span>
+                    TikTok
+                </a>
+
+                <a
+                    href="{linkedin_url}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="social-btn"
+                >
+                    <span class="social-icon">in</span>
+                    LinkedIn
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div id="redirect-message">
+        Redirigiendo...
+    </div>
+
+</div>
+
+
+<script>
+
+(function () {{
+
+    const redirectTo = {to!r};
+
+    const video = document.getElementById("intro-video");
+    const videoContainer = document.getElementById("video-container");
+    const socialContainer = document.getElementById("social-container");
+    const redirectMessage = document.getElementById("redirect-message");
+
+    let finished = false;
+
+
+    function finishIntro() {{
+
+        // Evitar que se ejecute dos veces
+        if (finished) {{
+            return;
+        }}
+
+        finished = true;
+
+
+        /*
+         * SI EXISTE "to":
+         *
+         * /pagina/?to=https://ejemplo.com
+         *
+         * redirigimos.
+         */
+
+        if (redirectTo) {{
+
+            redirectMessage.classList.add("show");
+
+            window.location.href = redirectTo;
+
+            return;
+        }}
+
+
+        /*
+         * SI NO EXISTE "to":
+         * mostramos las redes sociales.
+         */
+
+        videoContainer.classList.add("hide");
+
+        setTimeout(function () {{
+
+            videoContainer.style.display = "none";
+            socialContainer.classList.add("show");
+
+        }}, 400);
+
+    }}
+
+
+    /*
+     * Lo ideal:
+     * esperar a que termine realmente el video.
+     */
+
+    video.addEventListener("ended", finishIntro);
+
+
+    /*
+     * Intentar reproducir automáticamente.
+     */
+
+    const playPromise = video.play();
+
+    if (playPromise !== undefined) {{
+
+        playPromise.catch(function () {{
+
+            console.log(
+                "El navegador bloqueó el autoplay."
+            );
+
+        }});
+
+    }}
+
+
+    /*
+     * FALLBACK:
+     *
+     * Si por algún problema el video no termina,
+     * después de 5 segundos continuamos.
+     */
+
+    setTimeout(function () {{
+
+        finishIntro();
+
+    }}, 5000);
+
+}})();
+
+</script>
+
 </body>
 </html>
 """
-    return HttpResponse(html, content_type='text/html; charset=utf-8')
+
+    return HttpResponse(html_content)
 
 
 urlpatterns = [
