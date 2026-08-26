@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import transaction
-from apps.openai_assistant.services import AssistantService, ChatService
+from apps.openai_assistant.services import AssistantService, ChatService, ResponsesService
 from apps.openai_assistant.models import Assistant
 from apps.telegram_bots.models import TelegramChat, TelegramMessage, TelegramUser
 
@@ -19,10 +19,73 @@ class TelegramOpenAIIntegration:
         if not assistant:
             return "No assistants available. Please contact the administrator."
 
-        #if chat.active_assistant_id != assistant.id or not chat.openai_chat:
-        if True:
-            chat.set_active_assistant2(assistant)
+        # Asegurar que el chat tenga el assistant activo registrado
+        chat.set_active_assistant2(assistant)
 
+        # Enrutamiento: si es Lyna 3B o Folios General, usar ResponsesService (stateless)
+        try:
+            from apps.openai_assistant.integrations.lyna_3b import (
+                LYNA3B_ASSISTANT_ID,
+                get_lyna3b_config_and_handlers,
+            )
+        except Exception:
+            LYNA3B_ASSISTANT_ID = None
+            get_lyna3b_config_and_handlers = None
+
+        try:
+            from apps.openai_assistant.integrations.folios_general import (
+                FOLIOS_GENERAL_ASSISTANT_ID,
+                get_folios_general_config_and_handlers,
+            )
+        except Exception:
+            FOLIOS_GENERAL_ASSISTANT_ID = None
+            get_folios_general_config_and_handlers = None
+
+        try:
+            from apps.openai_assistant.integrations.lyna_asturiano import (
+                ASTURIANO_ASSISTANT_ID,
+                get_asturiano_config_and_handlers,
+            )
+        except Exception:
+            ASTURIANO_ASSISTANT_ID = None
+            get_asturiano_config_and_handlers = None
+
+        if LYNA3B_ASSISTANT_ID and str(assistant.id) == str(LYNA3B_ASSISTANT_ID) and get_lyna3b_config_and_handlers:
+            try:
+                config, handlers = get_lyna3b_config_and_handlers()
+                service = ResponsesService()
+                result = service.run_stateless(config, user_input=message.text, tool_handlers=handlers)
+                # Responder con el resumen en texto natural tras ejecutar register_operations
+                if result and isinstance(result, dict):
+                    text = result.get("text") or "Estoy procesando tu mensaje."
+                    return text
+            except Exception as e:
+                # Si algo falla en el nuevo flujo, hacemos fallback al legado
+                print(f"[TelegramOpenAIIntegration] Error ResponsesService Lyna3B: {e}")
+
+        if FOLIOS_GENERAL_ASSISTANT_ID and str(assistant.id) == str(FOLIOS_GENERAL_ASSISTANT_ID) and get_folios_general_config_and_handlers:
+            try:
+                config, handlers = get_folios_general_config_and_handlers()
+                service = ResponsesService()
+                result = service.run_stateless(config, user_input=message.text, tool_handlers=handlers)
+                if result and isinstance(result, dict):
+                    text = result.get("text") or "Estoy procesando tu mensaje."
+                    return text
+            except Exception as e:
+                print(f"[TelegramOpenAIIntegration] Error ResponsesService FoliosGeneral: {e}")
+
+        if ASTURIANO_ASSISTANT_ID and str(assistant.id) == str(ASTURIANO_ASSISTANT_ID) and get_asturiano_config_and_handlers:
+            try:
+                config, handlers = get_asturiano_config_and_handlers()
+                service = ResponsesService()
+                result = service.run_stateless(config, user_input=message.text, tool_handlers=handlers)
+                if result and isinstance(result, dict):
+                    text = result.get("text") or "Estoy procesando tu mensaje."
+                    return text
+            except Exception as e:
+                print(f"[TelegramOpenAIIntegration] Error ResponsesService LynaAsturiano: {e}")
+
+        # Flujo legado por defecto (Assistants API)
         openai_chat = chat.openai_chat
         new_messages = self.chat_service.send_message(openai_chat, message.text, user)
 

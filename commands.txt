@@ -4,10 +4,10 @@ python manage.py setup_webhook Lisa_lletra_bot --base-url https://lletrabase-eab
 python manage.py setup_webhook Lexa_lletra_bot --base-url https://lletrabase-eab0df519ae0.herokuapp.com
 python manage.py setup_webhook Lyna_lletra_bot --base-url https://lletrabase-eab0df519ae0.herokuapp.com
 
-python manage.py setup_webhook prueba_lletra_bot --base-url https://e1fb-187-154-214-11.ngrok-free.app
-python manage.py setup_webhook Lisa_lletra_bot --base-url  https://e1fb-187-154-214-11.ngrok-free.app
-python manage.py setup_webhook Lexa_lletra_bot --base-url https://e1fb-187-154-214-11.ngrok-free.app
-python manage.py setup_webhook Lyna_lletra_bot --base-url https://e1fb-187-154-214-11.ngrok-free.app
+python manage.py setup_webhook prueba_lletra_bot --base-url https://8393-189-141-40-124.ngrok-free.app
+python manage.py setup_webhook Lisa_lletra_bot --base-url  https://8393-189-141-40-124.ngrok-free.app
+python manage.py setup_webhook Lexa_lletra_bot --base-url https://8393-189-141-40-124.ngrok-free.app
+python manage.py setup_webhook Lyna_lletra_bot --base-url https://8393-189-141-40-124.ngrok-free.app
 
 
 #Crear respaldo local (Correr en CMD)
