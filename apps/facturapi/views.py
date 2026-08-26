@@ -234,7 +234,6 @@ class InvoiceFormView(AdminTemplateView):
             else:
                 data['error'] = f'Acción "{action}" no reconocida'
 
-            raise Exception("Hola")
         except Exception as e:
             print(e)
             data['error'] = str(e)
