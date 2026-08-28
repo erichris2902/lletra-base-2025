@@ -51,14 +51,16 @@ class PurchaseOrderListView(AdminListView):
         start = int(request.POST.get('start', 0))
         length = int(request.POST.get('length', 10))
 
-        queryset = PurchaseOrder.objects.select_related('supplier', 'driver').all()
+        queryset = PurchaseOrder.objects.select_related('supplier', 'driver').prefetch_related('operations__operation').all()
 
         if search:
             queryset = queryset.filter(
                 Q(folio__icontains=search) |
                 Q(supplier__business_name__icontains=search) |
-                Q(driver__name__icontains=search)
-            )
+                Q(driver__name__icontains=search) |
+                Q(operations__operation__folio__icontains=search) |
+                Q(operations__operation__pre_folio__icontains=search)
+            ).distinct()
 
         total = queryset.count()
         orders = queryset[start:start + length]
@@ -66,9 +68,19 @@ class PurchaseOrderListView(AdminListView):
         data = []
         for order in orders:
             order.calculate_totals()
+            # Construir folios de servicio (operaciones relacionadas)
+            op_folios = []
+            for po_op in order.operations.all():
+                op = po_op.operation
+                fol = getattr(op, 'folio', None) or getattr(op, 'pre_folio', None) or str(op.id)
+                if fol:
+                    op_folios.append(fol)
+            service_folio = ', '.join(op_folios) if op_folios else 'N/A'
+
             data.append({
                 'id': order.id,
                 'folio': order.folio,
+                'service_folio': service_folio,
                 'client': order.supplier.business_name if order.supplier else 'N/A',
                 'driver': order.driver.name if order.driver else 'N/A',
                 'status': order.get_status_display(),
