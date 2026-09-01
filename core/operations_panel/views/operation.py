@@ -618,10 +618,12 @@ class ShipmentOperationListView(AdminListView):
             dp = DistributionPacking.objects.get(operation=operation, pk=key)
             dp.cajas_ab = value['cajas_ab']
             dp.bolsas_ab = value['bolsas_ab']
-            dp.weight_ab = value['weight_ab']
+            dp.weight_ab_bolsas = value['weight_ab_bolsas']
+            dp.weight_ab_cajas = value['weight_ab_cajas']
             dp.cajas_cvz = value['cajas_cvz']
             dp.bolsas_cvz = value['bolsas_cvz']
-            dp.weight_cvz = value['weight_cvz']
+            dp.weight_cvz_bolsas = value['weight_cvz_bolsas']
+            dp.weight_cvz_cajas = value['weight_cvz_cajas']
             dp.save()
         all_packings = DistributionPacking.objects.filter(operation=operation)
         #Veruificar que ambos tengan peso
@@ -629,7 +631,7 @@ class ShipmentOperationListView(AdminListView):
         create_b = False
         for dp in all_packings:
             # if dp.distribution == AsturianoPacking.CVZ:
-            if dp.weight_ab > 0 and dp.weight_cvz > 0:
+            if dp.has_cerveza() and dp.has_abarrotes():
                 create_b = True
 
         # 2.1 Crear una copia de la operación
@@ -647,17 +649,17 @@ class ShipmentOperationListView(AdminListView):
         # 3. Reasignar DistributionPacking y TransportedProduct
         for dp in all_packings:
             #if dp.distribution == AsturianoPacking.CVZ:
-            if dp.weight_ab == 0  and dp.weight_cvz > 0:
+            if not dp.has_abarrotes() and dp.has_cerveza():
                 dp.distribution = AsturianoPacking.CVZ
                 dp.operation = operation  # Se pasa a la nueva operación
                 dp.save()
             #elif dp.distribution == AsturianoPacking.AB:
-            elif dp.weight_ab > 0 and dp.weight_cvz == 0:
+            elif dp.has_abarrotes() and not dp.has_cerveza():
                 # Se queda en la original
                 dp.distribution = AsturianoPacking.AB
                 dp.save()
                 continue
-            elif dp.weight_ab > 0 and dp.weight_cvz > 0:
+            elif dp.has_abarrotes() and dp.has_cerveza():
                 dp.operation = ab_operation
                 dp.distribution = AsturianoPacking.AB
                 dp.save()
@@ -674,7 +676,7 @@ class ShipmentOperationListView(AdminListView):
             if packing.cajas_ab > 0:
                 abarrote_product_caja = TransportedProduct.objects.filter(description="ABARROTE (CAJA)").first()
                 abarrote_product_caja.pk = None
-                abarrote_product_caja.weight = packing.weight_ab
+                abarrote_product_caja.weight = packing.weight_ab_cajas
                 abarrote_product_caja.amount = packing.cajas_ab
                 abarrote_product_caja.save()
                 ab_operation.transported_products.add(abarrote_product_caja)
@@ -682,7 +684,7 @@ class ShipmentOperationListView(AdminListView):
             if packing.bolsas_ab > 0:
                 abarrote_product_bolsa = TransportedProduct.objects.filter(description="ABARROTE (BULTO)").first()
                 abarrote_product_bolsa.pk = None
-                abarrote_product_bolsa.weight = packing.weight_ab
+                abarrote_product_bolsa.weight = packing.weight_ab_bolsas
                 abarrote_product_bolsa.amount = packing.bolsas_ab
                 abarrote_product_bolsa.save()
                 ab_operation.transported_products.add(abarrote_product_bolsa)
@@ -693,7 +695,7 @@ class ShipmentOperationListView(AdminListView):
             if packing.cajas_cvz > 0:
                 abarrote_product_caja = TransportedProduct.objects.filter(description="CERVEZA (CAJA)").first()
                 abarrote_product_caja.pk = None
-                abarrote_product_caja.weight = packing.weight_ab
+                abarrote_product_caja.weight = packing.weight_cvz_cajas
                 abarrote_product_caja.amount = packing.cajas_ab
                 abarrote_product_caja.save()
                 cvz_operation.transported_products.add(abarrote_product_caja)
@@ -701,7 +703,7 @@ class ShipmentOperationListView(AdminListView):
             if packing.bolsas_cvz > 0:
                 abarrote_product_bolsa = TransportedProduct.objects.filter(description="CERVEZA (BULTO)").first()
                 abarrote_product_bolsa.pk = None
-                abarrote_product_bolsa.weight = packing.weight_ab
+                abarrote_product_bolsa.weight = packing.weight_cvz_bolsas
                 abarrote_product_bolsa.amount = packing.bolsas_ab
                 abarrote_product_bolsa.save()
                 cvz_operation.transported_products.add(abarrote_product_bolsa)

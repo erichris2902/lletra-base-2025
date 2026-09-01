@@ -13,8 +13,10 @@ class DistributionPacking2Form(BaseModelForm):
         fields = ['delivery_shop',
                   "cajas_ab",
                   'bolsas_ab',
-                  'weight_ab',
+                  'weight_ab_bolsas',
+                  'weight_ab_cajas',
                   'cajas_cvz',
                   'bolsas_cvz',
-                  'weight_cvz',
+                  'weight_cvz_bolsas',
+                  'weight_cvz_cajas',
                   ]
