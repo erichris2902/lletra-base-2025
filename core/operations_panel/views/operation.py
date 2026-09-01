@@ -690,7 +690,7 @@ class ShipmentOperationListView(AdminListView):
                 abarrote_product_caja.amount = packing.cajas_ab
                 abarrote_product_caja.save()
                 cvz_operation.transported_products.add(abarrote_product_caja)
-                ab_operation.save()
+                cvz_operation.save()
             if packing.bolsas_cvz > 0:
                 abarrote_product_bolsa = TransportedProduct.objects.filter(description="CERVEZA (BULTO)").first()
                 abarrote_product_bolsa.pk = None
@@ -698,7 +698,7 @@ class ShipmentOperationListView(AdminListView):
                 abarrote_product_bolsa.amount = packing.bolsas_ab
                 abarrote_product_bolsa.save()
                 cvz_operation.transported_products.add(abarrote_product_bolsa)
-                ab_operation.save()
+                cvz_operation.save()
 
     def handle_get_packing(self, request, data):
         context = {}
