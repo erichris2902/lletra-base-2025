@@ -626,13 +626,20 @@ class ShipmentOperationListView(AdminListView):
         all_packings = DistributionPacking.objects.filter(operation=operation)
         #Veruificar que ambos tengan peso
 
+        create_b = False
+        for dp in all_packings:
+            # if dp.distribution == AsturianoPacking.CVZ:
+            if dp.weight_ab > 0 and dp.weight_cvz > 0:
+                create_b = True
+
         # 2.1 Crear una copia de la operación
         if Operation.objects.filter(folio=operation.folio + "B").exists():
             pass
         else:
-            operation.pk = None  # Esto duplica la instancia
-            operation.folio = operation.folio + "B"  # Debes implementar esta función
-            operation.save()
+            if create_b:
+                operation.pk = None  # Esto duplica la instancia
+                operation.folio = operation.folio + "B"  # Debes implementar esta función
+                operation.save()
 
         cvz_operation = operation
         ab_operation = Operation.objects.get(pk=request.POST.get('id'))
