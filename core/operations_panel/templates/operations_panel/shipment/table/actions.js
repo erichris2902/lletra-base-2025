@@ -54,6 +54,12 @@ $('#main_datatable tbody').on('click', 'a[rel="update_stops"]', function () {
     LoadForm(data.id, "get_stops");
 });
 
+$('#main_datatable tbody').on('click', 'a[rel="get_sacos_cajas"]', function () {
+    const tr = tblClient.cell($(this).closest('td, li')).index();
+    const data = tblClient.row(tr.row).data();
+    LoadForm(data.id, "get_sacos_cajas");
+});
+
 $('#main_datatable tbody').on('click', 'a[rel="update_route"]', function () {
     const tr = tblClient.cell($(this).closest('td, li')).index();
     const data = tblClient.row(tr.row).data();

@@ -11,7 +11,7 @@ from core.operations_panel.choices import AsturianoPacking
 from core.operations_panel.forms.address import AddressForm
 from core.operations_panel.forms.cargo import AssignCargoToOperationForm
 from core.operations_panel.forms.delivery_location import DeliveryLocationForm
-from core.operations_panel.forms.distribution_packing import DistributionPackingForm
+from core.operations_panel.forms.distribution_packing import DistributionPackingForm, DistributionPacking2Form
 from core.operations_panel.forms.operation import OperationForm, OperationFolioWebsiteForm, OperationApprovalForm, \
     OperationFolioForm, OperationShipmentForm, OperationRouteForm
 from core.operations_panel.forms.route import RouteShipmentForm, RouteForm
@@ -455,6 +455,31 @@ class ShipmentOperationListView(AdminListView):
         data['id'] = str(route.id)
         data['form'] = self.render_form(request, route)
 
+    def handle_get_sacos_cajas(self, request, data):
+        context = {}
+        operation = Operation.objects.get(pk=request.POST.get('id'))
+        if operation.folio.endswith("B"):
+            raise Exception("No se puede distribuir el packing de un viaje derivado, solo el viaje original.")
+        if not Operation.objects.filter(folio=operation.folio + "B").exists() or operation.folio.endswith("B"):
+            distribution_packings = DistributionPacking.objects.filter(operation=operation)
+            for distribution_packing in distribution_packings:
+                distribution_packing.delete()
+            for delivery in operation.route.route_stops.all():
+                packing, _ = DistributionPacking.objects.get_or_create(
+                    operation=operation,
+                    delivery_shop=delivery,
+                    defaults={
+                        "distribution": AsturianoPacking.CVZ_AB,
+                        "weight": 300,
+                        "amount": 1,
+                    }
+                )
+        distribution_packings = DistributionPacking.objects.filter(operation=operation)
+        self.form = DistributionPacking2Form
+        self.form_action = "update_packing2"
+        data['id'] = str(operation.id)
+        data['form'] = self.render_formset(request, distribution_packings, DistributionPacking2Form)
+
     def handle_get_route_select(self, request, data):
         operation = self.model.objects.get(pk=request.POST.get('id'))
         self.model = Operation
@@ -583,6 +608,97 @@ class ShipmentOperationListView(AdminListView):
             cerveza_product.save()
             cvz_operation.transported_products.add(cerveza_product)
             cvz_operation.save()
+
+
+    def handle_update_packing2(self, request, data):
+        operation = Operation.objects.get(pk=request.POST.get('id'))
+        querydict = request.POST  # o el QueryDict que compartiste
+        parsed = self.parse_packing_data(querydict)
+        for key, value in parsed.items():
+            dp = DistributionPacking.objects.get(operation=operation, pk=key)
+            dp.cajas_ab = value['cajas_ab']
+            dp.bolsas_ab = value['bolsas_ab']
+            dp.weight_ab = value['weight_ab']
+            dp.cajas_cvz = value['cajas_cvz']
+            dp.bolsas_cvz = value['bolsas_cvz']
+            dp.weight_cvz = value['weight_cvz']
+            dp.save()
+        all_packings = DistributionPacking.objects.filter(operation=operation)
+        #Veruificar que ambos tengan peso
+
+        # 2.1 Crear una copia de la operación
+        if Operation.objects.filter(folio=operation.folio + "B").exists():
+            pass
+        else:
+            operation.pk = None  # Esto duplica la instancia
+            operation.folio = operation.folio + "B"  # Debes implementar esta función
+            operation.save()
+
+        cvz_operation = operation
+        ab_operation = Operation.objects.get(pk=request.POST.get('id'))
+
+        # 3. Reasignar DistributionPacking y TransportedProduct
+        for dp in all_packings:
+            #if dp.distribution == AsturianoPacking.CVZ:
+            if dp.weight_ab == 0  and dp.weight_cvz > 0:
+                dp.distribution = AsturianoPacking.CVZ
+                dp.operation = operation  # Se pasa a la nueva operación
+                dp.save()
+            #elif dp.distribution == AsturianoPacking.AB:
+            elif dp.weight_ab > 0 and dp.weight_cvz == 0:
+                # Se queda en la original
+                dp.distribution = AsturianoPacking.AB
+                dp.save()
+                continue
+            elif dp.weight_ab > 0 and dp.weight_cvz > 0:
+                dp.operation = ab_operation
+                dp.distribution = AsturianoPacking.AB
+                dp.save()
+                dp.pk = None
+                dp.operation = cvz_operation
+                dp.distribution = AsturianoPacking.CVZ
+                dp.save()
+                continue
+        ab_operation = Operation.objects.get(pk=request.POST.get('id'))
+        cvz_operation = Operation.objects.get(folio=ab_operation.folio + "B")
+        ab_packings = DistributionPacking.objects.filter(operation=ab_operation)
+        ab_operation.transported_products.clear()
+        for packing in ab_packings:
+            if packing.cajas_ab > 0:
+                abarrote_product_caja = TransportedProduct.objects.filter(description="ABARROTE (CAJA)").first()
+                abarrote_product_caja.pk = None
+                abarrote_product_caja.weight = packing.weight_ab
+                abarrote_product_caja.amount = packing.cajas_ab
+                abarrote_product_caja.save()
+                ab_operation.transported_products.add(abarrote_product_caja)
+                ab_operation.save()
+            if packing.bolsas_ab > 0:
+                abarrote_product_bolsa = TransportedProduct.objects.filter(description="ABARROTE (BULTO)").first()
+                abarrote_product_bolsa.pk = None
+                abarrote_product_bolsa.weight = packing.weight_ab
+                abarrote_product_bolsa.amount = packing.bolsas_ab
+                abarrote_product_bolsa.save()
+                ab_operation.transported_products.add(abarrote_product_bolsa)
+                ab_operation.save()
+        cvz_packings = DistributionPacking.objects.filter(operation=cvz_operation)
+        cvz_operation.transported_products.clear()
+        for packing in cvz_packings:
+            if packing.cajas_cvz > 0:
+                abarrote_product_caja = TransportedProduct.objects.filter(description="CERVEZA (CAJA)").first()
+                abarrote_product_caja.pk = None
+                abarrote_product_caja.weight = packing.weight_ab
+                abarrote_product_caja.amount = packing.cajas_ab
+                abarrote_product_caja.save()
+                cvz_operation.transported_products.add(abarrote_product_caja)
+                ab_operation.save()
+            if packing.bolsas_cvz > 0:
+                abarrote_product_bolsa = TransportedProduct.objects.filter(description="CERVEZA (BULTO)").first()
+                abarrote_product_bolsa.pk = None
+                abarrote_product_bolsa.weight = packing.weight_ab
+                abarrote_product_bolsa.amount = packing.bolsas_ab
+                abarrote_product_bolsa.save()
+                cvz_operation.transported_products.add(abarrote_product_bolsa)
+                ab_operation.save()
 
     def handle_get_packing(self, request, data):
         context = {}

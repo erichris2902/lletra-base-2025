@@ -33,6 +33,14 @@ class DistributionPacking(BaseModel):
     weight = models.FloatField(verbose_name="Peso en Kg")
     amount = models.IntegerField(verbose_name="Cantidad")
 
+    cajas_ab = models.IntegerField(verbose_name="Cajas de abarrotes", default=0)
+    bolsas_ab = models.IntegerField(verbose_name="Bolsas de abarrotes", default=0)
+    weight_ab = models.FloatField(verbose_name="Peso en Kg de abarrotes", default=0)
+
+    cajas_cvz = models.IntegerField(verbose_name="Cajas de cerveza", default=0)
+    bolsas_cvz = models.IntegerField(verbose_name="Bolsas de cerveza", default=0)
+    weight_cvz = models.FloatField(verbose_name="Peso en Kg de cerveza", default=0)
+
     def __str__(self):
         return f"{self.operation or 'Sin operación'} - {self.delivery_shop or 'Sin tienda'}"
 
