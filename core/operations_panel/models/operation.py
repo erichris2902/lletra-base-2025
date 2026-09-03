@@ -508,7 +508,7 @@ class Operation(BaseModel):
             invoice.expeditionPlace = '76100'
             invoice.save()
 
-            for product in products:
+            for product in products.all():
                 invoice_item = FacturapiInvoiceItem()
                 invoice_item.quantity = 1
                 invoice_item.unit_price = product.price
