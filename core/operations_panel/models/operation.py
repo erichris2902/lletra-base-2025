@@ -477,7 +477,7 @@ class Operation(BaseModel):
         with transaction.atomic():
             customer = self.client
 
-            product = FacturapiProduct.objects.get(sku=self.folio)
+            products = FacturapiProduct.objects.filter(sku__contains=self.folio).all()
 
             invoice = ShipmentFacturapiInvoice()
             invoice.operation = instance
@@ -495,7 +495,7 @@ class Operation(BaseModel):
             invoice.insurance_policy_number = self.vehicle.insurance_code
             invoice.sct_permit_type = "TPAF01"
 
-            if product.price == 0:
+            if products[0].price == 0:
                 invoice.customer = Client.objects.get(name="LLETRA")
                 invoice.cfdi_type = "T"
             else:
@@ -508,16 +508,17 @@ class Operation(BaseModel):
             invoice.expeditionPlace = '76100'
             invoice.save()
 
-            invoice_item = FacturapiInvoiceItem()
-            invoice_item.quantity = 1
-            invoice_item.unit_price = product.price
-            invoice_item.product = product
-            invoice_item.description = product.description
-            invoice_item.discount = 0
-            invoice_item.subtotal = product.price
-            invoice_item.invoice = invoice
-            invoice_item.save()
-            invoice.items.add(invoice_item)
+            for product in products:
+                invoice_item = FacturapiInvoiceItem()
+                invoice_item.quantity = 1
+                invoice_item.unit_price = product.price
+                invoice_item.product = product
+                invoice_item.description = product.description
+                invoice_item.discount = 0
+                invoice_item.subtotal = product.price
+                invoice_item.invoice = invoice
+                invoice_item.save()
+                invoice.items.add(invoice_item)
 
             invoice.bill()
 
