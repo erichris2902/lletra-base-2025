@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import models
 
 from core.system.models import BaseModel
+from core.admin_panel.models.purchase_order import PurchaseOrderOperation, PurchaseOrderAccessory
 
 
 class OperationMasterControl(BaseModel):
@@ -194,6 +195,11 @@ class OperationMasterControl(BaseModel):
         if self.sale_amount_override is not None:
             return self.sale_amount_override
 
+        # Si la operación está ligada a una OC, usar el total individual de la operación dentro de la OC
+        po_total = self.get_purchase_order_operation_total()
+        if po_total is not None:
+            return po_total
+
         return self.get_operation_sale_amount()
 
     @property
@@ -274,6 +280,47 @@ class OperationMasterControl(BaseModel):
                 return value
 
         return Decimal("0.00")
+
+    def get_purchase_order_operation_total(self):
+        """
+        Si la operación está ligada a una Orden de Compra (OC), devuelve el TOTAL correspondiente
+        SOLO a esta operación dentro de esa OC, incluyendo accesorios ligados a esta operación
+        y el IVA proporcional según la OC. Si no hay OC, devuelve None.
+        """
+        op = getattr(self, "operation", None)
+        if not op:
+            return None
+
+        link = PurchaseOrderOperation.objects.select_related('purchase_order').filter(operation=op).first()
+        if not link or not link.purchase_order:
+            return None
+
+        po = link.purchase_order
+        # Determinar tasa de impuesto usada por la OC: tax_amount / subtotal, fallback 12%
+        try:
+            subtotal_po = po.subtotal or Decimal("0.00")
+            tax_po = po.tax_amount or Decimal("0.00")
+        except Exception:
+            subtotal_po = Decimal("0.00")
+            tax_po = Decimal("0.00")
+
+        if subtotal_po and subtotal_po != Decimal("0.00"):
+            tax_rate = (tax_po / subtotal_po)
+        else:
+            tax_rate = Decimal("0.12")
+
+        # Base de la operación dentro de la OC (PurchaseOrder.get_total usa operation.total)
+        base = getattr(op, "total", None)
+        if base is None:
+            base = Decimal("0.00")
+
+        # Accesorios de la OC ligados a ESTA operación
+        accessories_qs = PurchaseOrderAccessory.objects.filter(purchase_order=po, operation=op).values_list("subtotal", flat=True)
+        accessories_total = sum((a or Decimal("0.00") for a in accessories_qs), Decimal("0.00"))
+
+        subtotal_op = base + accessories_total
+        total_op = subtotal_op + (subtotal_op * tax_rate)
+        return total_op
 
 class OperationControlChangeLog(models.Model):
     control = models.ForeignKey(
