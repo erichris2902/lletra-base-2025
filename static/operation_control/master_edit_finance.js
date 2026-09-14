@@ -59,14 +59,14 @@
       <td>${r.unit ?? ''}</td>
       <td>${r.has_purchase_order ? (r.purchase_order_folio || 'Sí') : '—'}</td>
       <td>
-        <input type="text" class="form-control form-control-sm edit" data-field="sale_amount_override" ${ingresoReadOnly?'disabled':''} value="${r.has_purchase_order ? ingresoDisplay : (r.sale_amount_override ?? '')}">
-        ${r.has_purchase_order ? '<div class="small text-muted">Tomado de OC: '+ ingresoDisplay +'</div>' : ''}
+        <input type="text" class="form-control form-control-sm edit" data-field="sale_amount_override" value="${r.sale_amount_override ?? ''}">
       </td>
       <td>
-        <input type="text" class="form-control form-control-sm edit" data-field="expected_collection_date" ${ingresoReadOnly?'disabled':''} placeholder="DD-MM-YYYY" value="${formatDateDDMMYYYY(r.expected_collection_date) || ''}">
+        <input type="text" class="form-control form-control-sm edit" data-field="expected_collection_date" placeholder="DD-MM-YYYY" value="${formatDateDDMMYYYY(r.expected_collection_date) || ''}">
       </td>
       <td>
-        <input type="text" class="form-control form-control-sm edit" data-field="cost_amount_override" value="${r.cost_amount ?? ''}">
+        <input type="text" class="form-control form-control-sm edit" data-field="cost_amount_override" ${r.has_purchase_order?'disabled':''} value="${r.has_purchase_order ? '' : (r.cost_amount_override ?? '')}">
+        ${r.has_purchase_order ? '<div class="small text-muted">Tomado de OC: '+ fmtMoney(r.purchase_order_total) +'</div>' : ''}
       </td>
       <td>
         <input type="text" class="form-control form-control-sm edit" data-field="supplier_invoice_number" value="${r.supplier_invoice_number ?? ''}">
@@ -84,10 +84,10 @@
         </select>
       </td>
       <td>
-        <input type="text" class="form-control form-control-sm edit" data-field="factoring_amount" value="${r.factoring_cost ?? ''}">
+        <input type="text" class="form-control form-control-sm edit" data-field="factoring_amount" value="${r.factoring_amount ?? ''}">
       </td>
       <td>
-        <input type="text" class="form-control form-control-sm edit" data-field="factoring_percentage" value="${r.profit_percentage ?? ''}">
+        <input type="text" class="form-control form-control-sm edit" data-field="factoring_percentage" value="${r.factoring_percentage ?? ''}">
       </td>
       <td class="text-end">${fmtMoney(r.profit)}</td>
       <td class="text-end">${fmtPercent(r.profit_percentage)}</td>
@@ -176,9 +176,34 @@
   }
 
   async function saveField(tr, el){
+    // Do not attempt to save disabled inputs
+    if (el.disabled) return;
+
     const id = tr.dataset.id;
     const field = el.dataset.field;
     let value = el.value;
+
+    // Validate presence of required identifiers and allowed fields
+    const allowed = [
+      'sale_amount_override',
+      'expected_collection_date',
+      'cost_amount_override',
+      'supplier_invoice_number',
+      'supplier_invoice_date',
+      'scheduled_supplier_payment_date',
+      'has_factoring',
+      'factoring_amount',
+      'factoring_percentage',
+      'notes'
+    ];
+    if (!id) {
+      await Swal.fire({icon:'error', title:'No se guardó', text:'Falta el identificador de la fila (control_id).'});
+      return;
+    }
+    if (!field || !allowed.includes(field)){
+      // Silently ignore unknown fields to avoid unnecessary server calls
+      return;
+    }
 
     // Early exit: if value did not change (after normalization), do not call API
     const currentNorm = normalizeForCompare(field, value);

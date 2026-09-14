@@ -5,6 +5,22 @@ from core.operations_panel.models.operation import Operation
 from core.system.forms import BaseModelForm
 
 
+class OperationRawRouteForm(forms.Form):
+    """
+    Simple popup form to edit origin/destination stored in Operation.raw_payload.
+    """
+    origin = forms.CharField(label="Origen", max_length=200, required=True)
+    destination = forms.CharField(label="Destino", max_length=200, required=True)
+
+    # Minimal layout so it renders nicely in our modal form template
+    layout = [
+        {"type": "row", "fields": [
+            {"name": "origin", "size": 6},
+            {"name": "destination", "size": 6},
+        ]}
+    ]
+
+
 class OperationForm(BaseModelForm):
     layout = [
         {"type": "row", "fields": [

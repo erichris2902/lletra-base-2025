@@ -18,6 +18,12 @@ $('#main_datatable tbody').on('click', 'a[rel="update"]', function () {
     LoadForm(data.id);
 });
 
+$('#main_datatable tbody').on('click', 'a[rel="edit_route_payload"]', function () {
+    const tr = tblClient.cell($(this).closest('td, li')).index();
+    const data = tblClient.row(tr.row).data();
+    LoadForm(data.id, "get_route_payload");
+});
+
 $('#main_datatable tbody').on('click', 'a[rel="delete"]', function () {
     const tr = tblClient.cell($(this).closest('td, li')).index();
     const data = tblClient.row(tr.row).data();

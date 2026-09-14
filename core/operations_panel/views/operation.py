@@ -13,7 +13,7 @@ from core.operations_panel.forms.cargo import AssignCargoToOperationForm
 from core.operations_panel.forms.delivery_location import DeliveryLocationForm
 from core.operations_panel.forms.distribution_packing import DistributionPackingForm, DistributionPacking2Form
 from core.operations_panel.forms.operation import OperationForm, OperationFolioWebsiteForm, OperationApprovalForm, \
-    OperationFolioForm, OperationShipmentForm, OperationRouteForm
+    OperationFolioForm, OperationShipmentForm, OperationRouteForm, OperationRawRouteForm
 from core.operations_panel.forms.route import RouteShipmentForm, RouteForm
 from core.operations_panel.forms.transported_product import TransportedProductsFormByCSV, \
     OperationTransportedProductForm, TransportedProductForm
@@ -105,10 +105,16 @@ class OperationListView(AdminListView):
         pass
 
     def get_queryset(self):
-        return self.model.objects.exclude(Q(folio__isnull=True) | Q(folio="")).prefetch_related("client", "driver",
-                                                                                                "vehicle", "route",
-                                                                                                "shipment_invoice",
-                                                                                                "transported_products").all()
+        return (
+            self.model.objects
+            .exclude(Q(folio__isnull=True) | Q(folio=""))
+            .select_related("shipment_invoice")
+            .prefetch_related(
+                "client", "driver", "vehicle", "route",
+                "transported_products", "invoices"
+            )
+            .all()
+        )
 
 
 class FolioOperationListView(AdminListView):
@@ -255,6 +261,50 @@ class FolioOperationListView(AdminListView):
         data['form'] = self.render_form(request, instance, form=OperationShipmentForm)
         return data
 
+    def handle_get_route_payload(self, request, data):
+        operation = self.model.objects.get(pk=request.POST.get('id'))
+        # Build initial values from raw_payload
+        rp = operation.raw_payload or {}
+        initial = {
+            'origin': rp.get('origen', '') or '',
+            'destination': rp.get('destino', '') or '',
+        }
+        form_instance = OperationRawRouteForm(initial=initial)
+        # Render using generic modal form renderer
+        data['id'] = str(operation.id)
+        data['form'] = self.render_others_form(request, operation, form_instance, action='update_route_payload')
+        return data
+
+    def handle_update_route_payload(self, request, data):
+        operation = get_object_or_404(self.model, pk=request.POST.get('id'))
+        form = OperationRawRouteForm(request.POST)
+        if form.is_valid():
+            origin = form.cleaned_data['origin'].strip()
+            destination = form.cleaned_data['destination'].strip()
+            # Merge into raw_payload preserving other keys
+            rp = operation.raw_payload or {}
+            try:
+                if not isinstance(rp, dict):
+                    rp = {}
+            except Exception:
+                rp = {}
+            rp['origen'] = origin
+            rp['destino'] = destination
+            operation.raw_payload = rp
+            operation.save(update_fields=['raw_payload'])
+            # Regenerar notas con el formato estándar basado en raw_payload
+            try:
+                operation.update_notes_from_payload(save=True)
+            except Exception:
+                # No bloquear si algo falla; continuar con éxito parcial
+                pass
+            data['success'] = True
+            data['message'] = 'Ruta y notas actualizadas exitosamente.'
+            return data
+        else:
+            data['error'] = form.errors.as_json()
+            return data
+
     def handle_update_shipment(self, request, data):
         operation = Operation.objects.get(pk=request.POST.get('id'))
         form = OperationShipmentForm(request.POST, instance=operation)
@@ -386,26 +436,26 @@ class ShipmentOperationListView(AdminListView):
         print(qs_page)
         for obj in qs_page:
             print(obj)
-            if obj.notes == '' or obj.notes is None:
-                if obj.raw_payload:
-                    print(obj.raw_payload)
-                    obj.notes = ''
-                    obj.notes += 'FECHA: ' + obj.raw_payload.get('fecha', '') + '\n'
-                    obj.notes += 'CLIENTE: ' + obj.raw_payload.get('cliente', '') + '\n'
-                    obj.notes += 'ORIGEN: ' + obj.raw_payload.get('origen', '') + '\n'
-                    obj.notes += 'DESTINO: ' + obj.raw_payload.get('destino', '') + '\n'
-                    obj.notes += 'REPARTOS: ' + str(obj.raw_payload.get('repartos', '')) + '\n'
-                    obj.notes += 'PLACAS: ' + obj.raw_payload.get('placas', '') + '\n'
-                    obj.notes += 'UNIDAD: ' + obj.raw_payload.get('unidad', '') + '\n'
-                    obj.notes += 'OPERADOR: ' + obj.raw_payload.get('operador', '') + '\n'
-                    obj.notes += 'PROVEEDOR: ' + obj.raw_payload.get('proveedor', '') + '\n'
-                    print("save")
-                    obj.save()
-        # for obj in qs_page:
-        #     print(obj)
-        #     if obj.notes == '' or obj.notes is None:
-        #         obj.notes = ''
-        #         if obj.raw_payload:
+            if (obj.notes == '' or obj.notes is None) and obj.raw_payload:
+                try:
+                    obj.update_notes_from_payload(save=True)
+                except Exception:
+                    # fallback manual as last resort (should not happen)
+                    try:
+                        rp = obj.raw_payload or {}
+                        obj.notes = ''
+                        obj.notes += 'FECHA: ' + str(rp.get('fecha', '') or '') + '\n'
+                        obj.notes += 'CLIENTE: ' + str(rp.get('cliente', '') or '') + '\n'
+                        obj.notes += 'ORIGEN: ' + str(rp.get('origen', '') or '') + '\n'
+                        obj.notes += 'DESTINO: ' + str(rp.get('destino', '') or '') + '\n'
+                        obj.notes += 'REPARTOS: ' + str(rp.get('repartos', '') or '') + '\n'
+                        obj.notes += 'PLACAS: ' + str(rp.get('placas', '') or '') + '\n'
+                        obj.notes += 'UNIDAD: ' + str(rp.get('unidad', '') or '') + '\n'
+                        obj.notes += 'OPERADOR: ' + str(rp.get('operador', '') or '') + '\n'
+                        obj.notes += 'PROVEEDOR: ' + str(rp.get('proveedor', '') or '') + '\n'
+                        obj.save(update_fields=['notes'])
+                    except Exception:
+                        pass
         # 5) data
         data = [obj.to_operations_view(keys=self.datatable_keys) for obj in qs_page]
 
@@ -520,6 +570,8 @@ class ShipmentOperationListView(AdminListView):
             instance = form.save()
             data['success'] = True
             data['message'] = f"Direccion de destino actualizada exitosamente"
+
+
 
     def handle_update_route_select(self, request, data):
         operation = self.model.objects.get(pk=request.POST.get('id'))

@@ -195,17 +195,22 @@ class OperationMasterControl(BaseModel):
         if self.sale_amount_override is not None:
             return self.sale_amount_override
 
-        # Si la operación está ligada a una OC, usar el total individual de la operación dentro de la OC
-        po_total = self.get_purchase_order_operation_total()
-        if po_total is not None:
-            return po_total
-
+        # Importante: Las Órdenes de Compra corresponden a egresos (costos),
+        # por lo que NUNCA deben afectar el ingreso/venta.
+        # El ingreso proviene de la operación (precio al cliente).
         return self.get_operation_sale_amount()
 
     @property
     def cost_amount(self):
         if self.cost_amount_override is not None:
             return self.cost_amount_override
+
+        # Si la operación está ligada a una Orden de Compra (OC),
+        # el costo debe provenir del total individual de la operación dentro de la OC
+        # (incluye accesorios ligados y el IVA proporcional según la OC).
+        po_total = self.get_purchase_order_operation_total()
+        if po_total is not None:
+            return po_total
 
         return self.get_operation_cost_amount()
 

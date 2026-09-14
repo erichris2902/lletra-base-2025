@@ -218,21 +218,53 @@ def api_list(request):
         profit_sum = profit_a + profit_b  # equivalente a sale_sum - cost_sum - fact_sum
         margin = _D("0.00") if sale_sum == _D("0.00") else (profit_sum * _D("100")) / sale_sum
 
-        # Build customer invoice display with '-C' if canceled
+        # Build customer invoice display with '-C' if canceled and append other active invoices from Operation.invoices
         customer_invoice_display = c.customer_invoice_code
         try:
             inv = getattr(op, "shipment_invoice", None)
+            main_code = None
+            shipment_id = None
             if inv:
-                base_code = None
+                shipment_id = getattr(inv, "id", None) or getattr(inv, "pk", None)
                 series = getattr(inv, "series", None)
                 folio_num = getattr(inv, "folio_number", None)
                 if series and folio_num is not None:
-                    base_code = f"{series}-{folio_num}"
+                    main_code = f"{series}-{folio_num}"
                 else:
-                    base_code = getattr(inv, "uuid", None) or (c.customer_invoice_code or "")
+                    main_code = getattr(inv, "uuid", None) or (c.customer_invoice_code or "")
                 is_canceled = (getattr(inv, "status", None) == "canceled") or (str(getattr(inv, "cancellation_status", "") or "").lower() in ("canceled", "cancelado", "cancelled", "cancelada"))
-                if base_code:
-                    customer_invoice_display = str(base_code) + ("-C" if is_canceled and not str(base_code).upper().endswith("-C") else "")
+                if main_code:
+                    customer_invoice_display = str(main_code) + ("-C" if is_canceled and not str(main_code).upper().endswith("-C") else "")
+            else:
+                # No shipment invoice; fall back to existing code if any
+                main_code = customer_invoice_display or None
+
+            # Collect additional active invoices from Operation.invoices (exclude shipment_invoice)
+            other_codes = []
+            try:
+                inv_qs = getattr(op, "invoices", None)
+                if inv_qs is not None:
+                    for extra in inv_qs.all():
+                        # Only active invoices per user request (status == 'valid')
+                        if getattr(extra, "status", None) != "valid":
+                            continue
+                        extra_id = getattr(extra, "id", None) or getattr(extra, "pk", None)
+                        if shipment_id is not None and extra_id == shipment_id:
+                            continue  # skip if it's the same as shipment invoice
+                        s = getattr(extra, "series", None)
+                        f = getattr(extra, "folio_number", None)
+                        code = f"{s}-{f}" if s and f is not None else (getattr(extra, "uuid", None) or None)
+                        if code and code not in other_codes and (not main_code or code != str(main_code)):
+                            other_codes.append(str(code))
+            except Exception:
+                pass
+
+            # Append others in parentheses after the main code if present; otherwise just join others
+            if other_codes:
+                if customer_invoice_display:
+                    customer_invoice_display = f"{customer_invoice_display} (" + ", ".join(other_codes) + ")"
+                else:
+                    customer_invoice_display = ", ".join(other_codes)
         except Exception:
             pass
 
@@ -430,20 +462,25 @@ def api_update_finance(request):
     field = payload.get("field")
     value = payload.get("value")
 
-    if not control_id or not field or field not in FINANCE_FIELDS:
-        return HttpResponseBadRequest("Parámetros inválidos o campo no editable")
+    # Validación de parámetros con mensajes específicos para facilitar diagnóstico
+    if not control_id:
+        return HttpResponseBadRequest("Falta control_id")
+    if not field:
+        return HttpResponseBadRequest("Falta field")
+    if field not in FINANCE_FIELDS:
+        return HttpResponseBadRequest(f"Campo no editable o desconocido: {field}")
 
     control = get_object_or_404(OperationMasterControl, pk=control_id)
 
-    # Regla de ingresos: si hay OC, no permitir editar sale_amount_override ni expected_collection_date
-    if field in ("sale_amount_override", "expected_collection_date"):
+    # Regla de egresos: si hay OC, no permitir editar cost_amount_override (el costo proviene de la OC)
+    if field in ("cost_amount_override",):
         op = getattr(control, "operation", None)
         has_po = False
         if op is not None:
             link = PurchaseOrderOperation.objects.filter(operation=op).first()
             has_po = bool(link)
         if has_po:
-            return HttpResponseBadRequest("La operación tiene una Orden de Compra; los ingresos se toman de la OC y no son editables aquí.")
+            return HttpResponseBadRequest("La operación tiene una Orden de Compra; el costo se toma de la OC y no es editable aquí.")
 
     caster = FINANCE_FIELDS[field]
     try:

@@ -40,6 +40,7 @@ function dropdown(data, type, row) {
 
     dropdown += '<div class="dropdown-menu">';
     dropdown += '<a rel="update" class="dropdown-item" type="button">Actualizar</a>';
+    dropdown += '<a rel="edit_route_payload" class="dropdown-item" type="button">modificar ruta</a>';
     dropdown += `<a href="/operations/generate_invoice/i/${row.id}/" target="_blank" class="dropdown-item">Cartaporte</a>`;
     dropdown += `<a href="/operations/generate_invoice/t/${row.id}/" target="_blank" class="dropdown-item">Translado</a>`;
     dropdown += `<a href="/operations/generate_invoice/local/${row.id}/" target="_blank" class="dropdown-item">Local</a>`;

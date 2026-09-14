@@ -219,6 +219,58 @@ class Operation(BaseModel):
     def __str__(self):
         return f"Operación {self.folio or self.pre_folio or self.id}"
 
+    # --- Helpers to (re)generate operation notes from raw_payload ---
+    def build_notes_from_payload(self) -> str:
+        """
+        Build the notes text using the same format used elsewhere in the system
+        based on current raw_payload keys. Safe for missing values.
+        Formato:
+            FECHA: <fecha>
+            CLIENTE: <cliente>
+            ORIGEN: <origen>
+            DESTINO: <destino>
+            REPARTOS: <repartos>
+            PLACAS: <placas>
+            UNIDAD: <unidad>
+            OPERADOR: <operador>
+            PROVEEDOR: <proveedor>
+        """
+        rp = self.raw_payload or {}
+        try:
+            if not isinstance(rp, dict):
+                rp = {}
+        except Exception:
+            rp = {}
+
+        def sval(key: str) -> str:
+            v = rp.get(key, "")
+            try:
+                return str(v) if v is not None else ""
+            except Exception:
+                return ""
+
+        parts = []
+        parts.append(f"FECHA: {sval('fecha')}")
+        parts.append(f"CLIENTE: {sval('cliente')}")
+        parts.append(f"ORIGEN: {sval('origen')}")
+        parts.append(f"DESTINO: {sval('destino')}")
+        parts.append(f"REPARTOS: {sval('repartos')}")
+        parts.append(f"PLACAS: {sval('placas')}")
+        parts.append(f"UNIDAD: {sval('unidad')}")
+        parts.append(f"OPERADOR: {sval('operador')}")
+        parts.append(f"PROVEEDOR: {sval('proveedor')}")
+        return "\n".join(parts) + "\n"
+
+    def update_notes_from_payload(self, *, save: bool = True) -> str:
+        notes = self.build_notes_from_payload()
+        self.notes = notes
+        if save:
+            try:
+                super(Operation, self).__class__.objects.filter(pk=self.pk).update(notes=notes)
+            except Exception:
+                self.save(update_fields=["notes"])  # fallback
+        return notes
+
     def to_folios_view(self, keys=None):
         result = self.to_display_dict(keys)
         result["deliveries"] = ", ".join(str(route) for route in self.route.route_stops.all()) if self.route and self.route.route_stops else "[]"
@@ -249,7 +301,13 @@ class Operation(BaseModel):
 
     def to_operations_view(self, keys=None):
         result = self.to_display_dict(keys)
-        result["is_invoice_ready"] = str(self.shipment_invoice is not None)
+        # FACTURADO (verde en /operations/): verdadero si hay shipment_invoice o al menos un elemento en invoices
+        try:
+            has_any_invoice = self.invoices.exists()
+        except Exception:
+            # Si prefetch puso la relación en caché, usamos eso para evitar query adicional
+            has_any_invoice = bool(getattr(self, '_prefetched_objects_cache', {}).get('invoices'))
+        result["is_invoice_ready"] = str(bool(self.shipment_invoice_id) or has_any_invoice)
         result["is_ready_to_invoice"] = str(self.is_ready_for_invoicing())
         result["is_packing_ready"] = str(self.is_packing_ready)
         result["products_amount"] = str(self.transported_products.count())
@@ -273,14 +331,28 @@ class Operation(BaseModel):
             result["invoiceable"] = True
             print("Facturaable")
 
-        result["invoice_id"] = str(self.shipment_invoice.id) if self.shipment_invoice else None
+        # Seleccionar factura primaria para descargas: shipment_invoice si existe; de lo contrario, la última en M2M
+        # Preferimos facturas con status='valid'; si no hay, tomamos la más reciente sin filtrar
+        if self.shipment_invoice:
+            primary_invoice = self.shipment_invoice
+        else:
+            qs_valid = self.invoices.filter(status='valid').order_by('-stamp_date', '-created_at', '-id')
+            primary_invoice = qs_valid.first() or self.invoices.order_by('-stamp_date', '-created_at', '-id').first()
+        result["invoice_id"] = str(primary_invoice.id) if primary_invoice else None
         return result
 
     def to_operations_general_view(self, keys=None):
         result = self.to_display_dict(keys)
         print(self.folio)
-        result["invoice_id"] = str(self.shipment_invoice.id) if self.shipment_invoice else None
-        result["is_invoice_ready"] = str(self.shipment_invoice is not None)
+        # Seleccionar factura primaria para descargas en acciones: shipment_invoice si existe; si no, la última en M2M
+        primary_invoice = self.shipment_invoice or self.invoices.order_by('-stamp_date', '-created_at', '-id').first()
+        result["invoice_id"] = str(primary_invoice.id) if primary_invoice else None
+        # FACTURADO (verde en /operations/): verdadero si hay shipment_invoice o al menos un elemento en invoices
+        try:
+            has_any_invoice = self.invoices.exists()
+        except Exception:
+            has_any_invoice = bool(getattr(self, '_prefetched_objects_cache', {}).get('invoices'))
+        result["is_invoice_ready"] = str(bool(self.shipment_invoice_id) or has_any_invoice)
         result["is_ready_to_invoice"] = str(self.is_ready_for_invoicing())
         result["is_packing_ready"] = str(self.is_packing_ready)
         return result
