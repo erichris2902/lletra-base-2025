@@ -231,7 +231,7 @@
     }
 
     // build payload
-    const payload = { control_id: Number(id), field, value };
+    const payload = { control_id: id, field, value };
 
     // optimistic UI: mark row saving
     tr.classList.add('saving');

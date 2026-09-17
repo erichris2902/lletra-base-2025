@@ -23,7 +23,6 @@ def master_list(request):
 
 
 @login_required
-@permission_required('operation_control.change_operationmastercontrol', raise_exception=True)
 @require_GET
 def master_edit_finance(request):
     """Render the Finance Edit page similar to master_list but with inline editing.
