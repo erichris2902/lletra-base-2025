@@ -2,7 +2,9 @@ import csv
 import io
 import json
 from collections import defaultdict
+from typing import Dict
 
+import requests
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
@@ -121,9 +123,9 @@ class FolioOperationListView(AdminListView):
     model = Operation
     form = OperationFolioWebsiteForm
     template_name = 'base/elements/views/datatable_list.html'
-    datatable_headers = ["Control vehicular", "Fecha", "Cliente", "Ruta", "Repartos",
+    datatable_headers = ["Control vehicular", "Fecha", "Cliente", "Origen", "Destino", "Repartos",
                          "Unidad", "Proveedor", "Status"]
-    datatable_keys = ["folio", "operation_date", "client", "route", "deliveries",
+    datatable_keys = ["folio", "operation_date", "client", "origin", "destination", "deliveries",
                       "vehicle", "supplier", "status"]
     datatable_actions = True
     title = model._meta.verbose_name_plural.title()
@@ -465,6 +467,94 @@ class ShipmentOperationListView(AdminListView):
             "recordsFiltered": records_filtered,
             "data": data
         }
+
+    def handle_upload_products(self, request, data):
+        operation = self.model.objects.get(pk=request.POST.get('id'))
+        DEFAULT_URL = "https://sgadesa.azurewebsites.net/Api/AsturianoReception"
+        DEFAULT_TIMEOUT = 30
+        payload = {"asturiano_identifier_key": 'EMB-20260915-' + operation.clave_seguimiento}
+        headers: Dict[str, str] = {}
+        headers.setdefault('Content-Type', 'application/json; charset=utf-8')
+        headers.setdefault('Accept', 'application/json, */*;q=0.8')
+        resp = requests.post(DEFAULT_URL, headers=headers, json=payload, timeout=DEFAULT_TIMEOUT)
+        details = resp.json().get("details", [])
+        has_cerveza = False
+        has_cigarros_abarrotes = False
+        return
+        with transaction.atomic():
+            for tienda in details:
+                for producto in tienda.get("products", []):
+                    categoria = (producto.get("category") or "").strip().upper()
+
+                    if categoria in {"VINOS", "CVZ"}:
+                        has_cerveza = True
+
+                    if categoria in {"CIGARROS", "ABARROTES"}:
+                        has_cigarros_abarrotes = True
+
+                    if has_cerveza and has_cigarros_abarrotes:
+                        break
+
+                if has_cerveza and has_cigarros_abarrotes:
+                    break
+
+            abarrote_operation = None
+            cvz_operation = None
+            if has_cerveza and has_cigarros_abarrotes:
+                operation.pk = None  # Esto duplica la instancia
+                operation.folio = operation.folio + "B"  # Debes implementar esta función
+                operation.save()
+                cvz_operation = operation
+
+                abarrote_operation = self.model.objects.get(pk=request.POST.get('id'))
+            elif has_cerveza and not has_cigarros_abarrotes:
+                cvz_operation = operation
+            elif not has_cerveza and has_cigarros_abarrotes:
+                abarrote_operation = operation
+
+            print("Tiene cerveza:", has_cerveza)
+            print("Tiene cigarros o abarrotes:", has_cigarros_abarrotes)
+
+
+            for shop in details:
+                print(shop['shop'])
+                cvz_operation.transported_products.clear()
+                abarrote_operation.transported_products.clear()
+                delivery_location = DeliveryLocation.objects.get(name__icontains=shop['shop'])
+
+                if delivery_location in operation.route.route_stops or delivery_location == operation.route.destination_location:
+                    for producto in tienda.get("products", []):
+                        categoria = (producto.get("category") or "").strip().upper()
+
+
+
+                        if categoria in {"VINOS", "CVZ"}:
+                            transported_product = TransportedProduct(
+                                transported_product_key=producto.get("sat_product_code") or "50202200",
+                                unit_key=producto.get("sat_packaging_code") or "H87",
+                                description=(producto.get("description") or producto.get("name") or "")[:100],
+                                currency="MXN",
+                                is_danger=False,
+                                weight=float(producto.get("weight_kg") or 0),
+                                amount=int(producto.get("quantity") or 0),
+                            )
+                            cvz_operation.transported_products.append(transported_product)
+
+
+                        if categoria in {"CIGARROS", "ABARROTES"}:
+                            transported_product = TransportedProduct(
+                                transported_product_key=producto.get("sat_product_code") or "24121804",
+                                unit_key=producto.get("sat_packaging_code") or "H87",
+                                description=(producto.get("description") or producto.get("name") or "")[:100],
+                                currency="MXN",
+                                is_danger=False,
+                                weight=float(producto.get("weight_kg") or 0),
+                                amount=int(producto.get("quantity") or 0),
+                            )
+                            abarrote_operation.transported_products.append(transported_product)
+
+            raise Exception(str("Ok"))
+
 
     def handle_get_route(self, request, data):
         operation = self.model.objects.get(pk=request.POST.get('id'))

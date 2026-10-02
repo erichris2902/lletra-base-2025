@@ -563,28 +563,153 @@ class ExpedienteZipProcessorView(AdminTemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
+        import logging
+        import threading
+        import time
+
         from django.http import FileResponse
-        from .services.expediente_processor import process_expedientes_zip, ProcessorError, ProcessorConfig
+
+        from .services.expediente_processor import (
+            process_expedientes_zip,
+            ProcessorError,
+            ProcessorConfig,
+        )
+
+        logger = logging.getLogger(__name__)
+
+        logger.info("============================================================")
+        logger.info("INICIO - Procesamiento de ZIP de expedientes")
+        logger.info("============================================================")
+
         form = ExpedienteZipForm(request.POST, request.FILES)
+
         if not form.is_valid():
-            # Re-render with errors
+            logger.warning(
+                "Formulario invalido. Errores: %s",
+                form.errors
+            )
+
             context = self.get_context_data()
-            context['form'] = form
+            context["form"] = form
             return self.render_to_response(context)
 
-        upload = form.cleaned_data['zip_file']
+        upload = form.cleaned_data["zip_file"]
+
+        logger.info(
+            "Archivo recibido: %s | Tamaño: %.2f MB",
+            upload.name,
+            upload.size / (1024 * 1024),
+        )
+
+        # ============================================================
+        # Heartbeat para confirmar que el proceso sigue ejecutándose
+        # ============================================================
+        stop_heartbeat = threading.Event()
+        start_time = time.monotonic()
+
+        def heartbeat():
+            while not stop_heartbeat.wait(10):
+                elapsed = time.monotonic() - start_time
+
+                logger.info(
+                    "[PROCESANDO] El ZIP sigue procesandose... "
+                    "Tiempo transcurrido: %.1f segundos",
+                    elapsed,
+                )
+
+        heartbeat_thread = threading.Thread(
+            target=heartbeat,
+            daemon=True,
+            name="expedientes-zip-heartbeat",
+        )
+
+        heartbeat_thread.start()
+
         try:
-            output_io, out_name = process_expedientes_zip(upload, config=ProcessorConfig())
+            logger.info(
+                "Iniciando process_expedientes_zip para archivo: %s",
+                upload.name,
+            )
+
+            output_io, out_name = process_expedientes_zip(
+                upload,
+                config=ProcessorConfig(),
+            )
+
+            elapsed = time.monotonic() - start_time
+
+            logger.info(
+                "Procesamiento terminado correctamente en %.2f segundos",
+                elapsed,
+            )
+
+            logger.info(
+                "Archivo de salida generado: %s",
+                out_name,
+            )
+
         except ProcessorError as e:
-            import logging
-            logging.getLogger(__name__).error("Error procesando ZIP de expedientes", exc_info=True)
-            form.add_error('zip_file', str(e))
+            elapsed = time.monotonic() - start_time
+
+            logger.exception(
+                "Error procesando ZIP de expedientes "
+                "despues de %.2f segundos: %s",
+                elapsed,
+                e,
+            )
+
+            form.add_error("zip_file", str(e))
+
             context = self.get_context_data()
-            context['form'] = form
+            context["form"] = form
+
             return self.render_to_response(context)
 
-        response = FileResponse(output_io, as_attachment=True, filename=out_name)
-        response['Content-Type'] = 'application/zip'
+        except Exception as e:
+            elapsed = time.monotonic() - start_time
+
+            logger.exception(
+                "ERROR NO CONTROLADO procesando ZIP "
+                "despues de %.2f segundos: %s",
+                elapsed,
+                e,
+            )
+
+            form.add_error(
+                "zip_file",
+                "Ocurrio un error inesperado procesando el archivo.",
+            )
+
+            context = self.get_context_data()
+            context["form"] = form
+
+            return self.render_to_response(context)
+
+        finally:
+            stop_heartbeat.set()
+
+            logger.info(
+                "Heartbeat detenido. Tiempo total: %.2f segundos",
+                time.monotonic() - start_time,
+            )
+
+        response = FileResponse(
+            output_io,
+            as_attachment=True,
+            filename=out_name,
+        )
+
+        response["Content-Type"] = "application/zip"
+
+        logger.info(
+            "Enviando ZIP resultante al usuario: %s",
+            out_name,
+        )
+
+        logger.info("============================================================")
+        logger.info("FIN - Procesamiento de ZIP de expedientes")
+        logger.info("============================================================")
+
         return response
 
 

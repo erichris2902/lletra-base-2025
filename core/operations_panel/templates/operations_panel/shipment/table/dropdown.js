@@ -46,6 +46,7 @@ function dropdown(data, type, row) {
     dropdown += '<a rel="update_destiny" class="dropdown-item" type="button">Editar destino</a>';
     dropdown += '<hr class="dropdown-divider">';
     if (row.shipment_type === 'ASTURIANO') {
+        dropdown += '<a rel="upload_products" class="dropdown-item" type="button">Cargar productos API</a>';
         dropdown += '<a rel="update_packing" class="dropdown-item" type="button">Distribuir packing</a>';
         dropdown += '<a rel="get_sacos_cajas" class="dropdown-item" type="button">Distribuir sacos y cajas</a>';
         dropdown += '<a rel="get_assign_products_form" class="dropdown-item" type="button">Asignar producto</a>';
