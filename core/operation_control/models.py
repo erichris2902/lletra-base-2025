@@ -136,6 +136,25 @@ class OperationMasterControl(BaseModel):
     # CONTROL GENERAL
     # =========================================================
 
+    # Reportes reales (captura manual para seguimiento de flujo)
+    collected_amount_reported = models.DecimalField(
+        verbose_name="Ingreso real reportado",
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Monto efectivamente cobrado al cliente (captura manual).",
+    )
+
+    supplier_paid_amount_reported = models.DecimalField(
+        verbose_name="Egreso real reportado",
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Monto efectivamente pagado al proveedor (captura manual).",
+    )
+
     notes = models.TextField(
         verbose_name="Observaciones",
         blank=True,

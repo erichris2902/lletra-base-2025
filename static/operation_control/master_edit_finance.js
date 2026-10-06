@@ -28,6 +28,7 @@
   const $fDateTo = document.getElementById('filter-date-to');
   const $fClient = document.getElementById('filter-client');
   const $fSupplier = document.getElementById('filter-supplier');
+  const $fFolio = document.getElementById('filter-folio');
 
   let currentPage = 1;
   const pageSize = 25;
@@ -276,6 +277,7 @@
     if ($fDateTo.value) params.set('date_to', $fDateTo.value);
     if ($fClient.value) params.set('client', $fClient.value);
     if ($fSupplier.value) params.set('supplier', $fSupplier.value);
+    if ($fFolio && $fFolio.value) params.set('folio', $fFolio.value);
 
     const url = OP_CTRL.apiList + '?' + params.toString();
     const res = await fetch(url, {headers: {'Accept': 'application/json'}});
@@ -300,6 +302,7 @@
     $fDateTo.value = '';
     $fClient.value = '';
     $fSupplier.value = '';
+    if ($fFolio) $fFolio.value = '';
     loadPage(1);
   });
   $prev.addEventListener('click', () => { if (currentPage > 1) loadPage(currentPage - 1); });

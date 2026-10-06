@@ -231,6 +231,7 @@
       case 'date_to': return 'Hasta';
       case 'client': return 'Cliente';
       case 'supplier': return 'Proveedor';
+      case 'folio': return 'Folio';
       case 'invoiced': return 'Facturado';
       case 'missing_approval': return 'Vo.Bo.';
       case 'has_factoring': return 'Factoraje';

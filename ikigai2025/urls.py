@@ -475,6 +475,7 @@ urlpatterns = [
     path('system/operations-master/', include("core.operation_control.urls")),  # Operations master control module
     path('system/', include("core.system_panel.urls")),  # System panel URLs
     path('supplier/', include("core.supplier_panel.urls")),  # System panel URLs
+    path('finance/', include("core.finance_panel.urls")),  # Finance panel URLs
     path('', include("core.admin_panel.urls")),  # Admin panel URLs at root
     path('asturiano/', RouteAsturianoListView.as_view(), name='routes_asturiano'),
     path('qr/', qr_landing, name='qr'),

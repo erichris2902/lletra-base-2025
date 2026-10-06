@@ -2,11 +2,15 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.forms.models import model_to_dict
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.utils.dateparse import parse_date
+from django.utils.timezone import now
 from django.views.decorators.http import require_GET, require_POST
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 
+from core.finance_panel.models import ExternalFinanceEntry
 from core.operation_control.models import OperationMasterControl, OperationControlChangeLog
 from core.admin_panel.models.purchase_order import PurchaseOrderOperation
 from decimal import Decimal
@@ -556,3 +560,87 @@ def api_update_finance(request):
     }
 
     return JsonResponse({"ok": True, "updated": {"field": field, "value": value}, "recalc": recalc})
+
+
+
+@login_required
+@require_GET
+def export(request):
+    """Exporta un XLSX con una hoja adicional "Ingresos/Egresos externos".
+
+    Usa el mismo rango de fechas (date_from/date_to) que la lista principal para
+    filtrar los registros externos por su campo `date`.
+    """
+    # Filtros por fecha (YYYY-MM-DD)
+    date_from = parse_date(request.GET.get("date_from") or "")
+    date_to = parse_date(request.GET.get("date_to") or "")
+
+    # Crear workbook y hoja principal (placeholder para Control Maestro)
+    wb = Workbook()
+    ws_main = wb.active
+    ws_main.title = "Control Maestro"
+    ws_main.append(["Export generado", now().strftime("%Y-%m-%d %H:%M")])
+
+    # Hoja: Ingresos/Egresos externos
+    ws_ext = wb.create_sheet(title="Ingresos/Egresos externos")
+    headers = [
+        "ID",
+        "Fecha",
+        "Tipo",
+        "Concepto",
+        "Categoría",
+        "Operación (Folio)",
+        "Monto (IVA incl.)",
+        "Pagado",
+        "Fecha de pago",
+        "PDF",
+        "XML",
+        "Comentarios",
+        "Creado por",
+        "Creado",
+        "Actualizado",
+    ]
+    ws_ext.append(headers)
+
+    qs = ExternalFinanceEntry.objects.select_related("category", "operation", "created_by").all()
+    if date_from:
+        qs = qs.filter(date__gte=date_from)
+    if date_to:
+        qs = qs.filter(date__lte=date_to)
+
+    for e in qs.order_by("date", "id"):
+        ws_ext.append([
+            e.id,
+            e.date.isoformat() if e.date else "",
+            e.get_entry_type_display(),
+            e.concept or "",
+            e.category.name if e.category else "",
+            getattr(e.operation, "folio", "") if e.operation else "",
+            float(e.amount) if e.amount is not None else "",
+            "Sí" if e.paid else "No",
+            e.paid_date.isoformat() if e.paid_date else "",
+            (getattr(e.invoice_pdf, 'url', '') or "") if e.invoice_pdf else "",
+            (getattr(e.invoice_xml, 'url', '') or "") if e.invoice_xml else "",
+            e.comments or "",
+            getattr(e.created_by, "username", "") if e.created_by else "",
+            getattr(e, "created_at", None).isoformat() if getattr(e, "created_at", None) else "",
+            getattr(e, "updated_at", None).isoformat() if getattr(e, "updated_at", None) else "",
+        ])
+
+    # Ajuste básico de anchos de columna
+    for i, col in enumerate(headers, start=1):
+        ws_ext.column_dimensions[get_column_letter(i)].width = max(14, min(42, len(col) + 2))
+
+    # Respuesta HTTP del archivo
+    from io import BytesIO
+    bio = BytesIO()
+    wb.save(bio)
+    bio.seek(0)
+    filename = f"control_maestro_{now().strftime('%Y%m%d_%H%M')}.xlsx"
+    resp = HttpResponse(
+        bio.read(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return resp
+

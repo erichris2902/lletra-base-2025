@@ -13,4 +13,7 @@ urlpatterns = [
     path("api/list/", views.api_list, name="api_list"),
     path("api/update-field/", views.api_update_field, name="api_update_field"),
     path("api/update/finance/", views.api_update_finance, name="api_update_finance"),
+
+    # Export
+    path("export/", views.export, name="export"),
 ]
