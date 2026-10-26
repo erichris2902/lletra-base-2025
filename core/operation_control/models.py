@@ -267,24 +267,71 @@ class OperationMasterControl(BaseModel):
 
     def get_operation_sale_amount(self):
         """
-        Ajustaremos este método cuando revisemos los campos reales
-        de tu modelo Operation.
+        Calcula el PRECIO (ingreso) CON impuestos.
+        Regla de negocio solicitada:
+        - Si hay factura(s) del cliente ligadas a la operación y vigentes (status == 'valid'),
+          usar la suma de sus totales (campo `total` de FacturapiInvoice), que ya incluyen impuestos.
+        - Si no hay facturas, estimar el total con impuestos a partir del total antes de impuestos
+          de la operación (`Operation.total`) aplicando una tasa IVA por defecto.
+            - Tasa preferida: si existe una Orden de Compra ligada, reutilizar su tasa efectiva
+              (tax_amount/subtotal) como aproximación; de lo contrario, usar 16% por defecto.
         """
-        possible_fields = [
-            "price",
-            "total",
-            "sale_amount",
-            "customer_price",
-            "amount",
-        ]
+        op = getattr(self, "operation", None)
+        if not op:
+            return Decimal("0.00")
 
-        for field_name in possible_fields:
-            value = getattr(self.operation, field_name, None)
+        # 1) Intentar usar facturas del cliente (bruto con impuestos)
+        try:
+            total_invoices = Decimal("0.00")
+            used_any = False
+            # Factura principal de embarque
+            inv = getattr(op, "shipment_invoice", None)
+            if inv is not None:
+                status = getattr(inv, "status", None)
+                if status == "valid":
+                    total_invoices += getattr(inv, "total", Decimal("0.00")) or Decimal("0.00")
+                    used_any = True
+            # Otras facturas activas
+            inv_qs = getattr(op, "invoices", None)
+            if inv_qs is not None:
+                shipment_id = getattr(inv, "id", None) if inv is not None else None
+                for extra in inv_qs.all():
+                    if getattr(extra, "status", None) != "valid":
+                        continue
+                    if shipment_id is not None and (getattr(extra, "id", None) == shipment_id):
+                        continue
+                    total_invoices += getattr(extra, "total", Decimal("0.00")) or Decimal("0.00")
+                    used_any = True
+            if used_any:
+                return total_invoices
+        except Exception:
+            # Si algo falla leyendo facturas, hacemos fallback a estimación por tasa
+            pass
 
-            if value is not None:
-                return value
+        # 2) Estimar precio bruto a partir del total neto de la operación
+        base_net = getattr(op, "total", None)
+        if base_net is None:
+            base_net = Decimal("0.00")
 
-        return Decimal("0.00")
+        # Tasa preferente desde la OC si existe
+        tax_rate = None
+        try:
+            from core.admin_panel.models.purchase_order import PurchaseOrderOperation as _POO
+            link = _POO.objects.select_related('purchase_order').filter(operation=op).first()
+            if link and link.purchase_order:
+                po = link.purchase_order
+                subtotal_po = getattr(po, "subtotal", None) or Decimal("0.00")
+                tax_po = getattr(po, "tax_amount", None) or Decimal("0.00")
+                if subtotal_po and subtotal_po != Decimal("0.00"):
+                    tax_rate = tax_po / subtotal_po
+        except Exception:
+            tax_rate = None
+
+        if tax_rate is None:
+            # Default IVA 16% para cliente
+            tax_rate = Decimal("0.16")
+
+        return base_net + (base_net * tax_rate)
 
     def get_operation_cost_amount(self):
         """

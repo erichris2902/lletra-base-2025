@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ProcessorConfig:
-    max_upload_size_mb: int = 200  # hard limit for uploaded zip (form should also enforce)
-    max_uncompressed_size_mb: int = 500  # basic protection against zip bombs
+    max_upload_size_mb: int = 20000  # hard limit for uploaded zip (form should also enforce)
+    max_uncompressed_size_mb: int = 5000  # basic protection against zip bombs
     ignore_dirs: Tuple[str, ...] = ("__MACOSX",)
 
 

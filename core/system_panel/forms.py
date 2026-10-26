@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 
 from core.system.forms import BaseModelForm, BaseForm
 from core.system.models import Section, Category
@@ -175,8 +176,11 @@ class ExpedienteZipForm(BaseForm):
         help_text="Sube un archivo .zip que contenga carpetas con PDFs por expediente.",
     )
 
-    def __init__(self, *args, max_mb: int = 200, **kwargs):
+    def __init__(self, *args, max_mb: int | None = None, **kwargs):
         super().__init__(*args, **kwargs)
+        # Permite configurar el límite desde settings.EXPEDIENTES_ZIP_MAX_MB (por defecto 500 MB)
+        if max_mb is None:
+            max_mb = getattr(settings, "EXPEDIENTES_ZIP_MAX_MB", 1000)
         self.max_mb = max_mb
         self.fields["zip_file"].widget.attrs.setdefault("accept", ".zip")
 
@@ -188,7 +192,7 @@ class ExpedienteZipForm(BaseForm):
         if not name.lower().endswith('.zip'):
             raise forms.ValidationError("Debe subir un archivo con extensión .zip")
         size = getattr(f, 'size', None)
-        if size is not None and size > self.max_mb * 1024 * 1024:
+        if self.max_mb is not None and size is not None and size > self.max_mb * 1024 * 1024:
             raise forms.ValidationError(f"El archivo excede el límite de {self.max_mb} MB")
         return f
 
@@ -245,8 +249,11 @@ class PdfReduceZipForm(BaseForm):
         initial=True,
     )
 
-    def __init__(self, *args, max_mb: int = 200, **kwargs):
+    def __init__(self, *args, max_mb: int | None = None, **kwargs):
         super().__init__(*args, **kwargs)
+        # Permite configurar el límite desde settings.PDF_REDUCE_ZIP_MAX_MB (por defecto 500 MB)
+        if max_mb is None:
+            max_mb = getattr(settings, "PDF_REDUCE_ZIP_MAX_MB", getattr(settings, "EXPEDIENTES_ZIP_MAX_MB", 500))
         self.max_mb = max_mb
         self.fields["zip_file"].widget.attrs.setdefault("accept", ".zip")
         # Render select nicely using project style (form-select)

@@ -56,7 +56,7 @@
       <td class="text-end col-money">${fmtMoney(r.factoring_cost)}</td>
       <td class="text-end col-money">${fmtMoney(r.profit)}</td>
       <td class="text-end col-percent">${fmtPercent(r.profit_percentage)}</td>
-      <td contenteditable class="cell-editable" data-field="counter_receipt">${r.customer_invoice_code ? '' : (r.counter_receipt || '')}</td>
+      <td contenteditable class="cell-editable" data-field="counter_receipt">${r.counter_receipt || ''}</td>
       <td>
         <select class="form-select form-select-sm bool-select" data-field="has_factoring">
           <option value="n" ${r.has_factoring ? '' : 'selected'}>No</option>

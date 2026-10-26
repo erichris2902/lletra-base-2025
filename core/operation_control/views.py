@@ -78,6 +78,11 @@ def api_list(request):
     if supplier:
         qs = qs.filter(operation__supplier__name__icontains=supplier)
 
+    # Control vehicular (Folio)
+    folio = request.GET.get("folio")
+    if folio:
+        qs = qs.filter(operation__folio__icontains=str(folio).strip())
+
     invoiced = request.GET.get("invoiced")
     if invoiced in ("y", "n"):
         condition = Q(customer_invoice_code__isnull=False) & ~Q(customer_invoice_code="")
