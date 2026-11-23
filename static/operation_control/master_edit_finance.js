@@ -57,8 +57,7 @@
       <td>${r.folio ?? ''}</td>
       <td>${r.date ?? ''}</td>
       <td>${r.client ?? ''}</td>
-      <td>${r.unit ?? ''}</td>
-      <td>${r.has_purchase_order ? (r.purchase_order_folio || 'Sí') : '—'}</td>
+      <td>${r.supplier ?? ''}</td>
       <td>
         <input type="text" class="form-control form-control-sm edit" data-field="sale_amount_override" value="${r.sale_amount_override ?? ''}">
       </td>
@@ -77,18 +76,6 @@
       </td>
       <td>
         <input type="text" class="form-control form-control-sm edit" data-field="scheduled_supplier_payment_date" placeholder="DD-MM-YYYY" value="${formatDateDDMMYYYY(r.scheduled_supplier_payment_date) || ''}">
-      </td>
-      <td>
-        <select class="form-select form-select-sm edit" data-field="has_factoring">
-          <option value="n" ${r.has_factoring? '':'selected'}>No</option>
-          <option value="y" ${r.has_factoring? 'selected':''}>Sí</option>
-        </select>
-      </td>
-      <td>
-        <input type="text" class="form-control form-control-sm edit" data-field="factoring_amount" value="${r.factoring_amount ?? ''}">
-      </td>
-      <td>
-        <input type="text" class="form-control form-control-sm edit" data-field="factoring_percentage" value="${r.factoring_percentage ?? ''}">
       </td>
       <td class="text-end">${fmtMoney(r.profit)}</td>
       <td class="text-end">${fmtPercent(r.profit_percentage)}</td>
@@ -155,7 +142,7 @@
     if (value == null) return '';
     let v = String(value).trim();
     if (v === '') return '';
-    if (["sale_amount_override","cost_amount_override","factoring_amount","factoring_percentage"].includes(field)){
+    if (["sale_amount_override","cost_amount_override"].includes(field)){
       const canon = latinDecimalToCanonical(v);
       return canon == null ? '__INVALID__' : canon; // use canonical decimal string
     }
@@ -192,9 +179,6 @@
       'supplier_invoice_number',
       'supplier_invoice_date',
       'scheduled_supplier_payment_date',
-      'has_factoring',
-      'factoring_amount',
-      'factoring_percentage',
       'notes'
     ];
     if (!id) {

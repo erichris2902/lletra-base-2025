@@ -57,7 +57,9 @@ def api_list(request):
             "operation__supplier",
             "operation__route",
             "operation__vehicle",
+            "operation__shipment_invoice",
         )
+        .prefetch_related("operation__invoices")
         .all().order_by("-operation__folio")
     )
 
@@ -95,6 +97,25 @@ def api_list(request):
     factoring = request.GET.get("has_factoring")
     if factoring in ("y", "n"):
         qs = qs.filter(has_factoring=(factoring == "y"))
+
+    # Filtro por folio de factura (shipment_invoice o invoices)
+    invoice_folio = request.GET.get("invoice_folio")
+    if invoice_folio:
+        # Permitir múltiples folios separados por coma/espacios; quedarnos sólo con números enteros
+        tokens = [t for t in re.split(r"[\s,;]+", str(invoice_folio)) if t]
+        nums = []
+        for t in tokens:
+            m = re.search(r"\d+", t)
+            if m:
+                try:
+                    nums.append(int(m.group(0)))
+                except Exception:
+                    pass
+        if nums:
+            qs = qs.filter(
+                Q(operation__shipment_invoice__folio_number__in=nums)
+                | Q(operation__invoices__folio_number__in=nums)
+            ).distinct()
 
     # Construir la lista final a mostrar:
     # - Incluir todas las operaciones cuyo folio NO termina en 'B'.
@@ -226,6 +247,12 @@ def api_list(request):
         profit_sum = profit_a + profit_b  # equivalente a sale_sum - cost_sum - fact_sum
         margin = _D("0.00") if sale_sum == _D("0.00") else (profit_sum * _D("100")) / sale_sum
 
+        # Reported amounts (treat NULL as 0 for pending calculations)
+        collected_rep = c.collected_amount_reported if c.collected_amount_reported is not None else _D("0.00")
+        supplier_paid_rep = c.supplier_paid_amount_reported if c.supplier_paid_amount_reported is not None else _D("0.00")
+        por_cobrar = sale_sum - collected_rep
+        por_pagar = cost_sum - supplier_paid_rep
+
         # Build customer invoice display with '-C' if canceled and append other active invoices from Operation.invoices
         customer_invoice_display = c.customer_invoice_code
         try:
@@ -276,6 +303,37 @@ def api_list(request):
         except Exception:
             pass
 
+        # Build invoice folio numbers (only folio_number) from shipment_invoice and Operation.invoices, deduped
+        invoice_folios = []
+        try:
+            if op is not None:
+                # shipment invoice first
+                try:
+                    inv = getattr(op, "shipment_invoice", None)
+                    folio_num = getattr(inv, "folio_number", None) if inv else None
+                    if folio_num is not None:
+                        s = str(folio_num)
+                        if s not in invoice_folios:
+                            invoice_folios.append(s)
+                except Exception:
+                    pass
+                # then extra invoices
+                try:
+                    inv_qs = getattr(op, "invoices", None)
+                    if inv_qs is not None:
+                        for extra in inv_qs.all():
+                            folio_num = getattr(extra, "folio_number", None)
+                            if folio_num is None:
+                                continue
+                            s = str(folio_num)
+                            if s not in invoice_folios:
+                                invoice_folios.append(s)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        invoice_folios_str = ", ".join(invoice_folios) if invoice_folios else None
+
         return {
             "id": c.id,
             "folio": getattr(op, "folio", None),
@@ -283,12 +341,19 @@ def api_list(request):
             "client": getattr(op.client, "name", None) if op and op.client else None,
             "origin": origin,
             "destination": destination,
+            "supplier": getattr(op.supplier, "business_name", None) if op and getattr(op, "supplier", None) else None,
+            "invoice_folios": invoice_folios_str,
             "unit": unit_display,
             "sale_amount": str(sale_sum),
             "cost_amount": str(cost_sum),
             "factoring_cost": str(fact_sum),
             "profit": str(profit_sum),
             "profit_percentage": str(margin),
+            # Reported amounts and pending (for /finance/cm/)
+            "collected_amount_reported": str(collected_rep) if collected_rep is not None else None,
+            "supplier_paid_amount_reported": str(supplier_paid_rep) if supplier_paid_rep is not None else None,
+            "pending_to_collect": str(por_cobrar),
+            "pending_to_pay": str(por_pagar),
             "counter_receipt": c.counter_receipt,
             "counter_receipt_date": c.counter_receipt_date,
             "customer_invoice_code": customer_invoice_display,

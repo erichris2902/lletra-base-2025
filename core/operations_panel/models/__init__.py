@@ -9,6 +9,7 @@ from core.operations_panel.models.supplier import Supplier
 from core.operations_panel.models.transported_product import TransportedProduct
 from core.operations_panel.models.vehicle import Vehicle
 from core.operations_panel.models.operation_evidence import OperationEvidence
+from core.operations_panel.models.service_log import ServiceLog, ServiceLogEvent, ServiceLogActivity
 
 
 __all__ = [
@@ -25,4 +26,7 @@ __all__ = [
     'Cargo',
     'Route',
     'OperationEvidence',
+    'ServiceLog',
+    'ServiceLogEvent',
+    'ServiceLogActivity',
 ]

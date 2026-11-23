@@ -1,0 +1,84 @@
+/* Simple 24h timeline with 30-min blocks. Mobile-first. */
+.sl-timeline {
+  position: relative;
+  width: 100%;
+  height: 72px; /* compact height, good for touch */
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none; /* allow horizontal drag selection */
+}
+
+/* Hour grid lines */
+.sl-timeline::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: linear-gradient(to right, rgba(108,117,125,.25) 1px, transparent 1px);
+  background-size: calc(100% / 24) 100%;
+  pointer-events: none;
+}
+
+/* Minor half-hour markers as soft ticks via overlay */
+.sl-timeline::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: linear-gradient(to right, rgba(108,117,125,.15) 1px, transparent 1px);
+  background-size: calc(100% / 48) 100%;
+  pointer-events: none;
+}
+
+/* Activities rendered as colored blocks */
+.sl-activity {
+  position: absolute;
+  top: 24px; /* default; may be overridden for stacking */
+  height: 40px;
+  border-radius: 4px;
+  opacity: .95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #212529;
+  padding: 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none; /* allow timeline drag/selection over blocks */
+}
+
+/* Category colors */
+.sl-cat-driving { background: #cfe2ff; border: 1px solid #9ec5fe; }
+.sl-cat-pause { background: #ffecb5; border: 1px solid #ffd35a; }
+.sl-cat-aux { background: #e2e3e5; border: 1px solid #c4c8cb; }
+.sl-cat-exc { background: #f8d7da; border: 1px solid #f1aeb5; }
+.sl-cat-rest { background: #d1e7dd; border: 1px solid #a3cfbb; }
+
+/* Selection overlay */
+.sl-selection {
+  position: absolute;
+  top: 4px;
+  height: 64px;
+  background: rgba(13,110,253,.15);
+  border: 2px solid rgba(13,110,253,.5);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* Hour labels row */
+.sl-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #6c757d;
+  margin-top: 4px;
+}

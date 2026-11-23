@@ -478,6 +478,8 @@ class ShipmentOperationListView(AdminListView):
         headers.setdefault('Accept', 'application/json, */*;q=0.8')
         resp = requests.post(DEFAULT_URL, headers=headers, json=payload, timeout=DEFAULT_TIMEOUT)
         details = resp.json().get("details", [])
+        print(resp.json())
+        print(details)
         has_cerveza = False
         has_cigarros_abarrotes = False
         return

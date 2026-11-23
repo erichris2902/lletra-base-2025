@@ -62,6 +62,8 @@ class ActionEngineForm(BaseForm):
         ("CME", "CME - Control maestro EGRESOS"),
         ("CMP", "CMP - Control maestro PLANTILLAS"),
         ("PPP", "PPP - Plantilla de productos precargados"),
+        ("RPUUID", "PRU - Pagos recibidos por UUID (Excel)"),
+        ("POSP", "POP - Pagos a proveedores (por folio de operación)"),
     ]
 
     layout = [

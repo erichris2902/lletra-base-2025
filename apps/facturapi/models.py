@@ -109,6 +109,68 @@ class FacturapiInvoice(BaseModel):
         cancel_invoice(self, motivo, sustitucion)
 
 
+class ReceivedInvoicePayment(BaseModel):
+    """Pago recibido aplicado a una factura (por UUID) proveniente de un layout externo.
+    - Idempotencia: (external_payment_number, invoice) debe ser único para permitir un mismo No. de Pago
+      en varias facturas (caso común), pero evitar duplicados de carga.
+    - Moneda: sólo MXN para este flujo.
+    - Enlaza opcionalmente a la Operación y al Control Maestro para sumarizar cobros.
+    """
+    invoice = models.ForeignKey(
+        FacturapiInvoice,
+        on_delete=models.PROTECT,
+        related_name='received_payments',
+        verbose_name='Factura'
+    )
+    invoice_uuid = models.CharField('UUID de factura', max_length=64, db_index=True)
+
+    # Identificador del pago en el layout externo (se repite entre filas de un mismo pago)
+    external_payment_number = models.CharField('No. de Pago', max_length=64, db_index=True)
+
+    payment_date = models.DateField('Fecha de pago', null=True, blank=True)
+    amount = models.DecimalField('Importe de pago', max_digits=12, decimal_places=2)
+    currency = models.CharField('Divisa', max_length=8, default='MXN')
+    branch = models.CharField('Sucursal', max_length=150, blank=True, null=True)
+
+    invoice_code = models.CharField('Código/Serie-Folio de factura', max_length=100, blank=True, null=True)
+    invoice_date = models.DateField('Fecha de factura', null=True, blank=True)
+    invoice_description = models.TextField('Descripción Factura', blank=True, null=True)
+
+    # Enlaces operativos
+    operation = models.ForeignKey(
+        'operations_panel.Operation',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='received_payments',
+        verbose_name='Operación'
+    )
+    master_control = models.ForeignKey(
+        'operation_control.OperationMasterControl',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='received_payments',
+        verbose_name='Control maestro'
+    )
+
+    class Meta:
+        verbose_name = 'Pago recibido (por factura)'
+        verbose_name_plural = 'Pagos recibidos (por factura)'
+        ordering = ['-payment_date', '-created_at']
+        unique_together = (
+            ('invoice', 'external_payment_number'),
+        )
+        indexes = [
+            models.Index(fields=['invoice_uuid']),
+            models.Index(fields=['external_payment_number']),
+            models.Index(fields=['payment_date']),
+        ]
+
+    def __str__(self):
+        return f"Pago {self.external_payment_number} → {self.invoice_uuid} por ${self.amount}"
+
+
 class FacturapiTax(BaseModel):
     """
     Información de impuestos de FacturAPI.

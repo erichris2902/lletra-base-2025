@@ -1,0 +1,128 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="pagetitle">
+  <h1>Bitácora de Horas de Servicio</h1>
+  <nav>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'operations_panel:service_logs_search' %}">Buscar</a></li>
+      <li class="breadcrumb-item active">Detalle</li>
+    </ol>
+  </nav>
+</div>
+
+<section class="section" id="service-log-app" data-log-id="{{ log.id }}">
+  <div class="row">
+    <div class="col-12">
+      <div class="card mb-3">
+        <div class="card-body p-3">
+          <div class="row g-3" id="header-cards">
+            <!-- Populated by JS: folio, driver, vehicle, origin/destination, departure/arrival, status -->
+            <div class="col-6 col-md-3">
+              <div class="small fw-bold text-muted">Folio</div>
+              <div id="hdr-folio" class="fs-5">{{ log.operation.folio }}</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="small fw-bold text-muted">Conductor</div>
+              <div id="hdr-driver" class="fs-6">&nbsp;</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="small fw-bold text-muted">Vehículo</div>
+              <div id="hdr-vehicle" class="fs-6">&nbsp;</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="small fw-bold text-muted">Placas</div>
+              <div id="hdr-plates" class="fs-6">&nbsp;</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="small fw-bold text-muted">Origen</div>
+              <div id="hdr-origin" class="fs-6">&nbsp;</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="small fw-bold text-muted">Destino</div>
+              <div id="hdr-destination" class="fs-6">&nbsp;</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="small fw-bold text-muted">Salida</div>
+              <div id="hdr-departure" class="fs-6">&nbsp;</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="small fw-bold text-muted">Llegada</div>
+              <div id="hdr-arrival" class="fs-6">&nbsp;</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="small fw-bold text-muted">Estado</div>
+              <div id="hdr-status" class="badge bg-secondary">&nbsp;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card mb-3">
+        <div class="card-body p-3">
+          <h5 class="card-title">Registrar evento</h5>
+          <div class="row g-3">
+            <div class="col-12 d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-outline-primary ev-btn" data-event="TRIP_START">Inicio de viaje</button>
+              <button type="button" class="btn btn-outline-secondary ev-btn" data-event="UNLOADING">Descarga</button>
+              <button type="button" class="btn btn-outline-danger ev-btn" data-event="BREAKDOWN">Descompostura</button>
+              <button type="button" class="btn btn-outline-warning ev-btn" data-event="MEAL">Comida</button>
+              <button type="button" class="btn btn-outline-info ev-btn" data-event="REST">Descanso</button>
+              <button type="button" class="btn btn-outline-dark ev-btn" data-event="CHECKPOINT">Retén</button>
+              <button type="button" class="btn btn-outline-success ev-btn" data-event="TRIP_END">Cierre de viaje</button>
+            </div>
+
+            <div class="col-12">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <button id="day-prev" class="btn btn-outline-secondary btn-sm" type="button">◀ Día anterior</button>
+                <div id="day-label" class="fw-bold"></div>
+                <span id="hover-time" class="badge bg-light text-dark ms-2" aria-live="polite" title="Hora bajo el cursor"></span>
+                <button id="day-next" class="btn btn-outline-secondary btn-sm" type="button">Día siguiente ▶</button>
+              </div>
+              <div id="timeline" class="sl-timeline" role="application" aria-label="Línea de tiempo 24h"></div>
+              <div class="small text-muted mt-2">
+                Toca para establecer el inicio. Arrastra para definir la duración (bloques de 30 min). Para inicio/cierre de viaje sólo toca el horario.
+              </div>
+              <div class="mt-2 d-flex align-items-center gap-2">
+                <input type="text" class="form-control" id="notes" placeholder="Notas (opcional)" />
+                <span id="save-status" class="text-muted"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card mb-3">
+        <div class="card-body p-3">
+          <h5 class="card-title">Actividades registradas</h5>
+          <div id="activities-list" class="small"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card mb-3">
+        <div class="card-body p-3">
+          <h5 class="card-title">Totales</h5>
+          <div id="totals" class="small"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <a id="pdf-download" href="#" class="btn btn-outline-primary">
+        Descargar bitácora PDF
+      </a>
+    </div>
+  </div>
+</section>
+
+<link rel="stylesheet" href="{% static 'operations_panel/service_logs/css/timeline.css' %}">
+<script src="{% static 'operations_panel/service_logs/js/timeline.js' %}"></script>
+<script src="{% static 'operations_panel/service_logs/js/main.js' %}"></script>
+{% endblock %}

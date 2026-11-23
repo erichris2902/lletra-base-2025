@@ -4,14 +4,14 @@ from decimal import Decimal, InvalidOperation
 import dateutil
 from dateutil.utils import today
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import transaction
+from django.db import transaction, models
 from django.http import HttpResponseBadRequest, HttpResponse
 from django.utils import timezone
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl.styles.borders import BORDER_THIN
 
-from apps.facturapi.models import FacturapiProduct, FacturapiTax, FacturapiInvoice
+from apps.facturapi.models import FacturapiProduct, FacturapiTax, FacturapiInvoice, ReceivedInvoicePayment
 from core.operations_panel.choices import AsturianoPacking
 from core.operations_panel.models import Operation, TransportedProduct, Client
 from core.operations_panel.models.distribution_packing import DistributionPacking
@@ -25,7 +25,7 @@ from core.system_panel.forms import CategoryForm, SectionForm, AssistantForm, Ac
     ReportEngineByFolioForm, ExpedienteZipForm, PdfReduceZipForm
 from apps.openai_assistant.models import Assistant
 from core.operation_control.models import OperationMasterControl
-from core.admin_panel.models.purchase_order import PurchaseOrderOperation, PurchaseOrderAccessory, PurchaseOrderStatus
+from core.admin_panel.models.purchase_order import PurchaseOrderOperation, PurchaseOrderAccessory, PurchaseOrderStatus, PurchaseOrderSupplierPayment
 from django.db.models import Prefetch
 
 
@@ -300,8 +300,6 @@ class ActionEngineView(AdminTemplateView):
 
             return HttpResponse(mensaje, content_type="text/plain")
 
-
-
         if "PPP" == action:
             try:
                 workbook = load_workbook(
@@ -430,6 +428,518 @@ class ActionEngineView(AdminTemplateView):
                         + "; ".join(errores)
                 )
             return HttpResponse(mensaje)
+
+        if action == "RPUUID":
+            # Importar pagos recibidos por UUID de factura
+            try:
+                workbook = load_workbook(
+                    filename=plantilla_excel,
+                    read_only=True,
+                    data_only=True,
+                )
+                worksheet = workbook.active
+            except Exception as exc:
+                return HttpResponseBadRequest(
+                    f"No fue posible leer el archivo Excel: {exc}"
+                )
+
+            # Normalización de encabezados: mayúsculas y sin acentos
+            import unicodedata
+            def normalize_key(s: str) -> str:
+                if s is None:
+                    return ""
+                s = str(s).strip().upper()
+                # Eliminar diacríticos
+                return "".join(c for c in unicodedata.normalize("NFD", s) if c.isascii())
+
+            # Encabezados requeridos (canónicos, sin tildes)
+            encabezados_requeridos = {
+                "NO. PAGO",
+                "FECHA PAGO",
+                "FACTURA",
+                "FECHA FACTURA",
+                "IMPORTE PAGO",
+                "DIVISA",
+                "SUCURSAL",
+                "DESCRIPCION FACTURA",
+                "UUID FACTURA",
+            }
+
+            filas = worksheet.iter_rows(values_only=True)
+            try:
+                primera_fila = next(filas)
+            except StopIteration:
+                return HttpResponseBadRequest("El archivo está vacío.")
+
+            # Mapa de encabezados normalizados -> índice
+            encabezados = {
+                normalize_key(valor): indice
+                for indice, valor in enumerate(primera_fila)
+                if valor is not None and str(valor).strip() != ""
+            }
+
+            faltantes = encabezados_requeridos - set(encabezados.keys())
+            if faltantes:
+                # Intentar mapear sin punto en "NO. PAGO" como alternativa común
+                alias = {
+                    "NO PAGO": "NO. PAGO",
+                    "NRO PAGO": "NO. PAGO",
+                    "NUMERO DE PAGO": "NO. PAGO",
+                    "DESCRIPCION": "DESCRIPCION FACTURA",
+                    "DESCRIPCION DE FACTURA": "DESCRIPCION FACTURA",
+                }
+                # Reconstruir faltantes usando alias si existen en encabezados
+                for k, v in list(alias.items()):
+                    if k in faltantes and v in encabezados_requeridos and k in encabezados:
+                        encabezados[v] = encabezados[k]
+                        faltantes.discard(k)
+                        faltantes.discard(v)
+                        # recalcular conjunto
+                        faltantes = encabezados_requeridos - set(encabezados.keys())
+                if faltantes:
+                    return HttpResponseBadRequest(
+                        "Faltan los siguientes encabezados: " + ", ".join(sorted(faltantes))
+                    )
+
+            def parse_excel_date(val):
+                from datetime import datetime, timedelta
+                # openpyxl ya convierte seriales a datetime/date en la mayoría de los casos si data_only=True
+                if val in (None, ""):
+                    return None
+                if hasattr(val, 'date'):
+                    try:
+                        return val.date()
+                    except Exception:
+                        pass
+                s = str(val).strip()
+                for fmt in ("%d/%m/%y", "%d-%m-%y", "%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"):
+                    try:
+                        return datetime.strptime(s, fmt).date()
+                    except Exception:
+                        continue
+                # Si es número (serial Excel) aproximado (base 1899-12-30)
+                try:
+                    num = float(s)
+                    base = datetime(1899, 12, 30)
+                    return (base + timedelta(days=num)).date()
+                except Exception:
+                    return None
+
+            from decimal import Decimal
+            creados = 0
+            duplicados = 0
+            controles_actualizados = 0
+            errores = []
+            procesadas = 0
+
+            # Utilidad: convertir monto usando la función ya definida
+            def to_decimal(v):
+                try:
+                    from core.system_panel.views import convertir_decimal  # misma unidad
+                except Exception:
+                    # Fallback simple
+                    def convertir_decimal(x):
+                        if x in (None, ""): return Decimal("0")
+                        return Decimal(str(x).replace(',', '').replace('$', '').strip())
+                return convertir_decimal(v)
+
+            # Helper seguro para obtener celda por clave canónica
+            def cell(fila, key):
+                idx = encabezados.get(key)
+                if idx is None:
+                    return None
+                # Evitar IndexError cuando la fila es más corta que la cabecera
+                if idx >= len(fila or ()):  # fila podría ser None
+                    return None
+                return fila[idx]
+
+            try:
+                with transaction.atomic():
+                    for numero_fila, fila in enumerate(filas, start=2):
+                        if fila is None:
+                            continue
+                        procesadas += 1
+                        ext_no_pago = cell(fila, "NO. PAGO")
+                        fecha_pago = cell(fila, "FECHA PAGO")
+                        factura_code = cell(fila, "FACTURA")
+                        fecha_factura = cell(fila, "FECHA FACTURA")
+                        importe_pago = cell(fila, "IMPORTE PAGO")
+                        divisa = cell(fila, "DIVISA")
+                        sucursal = cell(fila, "SUCURSAL")
+                        descripcion = cell(fila, "DESCRIPCION FACTURA") or cell(fila, "DESCRIPCION")
+                        uuid_val = cell(fila, "UUID FACTURA")
+
+                        # Ignorar filas completamente vacías
+                        if not any(v not in (None, "") for v in (
+                            ext_no_pago, fecha_pago, importe_pago, uuid_val
+                        )):
+                            continue
+
+                        # Validaciones mínimas por fila
+                        if uuid_val in (None, ""):
+                            errores.append(f"Fila {numero_fila}: UUID vacío o fuera de rango.")
+                            continue
+                        if importe_pago in (None, ""):
+                            errores.append(f"Fila {numero_fila}: Importe de pago vacío o fuera de rango.")
+                            continue
+                        if ext_no_pago in (None, ""):
+                            errores.append(f"Fila {numero_fila}: No. de pago vacío o fuera de rango.")
+                            continue
+
+                        uuid_str = str(uuid_val).strip()
+
+                        try:
+                            invoice = FacturapiInvoice.objects.get(uuid__iexact=uuid_str)
+                        except FacturapiInvoice.DoesNotExist:
+                            errores.append(f"Fila {numero_fila}: No se encontró factura con UUID {uuid_str}.")
+                            continue
+
+                        # Resolver operación
+                        op = Operation.objects.filter(shipment_invoice=invoice).first()
+                        if op is None:
+                            op = Operation.objects.filter(invoices__id=invoice.id).first()
+
+                        # Resolver/crear control maestro
+                        mc = None
+                        if op is not None:
+                            from core.operation_control.models import OperationMasterControl as _OMC
+                            mc, _ = _OMC.objects.get_or_create(operation=op)
+
+                        # Parseo de datos
+                        fecha_pago_d = parse_excel_date(fecha_pago)
+                        fecha_factura_d = parse_excel_date(fecha_factura)
+                        try:
+                            monto = to_decimal(importe_pago)
+                        except Exception:
+                            errores.append(f"Fila {numero_fila}: Importe inválido: {importe_pago!r}.")
+                            continue
+                        moneda = str(divisa).strip().upper() if divisa else "MXN"
+                        if moneda != "MXN":
+                            # De acuerdo a requerimiento, solo MXN; registramos pero advertimos
+                            pass
+                        ext_no_pago_s = str(ext_no_pago).strip()
+
+                        # Idempotencia por (invoice, external_payment_number)
+                        pago, creado = ReceivedInvoicePayment.objects.get_or_create(
+                            invoice=invoice,
+                            external_payment_number=ext_no_pago_s,
+                            defaults=dict(
+                                invoice_uuid=uuid_str,
+                                payment_date=fecha_pago_d,
+                                amount=monto,
+                                currency=moneda,
+                                branch=str(sucursal).strip() if sucursal else None,
+                                invoice_code=str(factura_code).strip() if factura_code else None,
+                                invoice_date=fecha_factura_d,
+                                invoice_description=str(descripcion).strip() if descripcion else None,
+                                operation=op,
+                                master_control=mc,
+                            )
+                        )
+                        if creado:
+                            creados += 1
+                        else:
+                            duplicados += 1
+                            # Si existe pero no tiene vínculos, completarlos sin cambiar idempotencia
+                            updated = False
+                            if pago.operation is None and op is not None:
+                                pago.operation = op; updated = True
+                            if pago.master_control is None and mc is not None:
+                                pago.master_control = mc; updated = True
+                            if updated:
+                                pago.save(update_fields=["operation", "master_control"]) 
+
+                        # Recalcular collected_amount_reported para la operación enlazada
+                        if op is not None and mc is not None:
+                            total = (
+                                ReceivedInvoicePayment.objects
+                                .filter(operation=op)
+                                .aggregate(s=models.Sum('amount'))['s'] or Decimal('0.00')
+                            )
+                            if mc.collected_amount_reported != total:
+                                mc.collected_amount_reported = total
+                                mc.save(update_fields=["collected_amount_reported"]) 
+                                controles_actualizados += 1
+
+            finally:
+                try:
+                    workbook.close()
+                except Exception:
+                    pass
+
+            mensaje = (
+                f"Proceso terminado. Filas procesadas: {procesadas}. "
+                f"Pagos creados: {creados}. Duplicados/omitidos: {duplicados}. "
+                f"Controles actualizados: {controles_actualizados}. Errores: {len(errores)}."
+            )
+            if errores:
+                mensaje += "\n\n" + "\n".join(errores[:50])
+            return HttpResponse(mensaje, content_type="text/plain")
+
+        if action == "POSP":
+            # Importar pagos a proveedores por folio de operación (control vehicular)
+            try:
+                workbook = load_workbook(
+                    filename=plantilla_excel,
+                    read_only=True,
+                    data_only=True,
+                )
+                worksheet = workbook.active
+            except Exception as exc:
+                return HttpResponseBadRequest(
+                    f"No fue posible leer el archivo Excel: {exc}"
+                )
+
+            import unicodedata
+            def normalize_key(s: str) -> str:
+                if s is None:
+                    return ""
+                s = str(s).strip().upper()
+                return "".join(c for c in unicodedata.normalize("NFD", s) if c.isascii())
+
+            # Encabezados esperados (tomados del ejemplo y variantes)
+            # Requisito: usar exclusivamente la columna POR PAGAR (ignorar TOTAL)
+            headers_needed = {"COD VIAJE", "FECHA", "POR PAGAR"}
+            optional_headers = {
+                "PROVEEDOR",
+                "NO FAC PROVEEDOR",  # numero de factura del proveedor
+                "FECHA DE FACTURA DE PROVEEDOR",
+                "ESTATUS",
+                "ESTADO",
+                "STATUS",
+                "PAGADO",
+                "PAGADA",
+                "COMPROBANTES",
+                "COMPLEMENTOS",
+            }
+            alias = {
+                "CODIGO VIAJE": "COD VIAJE",
+                "COD VIAJE ": "COD VIAJE",
+                "NO FACTURA PROVEEDOR": "NO FAC PROVEEDOR",
+                "NUMERO FACTURA PROVEEDOR": "NO FAC PROVEEDOR",
+                "FECHA FACTURA PROVEEDOR": "FECHA DE FACTURA DE PROVEEDOR",
+            }
+
+            filas = worksheet.iter_rows(values_only=True)
+            try:
+                primera = next(filas)
+            except StopIteration:
+                return HttpResponseBadRequest("El archivo está vacío.")
+
+            encabezados = {
+                normalize_key(v): i for i, v in enumerate(primera) if v not in (None, "")
+            }
+            # aplicar alias
+            for k, v in alias.items():
+                nk = normalize_key(k)
+                nv = normalize_key(v)
+                if nk in encabezados and nv not in encabezados:
+                    encabezados[nv] = encabezados[nk]
+
+            # validar requeridos mínimos
+            faltantes = [h for h in headers_needed if h not in encabezados]
+            if faltantes:
+                missing_note = "; Faltan: " + ", ".join(faltantes)
+                return HttpResponseBadRequest("Encabezados insuficientes" + missing_note)
+
+            def cell(row, key):
+                idx = encabezados.get(key)
+                if idx is None or row is None:
+                    return None
+                return row[idx] if idx < len(row) else None
+
+            def parse_excel_date(val):
+                from datetime import datetime, timedelta
+                if val in (None, ""):
+                    return None
+                if hasattr(val, 'date'):
+                    try:
+                        return val.date()
+                    except Exception:
+                        pass
+                s = str(val).strip()
+                for fmt in ("%d/%m/%y", "%d-%m-%y", "%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"):
+                    try:
+                        return datetime.strptime(s, fmt).date()
+                    except Exception:
+                        continue
+                try:
+                    num = float(s)
+                    base = datetime(1899, 12, 30)
+                    return (base + timedelta(days=num)).date()
+                except Exception:
+                    return None
+
+            # convertir decimal reutilizando helper existente
+            def to_decimal(v):
+                try:
+                    from core.system_panel.views import convertir_decimal
+                except Exception:
+                    from decimal import Decimal as _D
+                    def convertir_decimal(x):
+                        if x in (None, ""): return _D("0")
+                        return _D(str(x).replace(',', '').replace('$', '').strip())
+                return convertir_decimal(v)
+
+            creados = 0
+            duplicados = 0
+            pos_pagadas = 0
+            controles_actualizados = 0
+            errores = []
+            procesadas = 0
+            omitidas = 0
+
+            from decimal import Decimal as _D
+            affected_po_ids = set()
+            affected_ops = set()
+
+            try:
+                with transaction.atomic():
+                    for numero_fila, fila in enumerate(filas, start=2):
+                        if fila is None:
+                            continue
+                        procesadas += 1
+                        folio = cell(fila, "COD VIAJE")
+                        if not folio:
+                            continue
+                        folio = str(folio).strip()
+                        # Monto: usar EXCLUSIVAMENTE la columna 'POR PAGAR'
+                        monto_val = cell(fila, "POR PAGAR")
+                        if monto_val in (None, ""):
+                            omitidas += 1
+                            continue
+                        try:
+                            monto = to_decimal(monto_val)
+                        except Exception:
+                            errores.append(f"Fila {numero_fila}: monto inválido {monto_val!r}.")
+                            continue
+                        if monto == 0:
+                            omitidas += 1
+                            continue
+
+                        fecha_pago = cell(fila, "FECHA")
+                        fecha_pago_d = parse_excel_date(fecha_pago)
+                        prov_name = cell(fila, "PROVEEDOR")
+                        sup_inv = cell(fila, "NO FAC PROVEEDOR")
+                        sup_inv = str(sup_inv).strip() if sup_inv not in (None, "") else None
+                        sup_inv_date = parse_excel_date(cell(fila, "FECHA DE FACTURA DE PROVEEDOR"))
+
+                        # Evaluar estado DISPERSADO/PAGADO a partir de varias posibles columnas
+                        est_1 = str(cell(fila, "ESTATUS") or cell(fila, "ESTADO") or cell(fila, "STATUS") or "").strip().upper()
+                        est_2 = str(cell(fila, "PAGADO") or cell(fila, "PAGADA") or "").strip().upper()
+                        status_text = (est_1 + " " + est_2).strip()
+                        cond_disp = ("DISPERSAD" in est_1) if est_1 else None
+                        cond_pag = ("PAGAD" in est_2) if est_2 else None
+                        proceed = False
+                        if cond_disp is not None and cond_pag is not None:
+                            proceed = cond_disp and cond_pag
+                        elif cond_disp is not None:
+                            proceed = cond_disp
+                        elif cond_pag is not None:
+                            proceed = cond_pag
+                        else:
+                            proceed = False
+                        if not proceed:
+                            # No cumple condición de Dispersado/Pagado → omitir sin error
+                            omitidas += 1
+                            continue
+
+                        # Buscar operación por folio (exacto, case-insensitive)
+                        op = Operation.objects.filter(folio__iexact=folio).first()
+                        if not op:
+                            # Si el folio termina en 'B' y no existe, intentar base sin 'B'
+                            fs = folio.upper()
+                            if fs.endswith('B'):
+                                op = Operation.objects.filter(folio__iexact=folio[:-1]).first()
+                        if not op:
+                            errores.append(f"Fila {numero_fila}: no se encontró operación con folio {folio}.")
+                            continue
+
+                        # Buscar POs ligadas a la operación
+                        links = PurchaseOrderOperation.objects.select_related('purchase_order').filter(operation=op)
+                        if not links.exists():
+                            errores.append(f"Fila {numero_fila}: la operación {folio} no tiene Orden de Compra asociada.")
+                            continue
+
+                        for link in links:
+                            po = link.purchase_order
+                            if po is None:
+                                continue
+                            affected_po_ids.add(po.id)
+                            affected_ops.add(op.id)
+                            pago, created = PurchaseOrderSupplierPayment.objects.get_or_create(
+                                purchase_order=po,
+                                supplier_invoice_number=sup_inv,
+                                payment_date=fecha_pago_d,
+                                amount=monto,
+                                defaults=dict(
+                                    operation=op,
+                                    currency="MXN",
+                                    notes=str(cell(fila, "COMPROBANTES") or "").strip() or None,
+                                    source_row={
+                                        "folio": folio,
+                                        "proveedor": str(prov_name or "").strip(),
+                                        "estatus": status_text,
+                                    },
+                                    supplier_invoice_date=sup_inv_date,
+                                )
+                            )
+                            if created:
+                                creados += 1
+                            else:
+                                duplicados += 1
+
+                    # Recalcular estado de las POs afectadas
+                    from django.db.models import Sum, Max
+                    for po_id in affected_po_ids:
+                        try:
+                            po = PurchaseOrderOperation.objects.select_related('purchase_order').filter(purchase_order_id=po_id).first().purchase_order
+                        except Exception:
+                            po = None
+                        if not po:
+                            continue
+                        total_pagado = (po.payments.aggregate(s=Sum('amount'))['s'] or _D('0.00'))
+                        if total_pagado >= (po.total or _D('0.00')) and po.status != PurchaseOrderStatus.PAGADA:
+                            last_date = po.payments.aggregate(m=Max('payment_date'))['m']
+                            po.status = PurchaseOrderStatus.PAGADA
+                            if last_date:
+                                po.paid_date = timezone.make_aware(datetime.combine(last_date, datetime.min.time())) if hasattr(timezone, 'make_aware') else po.paid_date
+                            po.save(update_fields=["status", "paid_date"])
+                            pos_pagadas += 1
+
+                    # Recalcular egresos reportados por operación
+                    from django.db.models import Sum
+                    for op_id in affected_ops:
+                        op = Operation.objects.filter(id=op_id).first()
+                        if not op:
+                            continue
+                        mc = OperationMasterControl.objects.filter(operation=op).first()
+                        if not mc:
+                            mc = OperationMasterControl.objects.create(operation=op)
+                        total_op_pagado = PurchaseOrderSupplierPayment.objects.filter(operation=op).aggregate(s=Sum('amount'))['s'] or _D('0.00')
+                        if mc.supplier_paid_amount_reported != total_op_pagado:
+                            mc.supplier_paid_amount_reported = total_op_pagado
+                            mc.save(update_fields=["supplier_paid_amount_reported"]) 
+                            controles_actualizados += 1
+
+            finally:
+                try:
+                    workbook.close()
+                except Exception:
+                    pass
+
+            mensaje = (
+                f"Proceso terminado. Filas procesadas: {procesadas}. "
+                f"Pagos creados: {creados}. Duplicados: {duplicados}. Omitidas: {omitidas}. "
+                f"POs marcadas como pagadas: {pos_pagadas}. Controles actualizados: {controles_actualizados}. "
+                f"Errores: {len(errores)}.\n"
+                f"Regla aplicada: sólo se usa la columna 'POR PAGAR' y sólo si el estatus indica DISPERSADO/PAGADO."
+            )
+            if errores:
+                mensaje += "\n\n" + "\n".join(errores[:50])
+            return HttpResponse(mensaje, content_type="text/plain")
+
+        #if action == ""
 
         return HttpResponseBadRequest("Tipo de accion inactiva.")
 

@@ -13,6 +13,13 @@ from core.operations_panel.views.route import RouteListView, RouteMapView, Route
 from core.operations_panel.views.supplier import SupplierListView
 from core.operations_panel.views.transported_product import TransportedProductListView
 from core.operations_panel.views.vehicle import VehicleListView
+from core.operations_panel.views.service_log import (
+    ServiceLogSearchView,
+    open_service_log,
+    ServiceLogDetailView,
+    service_log_data,
+    create_event,
+)
 
 app_name = 'operations_panel'
 
@@ -49,4 +56,11 @@ urlpatterns = [
     path('generate_invoice/local/<uuid:operation_id>/', InvoiceShipmentLocalFormView.as_view(), name='invoice_shipment_local'),
 
     path('download/shipment-invoice/<uuid:operation_id>/no-signed', DownloadShipmentPDF, name='shipment_cartaporte'),
+
+    # Service Logs (Bitácora de Horas de Servicio)
+    path('service-logs/', ServiceLogSearchView.as_view(), name='service_logs_search'),
+    path('service-logs/open/', open_service_log, name='service_logs_open'),
+    path('service-logs/<uuid:log_id>/', ServiceLogDetailView.as_view(), name='service_log_detail'),
+    path('service-logs/<uuid:log_id>/data/', service_log_data, name='service_log_data'),
+    path('service-logs/<uuid:log_id>/events/', create_event, name='service_log_create_event'),
 ]

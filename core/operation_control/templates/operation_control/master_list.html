@@ -77,15 +77,6 @@
             </div>
           </div>
           <div class="col-6 col-sm-4 col-md-2">
-            <div class="small-box bg-warning">
-              <div class="inner">
-                <h4 id="kpi-pending" class="mb-0">$0.00</h4>
-                <p class="mb-0">Por cobrar</p>
-              </div>
-              <div class="icon"><i class="fas fa-hourglass-half"></i></div>
-            </div>
-          </div>
-          <div class="col-6 col-sm-4 col-md-2">
             <div class="small-box bg-secondary">
               <div class="inner">
                 <h4 id="kpi-costs" class="mb-0">$0.00</h4>
@@ -98,18 +89,9 @@
             <div class="small-box bg-primary">
               <div class="inner">
                 <h4 id="kpi-paid" class="mb-0">$0.00</h4>
-                <p class="mb-0">Pagado prov.</p>
+                <p class="mb-0">Pagado</p>
               </div>
               <div class="icon"><i class="fas fa-hand-holding-usd"></i></div>
-            </div>
-          </div>
-          <div class="col-6 col-sm-4 col-md-2">
-            <div class="small-box bg-teal">
-              <div class="inner d-flex align-items-baseline gap-2">
-                <h4 id="kpi-profit" class="mb-0">$0.00</h4>
-                <small id="kpi-margin" class="text-white-50">0%</small>
-              </div>
-              <div class="icon"><i class="fas fa-chart-line"></i></div>
             </div>
           </div>
         </div>
@@ -148,6 +130,10 @@
               <div class="col-sm-6 col-md-3 col-lg-2">
                 <label class="form-label">Proveedor</label>
                 <input type="text" class="form-control form-control-sm" name="supplier" placeholder="Proveedor" />
+              </div>
+              <div class="col-sm-6 col-md-3 col-lg-2">
+                <label class="form-label">Folio factura</label>
+                <input type="text" class="form-control form-control-sm" name="invoice_folio" placeholder="Ej. 123, 456" />
               </div>
               <div class="col-6 col-md-2 col-lg-1">
                 <label class="form-label">Facturado</label>
@@ -208,13 +194,13 @@
                     <th class="col-client">Cliente 🔒</th>
                     <th class="col-origin">Origen 🔒</th>
                     <th class="col-destination">Destino 🔒</th>
+                    <th class="col-supplier">Proveedor 🔒</th>
+                    <th class="col-invoices">Folios facturas</th>
                     <th class="text-end col-money">Precio 🧮</th>
                     <th class="text-end col-money">Costo 🧮</th>
-                    <th class="text-end col-money">Factoraje 🧮</th>
                     <th class="text-end col-money">Utilidad 🧮</th>
                     <th class="text-end col-percent">Utilidad % 🧮</th>
                     <th class="cell-editable">Codigo de plantilla ✏️</th>
-                    <th>Factoraje</th>
                     <th class="cell-editable">Notas ✏️</th>
                   </tr>
                 </thead>

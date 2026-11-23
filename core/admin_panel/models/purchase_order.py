@@ -308,3 +308,58 @@ class PurchaseOrderAccessory(BaseModel):
     class Meta:
         verbose_name = "Accesorio"
         verbose_name_plural = "Accesorios"
+
+
+class PurchaseOrderSupplierPayment(BaseModel):
+    """Pagos realizados al proveedor contra una Orden de Compra.
+    Registrados desde layouts externos por folio de operación (control vehicular).
+    Idempotencia basada en (purchase_order, supplier_invoice_number, payment_date, amount).
+    """
+    purchase_order = models.ForeignKey(
+        PurchaseOrder,
+        on_delete=models.CASCADE,
+        related_name="payments",
+        verbose_name="Orden de Compra"
+    )
+    operation = models.ForeignKey(
+        Operation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="purchase_order_payments",
+        verbose_name="Operación"
+    )
+    external_reference = models.CharField(
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name="Referencia externa"
+    )
+    payment_date = models.DateField(verbose_name="Fecha de pago", blank=True, null=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Monto")
+    currency = models.CharField(max_length=8, default="MXN", verbose_name="Moneda")
+
+    supplier_invoice_number = models.CharField(
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name="Factura del proveedor"
+    )
+    supplier_invoice_date = models.DateField(blank=True, null=True, verbose_name="Fecha factura proveedor")
+    notes = models.TextField(blank=True, null=True, verbose_name="Notas")
+    source_row = models.JSONField(blank=True, null=True, verbose_name="Fila origen (depuración)")
+
+    class Meta:
+        verbose_name = "Pago a proveedor (OC)"
+        verbose_name_plural = "Pagos a proveedor (OC)"
+        ordering = ["-payment_date", "-created_at"]
+        unique_together = (
+            ("purchase_order", "supplier_invoice_number", "payment_date", "amount"),
+        )
+        indexes = [
+            models.Index(fields=["payment_date"]),
+            models.Index(fields=["supplier_invoice_number"]),
+        ]
+
+    def __str__(self):
+        return f"Pago OC {self.purchase_order.folio if self.purchase_order_id else '-'} - ${self.amount}"

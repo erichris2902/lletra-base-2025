@@ -51,18 +51,13 @@
       <td class="col-client">${r.client ?? ''}</td>
       <td class="col-origin">${r.origin ?? ''}</td>
       <td class="col-destination">${r.destination ?? ''}</td>
+      <td class="col-supplier">${r.supplier ?? ''}</td>
+      <td class="col-invoices">${r.invoice_folios ?? ''}</td>
       <td class="text-end col-money">${fmtMoney(r.sale_amount)}</td>
       <td class="text-end col-money">${fmtMoney(r.cost_amount)}</td>
-      <td class="text-end col-money">${fmtMoney(r.factoring_cost)}</td>
       <td class="text-end col-money">${fmtMoney(r.profit)}</td>
       <td class="text-end col-percent">${fmtPercent(r.profit_percentage)}</td>
       <td contenteditable class="cell-editable" data-field="counter_receipt">${r.counter_receipt || ''}</td>
-      <td>
-        <select class="form-select form-select-sm bool-select" data-field="has_factoring">
-          <option value="n" ${r.has_factoring ? '' : 'selected'}>No</option>
-          <option value="y" ${r.has_factoring ? 'selected' : ''}>Sí</option>
-        </select>
-      </td>
       <td contenteditable class="cell-editable" data-field="notes">${r.notes || ''}</td>
     `;
     return tr;
@@ -144,12 +139,12 @@
       // Update recalculated values
       if (data.recalc) {
         const cells = tr.querySelectorAll('td');
-        // Indices according to the row template
-        cells[5].innerText = fmtMoney(data.recalc.sale_amount);
-        cells[6].innerText = fmtMoney(data.recalc.cost_amount);
-        cells[7].innerText = fmtMoney(data.recalc.factoring_cost);
-        cells[8].innerText = fmtMoney(data.recalc.profit);
-        cells[9].innerText = fmtPercent(data.recalc.profit_percentage);
+        // Indices according to the updated row template
+        // 0:fecha,1:folio,2:cliente,3:origen,4:destino,5:proveedor,6:folios,7:precio,8:costo,9:utilidad,10:%
+        cells[7].innerText = fmtMoney(data.recalc.sale_amount);
+        cells[8].innerText = fmtMoney(data.recalc.cost_amount);
+        cells[9].innerText = fmtMoney(data.recalc.profit);
+        cells[10].innerText = fmtPercent(data.recalc.profit_percentage);
       }
       showToast('Cambios guardados ✓');
     } catch (err) {
@@ -231,6 +226,7 @@
       case 'date_to': return 'Hasta';
       case 'client': return 'Cliente';
       case 'supplier': return 'Proveedor';
+      case 'invoice_folio': return 'Folio factura';
       case 'folio': return 'Folio';
       case 'invoiced': return 'Facturado';
       case 'missing_approval': return 'Vo.Bo.';

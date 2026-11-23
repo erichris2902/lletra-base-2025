@@ -97,17 +97,19 @@
     const hasPO = !!r.has_purchase_order;
     const ingresoDisplay = hasPO ? (r.purchase_order_total ? fmtMoney(r.purchase_order_total) : '—') : fmtMoney(r.sale_amount);
     const costoDisplay = fmtMoney(r.cost_amount);
+    const porCobrar = fmtMoney(r.pending_to_collect);
+    const porPagar = fmtMoney(r.pending_to_pay);
 
     tr.innerHTML = `
       <td class="nowrap">${r.folio ?? ''}</td>
       <td class="nowrap">${r.date ?? ''}</td>
       <td>${r.client ?? ''}</td>
-      <td>${r.unit ?? ''}</td>
-      <td>${hasPO ? (r.purchase_order_folio || 'Sí') : '—'}</td>
+      <td>${r.supplier ?? ''}</td>
       <td class="text-end">${ingresoDisplay}</td>
       <td>
         <input type="text" class="form-control form-control-sm edit" data-field="collected_amount_reported" placeholder="0.00" value="${r.collected_amount_reported ?? ''}">
       </td>
+      <td class="text-end">${porCobrar}</td>
       <td>
         <input type="text" class="form-control form-control-sm edit" data-field="expected_collection_date" placeholder="DD-MM-YYYY" value="${fmtDateISO(r.expected_collection_date) || ''}">
       </td>
@@ -115,6 +117,7 @@
       <td>
         <input type="text" class="form-control form-control-sm edit" data-field="supplier_paid_amount_reported" placeholder="0.00" value="${r.supplier_paid_amount_reported ?? ''}">
       </td>
+      <td class="text-end">${porPagar}</td>
       <td>
         <input type="text" class="form-control form-control-sm edit" data-field="supplier_invoice_number" value="${r.supplier_invoice_number ?? ''}">
       </td>
