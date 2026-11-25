@@ -2,6 +2,7 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
 import dateutil
+from celery import shared_task
 from dateutil.utils import today
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction, models
@@ -28,6 +29,107 @@ from core.operation_control.models import OperationMasterControl
 from core.admin_panel.models.purchase_order import PurchaseOrderOperation, PurchaseOrderAccessory, PurchaseOrderStatus, PurchaseOrderSupplierPayment
 from django.db.models import Prefetch
 
+@shared_task
+def cancelacion_masiva(plantilla_excel):
+    try:
+        workbook = load_workbook(
+            filename=plantilla_excel,
+            read_only=True,
+            data_only=True,
+        )
+        worksheet = workbook.active
+    except Exception as exc:
+        return HttpResponseBadRequest(
+            f"No fue posible leer el archivo Excel: {exc}"
+        )
+
+    encabezados_requeridos = {
+        "UUID A CANCELAR",
+    }
+
+    filas = worksheet.iter_rows(values_only=True)
+
+    try:
+        primera_fila = next(filas)
+    except StopIteration:
+        workbook.close()
+        return HttpResponseBadRequest("El archivo está vacío.")
+
+    encabezados = {
+        str(valor).strip().upper(): indice
+        for indice, valor in enumerate(primera_fila)
+        if valor is not None
+    }
+
+    encabezados_faltantes = encabezados_requeridos - set(encabezados.keys())
+
+    if encabezados_faltantes:
+        workbook.close()
+        return HttpResponseBadRequest(
+            "Faltan los siguientes encabezados: "
+            + ", ".join(sorted(encabezados_faltantes))
+        )
+
+    facturas_canceladas = 0
+    filas_omitidas = []
+    errores = []
+
+    try:
+        indice_uuid = encabezados["UUID A CANCELAR"]
+
+        with transaction.atomic():
+            for numero_fila, fila in enumerate(filas, start=2):
+
+                if indice_uuid >= len(fila):
+                    filas_omitidas.append(
+                        f"Fila {numero_fila}: no contiene la columna UUID A CANCELAR."
+                    )
+                    continue
+
+                uuid_a_cancelar = fila[indice_uuid]
+
+                if uuid_a_cancelar in (None, ""):
+                    filas_omitidas.append(
+                        f"Fila {numero_fila}: UUID vacío."
+                    )
+                    continue
+
+                uuid_a_cancelar = str(uuid_a_cancelar).strip()
+
+                try:
+                    factura = FacturapiInvoice.objects.get(
+                        uuid__iexact=uuid_a_cancelar
+                    )
+                except FacturapiInvoice.DoesNotExist:
+                    errores.append(
+                        f"Fila {numero_fila}: no existe una factura "
+                        f"con UUID {uuid_a_cancelar}."
+                    )
+                    continue
+
+                try:
+                    factura.cancel("02")
+                    facturas_canceladas += 1
+                except Exception as exc:
+                    errores.append(
+                        f"Fila {numero_fila}: error al cancelar "
+                        f"{uuid_a_cancelar}: {exc}"
+                    )
+
+    finally:
+        workbook.close()
+
+    mensaje = (
+        f"Proceso terminado. "
+        f"Facturas canceladas: {facturas_canceladas}. "
+        f"Filas omitidas: {len(filas_omitidas)}. "
+        f"Errores: {len(errores)}."
+    )
+
+    if errores:
+        mensaje += "\n\n" + "\n".join(errores)
+
+    return mensaje
 
 class DashboardView(LoginRequiredMixin, AdminTemplateView):
     """
@@ -87,14 +189,11 @@ class ActionEngineView(AdminTemplateView):
     category = "Facturacion MX"
 
     def post(self, request, *args, **kwargs):
-        print(request.POST)
-        print(request.FILES)
         action = request.POST.get("action")
         plantilla_excel = request.FILES.get("file")
 
         if not plantilla_excel:
             return HttpResponseBadRequest("Faltan incluir plantilla")
-        print(action)
         if action == "CMR":
             try:
                 workbook = load_workbook(
@@ -200,105 +299,8 @@ class ActionEngineView(AdminTemplateView):
             return HttpResponse(mensaje, content_type="text/plain")
 
         if action == "CM":
-            try:
-                workbook = load_workbook(
-                    filename=plantilla_excel,
-                    read_only=True,
-                    data_only=True,
-                )
-                worksheet = workbook.active
-            except Exception as exc:
-                return HttpResponseBadRequest(
-                    f"No fue posible leer el archivo Excel: {exc}"
-                )
-
-            encabezados_requeridos = {
-                "UUID A CANCELAR",
-            }
-
-            filas = worksheet.iter_rows(values_only=True)
-
-            try:
-                primera_fila = next(filas)
-            except StopIteration:
-                workbook.close()
-                return HttpResponseBadRequest("El archivo está vacío.")
-
-            encabezados = {
-                str(valor).strip().upper(): indice
-                for indice, valor in enumerate(primera_fila)
-                if valor is not None
-            }
-
-            encabezados_faltantes = encabezados_requeridos - set(encabezados.keys())
-
-            if encabezados_faltantes:
-                workbook.close()
-                return HttpResponseBadRequest(
-                    "Faltan los siguientes encabezados: "
-                    + ", ".join(sorted(encabezados_faltantes))
-                )
-
-            facturas_canceladas = 0
-            filas_omitidas = []
-            errores = []
-
-            try:
-                indice_uuid = encabezados["UUID A CANCELAR"]
-
-                with transaction.atomic():
-                    for numero_fila, fila in enumerate(filas, start=2):
-
-                        if indice_uuid >= len(fila):
-                            filas_omitidas.append(
-                                f"Fila {numero_fila}: no contiene la columna UUID A CANCELAR."
-                            )
-                            continue
-
-                        uuid_a_cancelar = fila[indice_uuid]
-
-                        if uuid_a_cancelar in (None, ""):
-                            filas_omitidas.append(
-                                f"Fila {numero_fila}: UUID vacío."
-                            )
-                            continue
-
-                        uuid_a_cancelar = str(uuid_a_cancelar).strip()
-
-                        try:
-                            factura = FacturapiInvoice.objects.get(
-                                uuid__iexact=uuid_a_cancelar
-                            )
-                        except FacturapiInvoice.DoesNotExist:
-                            errores.append(
-                                f"Fila {numero_fila}: no existe una factura "
-                                f"con UUID {uuid_a_cancelar}."
-                            )
-                            continue
-
-                        try:
-                            factura.cancel("02")
-                            facturas_canceladas += 1
-                        except Exception as exc:
-                            errores.append(
-                                f"Fila {numero_fila}: error al cancelar "
-                                f"{uuid_a_cancelar}: {exc}"
-                            )
-
-            finally:
-                workbook.close()
-
-            mensaje = (
-                f"Proceso terminado. "
-                f"Facturas canceladas: {facturas_canceladas}. "
-                f"Filas omitidas: {len(filas_omitidas)}. "
-                f"Errores: {len(errores)}."
-            )
-
-            if errores:
-                mensaje += "\n\n" + "\n".join(errores)
-
-            return HttpResponse(mensaje, content_type="text/plain")
+            cancelacion_masiva.delay(plantilla_excel)
+            return HttpResponse("Se generaran las cancelacion, este proceso puede tomar unos minutos", content_type="text/plain")
 
         if "PPP" == action:
             try:
