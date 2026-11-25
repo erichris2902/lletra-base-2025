@@ -28,12 +28,19 @@ from apps.openai_assistant.models import Assistant
 from core.operation_control.models import OperationMasterControl
 from core.admin_panel.models.purchase_order import PurchaseOrderOperation, PurchaseOrderAccessory, PurchaseOrderStatus, PurchaseOrderSupplierPayment
 from django.db.models import Prefetch
+import base64
+from io import BytesIO
 
 @shared_task
-def cancelacion_masiva(plantilla_excel):
+def cancelacion_masiva(archivo_base64):
+
     try:
+        archivo = BytesIO(
+            base64.b64decode(archivo_base64)
+        )
+
         workbook = load_workbook(
-            filename=plantilla_excel,
+            filename=archivo,
             read_only=True,
             data_only=True,
         )
@@ -299,8 +306,19 @@ class ActionEngineView(AdminTemplateView):
             return HttpResponse(mensaje, content_type="text/plain")
 
         if action == "CM":
-            cancelacion_masiva.delay(plantilla_excel)
-            return HttpResponse("Se generaran las cancelacion, este proceso puede tomar unos minutos", content_type="text/plain")
+            plantilla_excel.seek(0)
+
+            archivo_base64 = base64.b64encode(
+                plantilla_excel.read()
+            ).decode("utf-8")
+
+            cancelacion_masiva.delay(archivo_base64)
+
+            return HttpResponse(
+                "Se inició el proceso de cancelación masiva. "
+                "Este proceso puede tomar unos minutos.",
+                content_type="text/plain"
+            )
 
         if "PPP" == action:
             try:
