@@ -12,9 +12,10 @@ class ClientForm(BaseModelForm):
             {"name": "rfc", "size": 4},
         ]},
         {"type": "row", "fields": [
-            {"name": "email", "size": 4},
-            {"name": "phone", "size": 4},
-            {"name": "tax_regime", "size": 4},
+            {"name": "email", "size": 3},
+            {"name": "phone", "size": 3},
+            {"name": "tax_regime", "size": 3},
+            {"name": "credit_days", "size": 3},
         ]},
         {"type": "row", "fields": [
             {"name": "notes", "size": 12},
@@ -29,6 +30,7 @@ class ClientForm(BaseModelForm):
             "email",
             "phone",
             "tax_regime",
+            "credit_days",
             "notes",
         ]
 

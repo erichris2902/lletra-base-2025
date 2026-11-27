@@ -22,6 +22,7 @@ class Client(BaseModel):
         verbose_name="Régimen fiscal"
     )
     notes = models.TextField(blank=True, null=True, verbose_name="Notas")
+    credit_days = models.IntegerField(verbose_name="Dias de credito", default=0, blank=True, null=True)
 
     @staticmethod
     def get_or_create_by_str(name: str = None):
