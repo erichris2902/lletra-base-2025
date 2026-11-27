@@ -14,8 +14,8 @@ class SupplierListView(AdminListView):
     model = PurchaseOrder
     form = PurchaseOrderSupplierInvoiceForm
     template_name = 'base/elements/views/supplier_panel/datatable_list.html'
-    datatable_headers = ["Folio", "Subtotal", "Estado"]
-    datatable_keys = ["folio", "subtotal", "status"]
+    datatable_headers = ["Folio", "operaciones", "Subtotal", "Estado"]
+    datatable_keys = ["folio", "operations", "subtotal", "status"]
     datatable_actions = True
     title = "Órdenes de Compra"
     form_path = 'base/elements/forms/form.html'

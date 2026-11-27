@@ -122,6 +122,50 @@ class PurchaseOrder(BaseModel):
     approved_date = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de aprobación")
     paid_date = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de pago")
 
+    def get_operations_folios_csv(self):
+        """Devuelve un string con los folios de todas las operaciones relacionadas, separados por coma.
+        Si una operación no tiene `folio`, intenta `pre_folio`; como último recurso usa el `id`.
+        """
+        qs = self.operations.select_related("operation").all()
+        folios = []
+        for po_op in qs:
+            op = getattr(po_op, "operation", None)
+            if not op:
+                continue
+            folio = getattr(op, "folio", None) or getattr(op, "pre_folio", None) or (str(op.id) if getattr(op, "id", None) else None)
+            if folio:
+                folios.append(folio)
+        return ", ".join(folios)
+
+    @property
+    def operations_folios(self):
+        """Atajo tipo propiedad para acceder al CSV de folios de operaciones."""
+        return self.get_operations_folios_csv()
+
+    def to_display_dict(self, keys=None):
+        from django.db.models.fields.related import ForeignKey, OneToOneField, ManyToManyField
+        from django.db.models.fields.reverse_related import ManyToOneRel, ManyToManyRel
+
+        result = {}
+        # Usar keys, o todos los campos (excluyendo relaciones reversas)
+        all_fields = [f for f in self._meta.get_fields() if not isinstance(f, (ManyToOneRel, ManyToManyRel))]
+        for field in all_fields:
+            name = field.name
+            if keys and name not in keys:
+                continue
+            value = getattr(self, name, None)
+            if isinstance(field, (ForeignKey, OneToOneField)):
+                result[name] = str(value) if value else ""
+            elif isinstance(field, ManyToManyField):
+                result[name] = [str(obj) for obj in value.all()]
+            else:
+                result[name] = value
+        # Siempre agrega el id si está en keys
+        result["id"] = str(self.id)
+        result["operations"] = str(self.operations_folios)
+
+        return result
+
     def save(self, *args, **kwargs):
         if self.folio:
             return super().save(*args, **kwargs)
